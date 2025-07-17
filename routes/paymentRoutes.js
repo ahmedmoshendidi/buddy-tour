@@ -84,6 +84,7 @@ router.post("/pay", async (req, res) => {
 router.post("/payment-callback", async (req, res) => {
   const event = req.body;
   console.log("🔥 Webhook triggered");
+  console.log("🔥 RECEIVED WEBHOOK:", req.body);
 
   // تأكد إن الدفع فعلاً تم بنجاح
   if (event.obj && event.obj.success && event.type === "TRANSACTION") {
