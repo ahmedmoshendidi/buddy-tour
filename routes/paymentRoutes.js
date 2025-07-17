@@ -72,8 +72,7 @@ router.post("/pay", async (req, res) => {
 
     const iframeUrl = `https://accept.paymob.com/api/acceptance/iframes/${PAYMOB_IFRAME_ID}?payment_token=${paymentToken}`;
 
-    // ✅ Send confirmation email
-    // await sendConfirmationEmail(email, firstName);
+   
 
     res.json({ iframe_url: iframeUrl });
   } catch (err) {
