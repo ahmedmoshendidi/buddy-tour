@@ -81,22 +81,40 @@ router.post("/pay", async (req, res) => {
   }
 });
 
-router.post("/payment-callback", async (req, res) => {
-  const event = req.body;
-  console.log("🔥 Webhook triggered");
+// router.post("/payment-callback", async (req, res) => {
+//   const event = req.body;
+//   console.log("🔥 Webhook triggered");
 
-  // تأكد إن الدفع فعلاً تم بنجاح
+//   // تأكد إن الدفع فعلاً تم بنجاح
+//   if (event.obj && event.obj.success && event.type === "TRANSACTION") {
+//     const email = event.obj.customer_email;
+//     const name = event.obj.billing_data.first_name;
+
+//     // ابعت الإيميل بعد نجاح الدفع
+//     await sendConfirmationEmail(email, name);
+
+//     console.log("✅ Confirmation email sent after successful payment.");
+//   }
+
+//   res.sendStatus(200); // لازم ترد بـ 200 عشان Paymob يعرف إن السيرفر استقبل الـ webhook
+// });
+
+router.post("/payment-callback", async (req, res) => {
+  console.log("🔥 Webhook triggered");
+  console.log("📦 Request body:", JSON.stringify(req.body, null, 2)); // اطبع البيانات الحقيقية
+
+  const event = req.body;
+
+  // هنا الشرط ممكن يكون غلط أو ناقص
   if (event.obj && event.obj.success && event.type === "TRANSACTION") {
     const email = event.obj.customer_email;
     const name = event.obj.billing_data.first_name;
 
-    // ابعت الإيميل بعد نجاح الدفع
     await sendConfirmationEmail(email, name);
-
     console.log("✅ Confirmation email sent after successful payment.");
   }
 
-  res.sendStatus(200); // لازم ترد بـ 200 عشان Paymob يعرف إن السيرفر استقبل الـ webhook
+  res.sendStatus(200);
 });
 
 
