@@ -2,20 +2,24 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const paymentRoutes = require("./routes/paymentRoutes");
-require('dotenv').config(); // في index.js أو server.js
-
+require('dotenv').config(); // تحميل env variables
 
 const app = express();
 
-// Serve static HTML files
-app.use(express.static(path.join(__dirname)));
+// تحديد البورت
+const PORT = process.env.PORT || 5000;
 
+// إعدادات السيرفر
 app.use(cors());
 app.use(express.json());
 
+// تقديم ملفات static زي success.html / fail.html
+app.use(express.static(path.join(__dirname)));
+
+// المسارات الخاصة بالدفع
 app.use("/api", paymentRoutes);
 
-// 🔁 تأكيد تقديم صفحات الشكر/الفشل عند الطلب المباشر
+// مسارات صفحات النجاح والفشل
 app.get("/success.html", (req, res) => {
   res.sendFile(path.join(__dirname, "success.html"));
 });
@@ -24,6 +28,7 @@ app.get("/fail.html", (req, res) => {
   res.sendFile(path.join(__dirname, "fail.html"));
 });
 
-app.listen(5000, () => {
-  console.log("✅ Server running on http://localhost:5000");
+// تشغيل السيرفر
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
 });
