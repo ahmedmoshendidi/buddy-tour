@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your contact details</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/css/intlTelInput.min.css"/>
+  <style>
+    body {
+      background-color: #f5f5f5;
+      font-family: Tahoma, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background-color: white;
+      padding: 30px 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 22px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    .error {
+      color: red;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 25px;
+      background-color: #27ae60;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #219150;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Your contact details</h2>
+    <form id="payment-form">
+      <label>First Name</label>
+      <input type="text" id="firstName">
+      <div class="error" id="firstNameError"></div>
+
+      <label>Last Name</label>
+      <input type="text" id="lastName">
+      <div class="error" id="lastNameError"></div>
+
+      <label>Email</label>
+      <input type="email" id="email">
+      <div class="error" id="emailError"></div>
+
+      <label>Phone Number</label>
+      <input type="tel" id="phone" autocomplete="off">
+      <div class="error" id="phoneError"></div>
+
+      <label>Country (residency)</label>
+      <select id="nationality">
+        <option value="egypt">Egypt</option>
+        <option value="usa">USA</option>
+        <option value="uk">UK</option>
+        <option value="canada">Canada</option>
+        <option value="germany">Germany</option>
+        <option value="france">France</option>
+      </select>
+
+      <button type="submit">Next</button>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/intlTelInput.min.js"></script>
+  <script>
+    const form = document.getElementById('payment-form');
+    const phoneInput = document.getElementById('phone');
+    const iti = window.intlTelInput(phoneInput, {
+      initialCountry: "eg",
+      separateDialCode: true,
+      utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/utils.js"
+    });
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      // Clear previous errors
+      document.getElementById("firstNameError").textContent = "";
+      document.getElementById("lastNameError").textContent = "";
+      document.getElementById("emailError").textContent = "";
+      document.getElementById("phoneError").textContent = "";
+
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = iti.getNumber();
+      const nationality = document.getElementById('nationality').value;
+
+      let hasError = false;
+
+      if (firstName === "") {
+        document.getElementById("firstNameError").textContent = "First name is required";
+        hasError = true;
+      }
+
+      if (lastName === "") {
+        document.getElementById("lastNameError").textContent = "Last name is required";
+        hasError = true;
+      }
+
+      if (email === "" || !email.endsWith("@gmail.com")) {
+        document.getElementById("emailError").textContent = "Valid @gmail.com email is required";
+        hasError = true;
+      }
+
+      if (!iti.isValidNumber()) {
+        document.getElementById("phoneError").textContent = "Enter a valid phone number";
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      try {
+        const response = await fetch('http://localhost:5000/api/pay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firstName, lastName, email, phone, nationality })
+        });
+
+        const data = await response.json();
+
+        if (data.iframe_url) {
+          window.location.href = data.iframe_url;
+        } else {
+          alert("Something went wrong while redirecting to payment.");
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        alert("Something went wrong. Please try again later.");
+      }
+    });
+  </script>
+</body>
+</html>
