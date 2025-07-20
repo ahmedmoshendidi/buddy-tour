@@ -81,26 +81,48 @@ router.post("/pay", async (req, res) => {
   }
 });
 
+// router.post("/payment-callback", async (req, res) => {
+//   const event = req.body;
+//   console.log("🔥 Webhook triggered");
+//   console.log("🔥 RECEIVED WEBHOOK:", req.body);
+//   console.log("📩 Webhook Raw Body:", JSON.stringify(req.body, null, 2));
+
+
+//   // تأكد إن الدفع فعلاً تم بنجاح
+//   // if (event.obj && event.obj.success && event.type === "TRANSACTION") {
+//   //   const email = event.obj.customer_email;
+//   //   const name = event.obj.billing_data.first_name;
+
+//   //   // ابعت الإيميل بعد نجاح الدفع
+//   //   await sendConfirmationEmail(email, name);
+
+//   //   console.log("✅ Confirmation email sent after successful payment.");
+//   // }
+
+//     if (
+//     event.type === "TRANSACTION" &&
+//     event.obj &&
+//     event.obj.success &&
+//     event.obj.billing_data &&
+//     event.obj.billing_data.first_name
+//   ) {
+//     const email = event.obj.customer_email || "no-email@unknown.com";
+//     const name = event.obj.billing_data.first_name;
+
+//     await sendConfirmationEmail(email, name);
+//     console.log("✅ Confirmation email sent to:", email);
+//   }
+
+
+//   res.sendStatus(200); // لازم ترد بـ 200 عشان Paymob يعرف إن السيرفر استقبل الـ webhook
+// });
+
 router.post("/payment-callback", async (req, res) => {
-  const event = req.body;
-  console.log("🔥 Webhook triggered");
-  console.log("🔥 RECEIVED WEBHOOK:", req.body);
-  console.log("📩 Webhook Raw Body:", JSON.stringify(req.body, null, 2));
-
-
-  // تأكد إن الدفع فعلاً تم بنجاح
-  if (event.obj && event.obj.success && event.type === "TRANSACTION") {
-    const email = event.obj.customer_email;
-    const name = event.obj.billing_data.first_name;
-
-    // ابعت الإيميل بعد نجاح الدفع
-    await sendConfirmationEmail(email, name);
-
-    console.log("✅ Confirmation email sent after successful payment.");
-  }
-
-  res.sendStatus(200); // لازم ترد بـ 200 عشان Paymob يعرف إن السيرفر استقبل الـ webhook
+  console.log("🔥 Webhook Received:");
+  console.log(JSON.stringify(req.body, null, 2));
+  res.sendStatus(200);
 });
+
 
 
 
