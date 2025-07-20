@@ -1,14 +1,16 @@
+// paymentRoutes.js
 const express = require("express");
 const axios = require("axios");
 const sendConfirmationEmail = require("../utils/sendConfirmationEmail");
-
 require("dotenv").config();
 
 const router = express.Router();
 
-const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY; // حط الـ API Key كامل
-const PAYMOB_INTEGRATION_ID = 5174718;
-const PAYMOB_IFRAME_ID = 937400; // مهم جدًا
+const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
+const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID;
+const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID;
+
+const paymentStatus = new Map(); // مؤقتًا، لتتبع حالة الطلب
 
 // === Get Paymob Auth Token ===
 async function getAuthToken() {
@@ -41,12 +43,9 @@ async function generatePaymentKey(token, orderId, billingData) {
     currency: "EGP",
     integration_id: PAYMOB_INTEGRATION_ID,
     lock_order_when_paid: true
-    // success_url / error_url مش بتشتغل مع iframe
   });
-
   return response.data.token;
 }
-
 
 router.post("/pay", async (req, res) => {
   try {
@@ -72,16 +71,12 @@ router.post("/pay", async (req, res) => {
 
     const iframeUrl = `https://accept.paymob.com/api/acceptance/iframes/${PAYMOB_IFRAME_ID}?payment_token=${paymentToken}`;
 
-   
-
-    res.json({ iframe_url: iframeUrl });
+    res.json({ iframe_url: iframeUrl, order_id: orderId });
   } catch (err) {
     console.error("❌ Error during payment:", err.response?.data || err.message);
     res.status(500).json({ error: "Payment initiation failed" });
   }
 });
-
-
 
 router.post("/payment-callback", async (req, res) => {
   console.log("🔥 Webhook Received:");
@@ -89,21 +84,28 @@ router.post("/payment-callback", async (req, res) => {
 
   try {
     const event = req.body;
+    const orderId =
+      event.obj?.payment_key_claims?.order_id ||
+      event.obj?.order?.id ||
+      event.obj?.order?.merchant_order_id;
 
     const billingData = event.obj?.payment_key_claims?.billing_data;
 
     if (
       event.type === "TRANSACTION" &&
       event.obj?.success === true &&
-      billingData
+      billingData &&
+      orderId
     ) {
+      paymentStatus.set(orderId, "success");
+
       const email = billingData.email || "no-email@unknown.com";
       const name = billingData.first_name || "Guest";
 
       await sendConfirmationEmail(email, name);
       console.log("✅ Confirmation email sent to:", email);
-    } else {
-      console.warn("⚠️ Webhook received but payment not successful or missing billing data.");
+    } else if (orderId) {
+      paymentStatus.set(orderId, "fail");
     }
 
     res.sendStatus(200);
@@ -113,8 +115,10 @@ router.post("/payment-callback", async (req, res) => {
   }
 });
 
-
-
-
+// Check payment status
+router.get("/payment-status/:orderId", (req, res) => {
+  const status = paymentStatus.get(req.params.orderId);
+  res.json({ status: status || "pending" });
+});
 
 module.exports = router;
