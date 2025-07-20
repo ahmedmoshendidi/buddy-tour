@@ -157,25 +157,12 @@
       const data = await response.json();
 
       if (data.iframe_url && data.order_id) {
-        // خزّن رقم الطلب محليًا
-        const orderId = data.order_id;
-        localStorage.setItem("order_id", orderId);
+        // Store orderId and iframe URL
+        localStorage.setItem("order_id", data.order_id);
+        localStorage.setItem("iframe_url", data.iframe_url);
 
-        window.location.href = data.iframe_url;
-
-
-        // Start polling in the same tab
-        const interval = setInterval(async () => {
-          const res = await fetch(`/api/payment-status/${orderId}`);
-          const statusData = await res.json();
-          if (statusData.status === "success") {
-            clearInterval(interval);
-            window.location.href = "/success.html";
-          } else if (statusData.status === "fail") {
-            clearInterval(interval);
-            window.location.href = "/fail.html";
-          }
-        }, 4000);
+        // Redirect to payment.html
+        window.location.href = "/payment.html";
       } else {
         alert("Something went wrong while redirecting to payment.");
       }
