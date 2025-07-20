@@ -161,8 +161,8 @@
         const orderId = data.order_id;
         localStorage.setItem("order_id", orderId);
 
-        // افتح صفحة الدفع في تبويب جديد
-        window.open(data.iframe_url, '_blank');
+        window.location.href = data.iframe_url;
+
 
         // Start polling in the same tab
         const interval = setInterval(async () => {
