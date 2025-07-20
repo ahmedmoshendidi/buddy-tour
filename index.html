@@ -63,10 +63,40 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
 
     button:hover {
       background-color: #219150;
+    }
+
+    button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #666;
+      display: none;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #27ae60;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -98,7 +128,11 @@
       <option value="uae">UAE</option>
     </select>
 
-    <button type="submit">Pay Now</button>
+    <button type="submit" id="submitBtn">Pay Now</button>
+    <div class="loading" id="loadingMsg">
+      <span class="spinner"></span>
+      Processing payment...
+    </div>
   </form>
 </div>
 
@@ -106,6 +140,9 @@
 <script>
   const form = document.getElementById('payment-form');
   const phoneInput = document.getElementById('phone');
+  const submitBtn = document.getElementById('submitBtn');
+  const loadingMsg = document.getElementById('loadingMsg');
+  
   const iti = window.intlTelInput(phoneInput, {
     initialCountry: "eg",
     separateDialCode: true,
@@ -147,41 +184,68 @@
 
     if (hasError) return;
 
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Processing...";
+    loadingMsg.style.display = "block";
+
     try {
+      console.log('🚀 Starting payment process...');
+      
       const response = await fetch('/api/pay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstName, lastName, email, phone, nationality })
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
+      console.log('💳 Payment response:', data);
 
       if (data.iframe_url && data.order_id) {
+        // ✅ احفظ البيانات في localStorage
         localStorage.setItem("order_id", data.order_id);
         localStorage.setItem("iframe_url", data.iframe_url);
 
-        // Redirect in same tab
-        window.location.href = data.iframe_url;
-
-        // Start polling for result
-        const interval = setInterval(async () => {
-          const res = await fetch(`/api/payment-status/${data.order_id}`);
-          const statusData = await res.json();
-          if (statusData.status === "success") {
-            clearInterval(interval);
-            window.location.href = "/success.html";
-          } else if (statusData.status === "fail") {
-            clearInterval(interval);
-            window.location.href = "/fail.html";
-          }
-        }, 4000);
+        console.log(`💾 Saved to localStorage - Order ID: ${data.order_id}`);
+        
+        // ✅ التحويل لصفحة payment.html اللي هتعمل الـ iframe والـ polling
+        window.location.href = "/payment.html";
+        
       } else {
-        alert("Something went wrong while redirecting to payment.");
+        throw new Error("Invalid response: Missing iframe_url or order_id");
       }
+      
     } catch (err) {
-      console.error("Error:", err);
-      alert("Something went wrong. Please try again later.");
+      console.error("❌ Payment Error:", err);
+      
+      // Show user-friendly error message
+      let errorMessage = "Something went wrong. Please try again.";
+      if (err.message.includes('HTTP 500')) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (err.message.includes('HTTP 400')) {
+        errorMessage = "Invalid data. Please check your information.";
+      } else if (err.message.includes('fetch')) {
+        errorMessage = "Network error. Please check your connection.";
+      }
+      
+      alert(errorMessage);
+      
+      // Reset button state
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Pay Now";
+      loadingMsg.style.display = "none";
     }
+  });
+
+  // ✅ Clear any old payment data when page loads
+  window.addEventListener('load', function() {
+    localStorage.removeItem("order_id");
+    localStorage.removeItem("iframe_url");
+    console.log('🧹 Cleared old payment data');
   });
 </script>
 

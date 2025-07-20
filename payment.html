@@ -3,48 +3,218 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pay</title>
+  <title>Payment Processing</title>
   <style>
     body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
       height: 100vh;
       width: 100vw;
+      font-family: Arial, sans-serif;
+    }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f5f5f5;
+      flex-direction: column;
+    }
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #27ae60;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    iframe {
+      width: 100%;
+      height: 100vh;
+      border: none;
+      display: none;
+    }
+    
+    .status {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      z-index: 9999;
+      max-width: 300px;
+    }
+
+    .error {
+      background: #e74c3c;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      margin: 20px;
+      border-radius: 8px;
+    }
+
+    .error button {
+      background: white;
+      color: #e74c3c;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div>Loading Payment Gateway...</div>
+</div>
+
+<div class="status" id="status">
+  Initializing payment...
+</div>
+
+<iframe id="paymentFrame"></iframe>
+
 <script>
-  // Get iframe_url and order_id from localStorage
   const iframeUrl = localStorage.getItem("iframe_url");
   const orderId = localStorage.getItem("order_id");
+  const statusDiv = document.getElementById('status');
+  const loadingDiv = document.getElementById('loading');
+  const iframe = document.getElementById('paymentFrame');
+  
+  let pollCount = 0;
+  let pollingInterval = null;
+
+  function updateStatus(message) {
+    statusDiv.textContent = message;
+    console.log('💳 Payment Status:', message);
+  }
+
+  function showError(message) {
+    document.body.innerHTML = `
+      <div class="error">
+        <h3>Payment Error</h3>
+        <p>${message}</p>
+        <button onclick="window.location.href='/'">Go Back</button>
+      </div>
+    `;
+  }
 
   if (!iframeUrl || !orderId) {
-    alert("Missing payment session.");
-    window.location.href = "/"; // redirect to home
+    showError("Missing payment session data. Please try again.");
   } else {
-    // redirect directly to iframe URL
-    window.location.href = iframeUrl;
+    updateStatus(`Order: ${orderId} - Loading payment gateway...`);
+    
+    console.log('🚀 Payment session found:', {
+      orderId: orderId,
+      iframeUrl: iframeUrl.substring(0, 50) + '...'
+    });
 
-    // Start polling for status
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/payment-status/${orderId}`);
-        const data = await res.json();
-        if (data.status === "success") {
-          clearInterval(interval);
-          window.location.href = "/success.html";
-        } else if (data.status === "fail") {
-          clearInterval(interval);
-          window.location.href = "/fail.html";
+    // ✅ استخدم iframe بدلاً من window.location.href
+    iframe.src = iframeUrl;
+    
+    // Show iframe when it loads
+    iframe.onload = function() {
+      console.log('✅ Payment iframe loaded successfully');
+      loadingDiv.style.display = 'none';
+      iframe.style.display = 'block';
+      updateStatus(`Order: ${orderId} - Payment gateway ready`);
+      
+      // ابدأ الـ polling بعد ما الـ iframe يحمل
+      startPolling();
+    };
+
+    // Handle iframe loading errors
+    iframe.onerror = function() {
+      console.error('❌ Failed to load payment iframe');
+      showError("Failed to load payment gateway. Please try again.");
+    };
+
+    function startPolling() {
+      updateStatus(`Order: ${orderId} - Monitoring payment...`);
+      
+      pollingInterval = setInterval(async () => {
+        pollCount++;
+        updateStatus(`Order: ${orderId} - Checking status... (${pollCount})`);
+        
+        try {
+          console.log(`🔍 Polling attempt ${pollCount} for order ${orderId}`);
+          
+          const res = await fetch(`/api/payment-status/${orderId}`);
+          
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
+          
+          const data = await res.json();
+          console.log('📊 Payment status response:', data);
+          
+          if (data.status === "success") {
+            updateStatus('✅ Payment successful! Redirecting...');
+            clearInterval(pollingInterval);
+            
+            console.log('🎉 Payment successful, redirecting to success page');
+            setTimeout(() => {
+              window.location.href = "/success.html";
+            }, 1500);
+            
+          } else if (data.status === "fail") {
+            updateStatus('❌ Payment failed! Redirecting...');
+            clearInterval(pollingInterval);
+            
+            console.log('💔 Payment failed, redirecting to fail page');
+            setTimeout(() => {
+              window.location.href = "/fail.html";
+            }, 1500);
+            
+          } else {
+            updateStatus(`Order: ${orderId} - Status: ${data.status} (${pollCount})`);
+            console.log(`⏳ Payment still pending: ${data.status}`);
+          }
+          
+        } catch (err) {
+          console.error("❌ Polling error:", err);
+          updateStatus(`⚠️ Connection error (${pollCount})`);
+          
+          // توقف بعد 15 محاولة فاشلة
+          if (pollCount > 15) {
+            clearInterval(pollingInterval);
+            showError("Unable to verify payment status. Please contact support if money was deducted.");
+          }
         }
-      } catch (err) {
-        console.error("Polling error:", err);
-      }
-    }, 4000);
+      }, 4000);
+      
+      // Safety timeout - توقف بعد 10 دقائق
+      setTimeout(() => {
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          showError("Payment verification timeout. Please contact support if money was deducted.");
+        }
+      }, 600000); // 10 minutes
+    }
   }
+
+  // تنظيف الـ interval لو المستخدم سابت الصفحة
+  window.addEventListener('beforeunload', function() {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+    }
+  });
 </script>
 
 </body>
