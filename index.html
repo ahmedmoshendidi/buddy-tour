@@ -71,103 +71,120 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Your contact details</h2>
-    <form id="payment-form">
-      <label>First Name</label>
-      <input type="text" id="firstName">
-      <div class="error" id="firstNameError"></div>
 
-      <label>Last Name</label>
-      <input type="text" id="lastName">
-      <div class="error" id="lastNameError"></div>
+<div class="container">
+  <h2>ادخل بياناتك</h2>
+  <form id="payment-form">
+    <label>First Name</label>
+    <input type="text" id="firstName" />
+    <div class="error" id="firstNameError"></div>
 
-      <label>Email</label>
-      <input type="email" id="email">
-      <div class="error" id="emailError"></div>
+    <label>Last Name</label>
+    <input type="text" id="lastName" />
+    <div class="error" id="lastNameError"></div>
 
-      <label>Phone Number</label>
-      <input type="tel" id="phone" autocomplete="off">
-      <div class="error" id="phoneError"></div>
+    <label>Email</label>
+    <input type="email" id="email" />
+    <div class="error" id="emailError"></div>
 
-      <label>Country (residency)</label>
-      <select id="nationality">
-        <option value="egypt">Egypt</option>
-        <option value="usa">USA</option>
-        <option value="uk">UK</option>
-        <option value="canada">Canada</option>
-        <option value="germany">Germany</option>
-        <option value="france">France</option>
-      </select>
+    <label>Phone</label>
+    <input type="tel" id="phone" />
+    <div class="error" id="phoneError"></div>
 
-      <button type="submit">Next</button>
-    </form>
-  </div>
+    <label>Nationality</label>
+    <select id="nationality">
+      <option value="egypt">Egypt</option>
+      <option value="ksa">Saudi Arabia</option>
+      <option value="uae">UAE</option>
+    </select>
 
-  <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/intlTelInput.min.js"></script>
-  <script>
-    const form = document.getElementById('payment-form');
-    const phoneInput = document.getElementById('phone');
-    const iti = window.intlTelInput(phoneInput, {
-      initialCountry: "eg",
-      separateDialCode: true,
-      utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/utils.js"
-    });
+    <button type="submit">Pay Now</button>
+  </form>
+</div>
 
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/intlTelInput.min.js"></script>
+<script>
+  const form = document.getElementById('payment-form');
+  const phoneInput = document.getElementById('phone');
+  const iti = window.intlTelInput(phoneInput, {
+    initialCountry: "eg",
+    separateDialCode: true,
+    utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/utils.js"
+  });
 
-      // Clear errors
-      ["firstName", "lastName", "email", "phone"].forEach(field =>
-        document.getElementById(field + "Error").textContent = ""
-      );
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-      const firstName = document.getElementById('firstName').value.trim();
-      const lastName = document.getElementById('lastName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const phone = iti.getNumber();
-      const nationality = document.getElementById('nationality').value;
+    // Clear previous errors
+    ["firstName", "lastName", "email", "phone"].forEach(field =>
+      document.getElementById(field + "Error").textContent = ""
+    );
 
-      let hasError = false;
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phone = iti.getNumber();
+    const nationality = document.getElementById('nationality').value;
 
-      if (firstName === "") {
-        document.getElementById("firstNameError").textContent = "First name is required";
-        hasError = true;
+    let hasError = false;
+
+    if (firstName === "") {
+      document.getElementById("firstNameError").textContent = "First name is required";
+      hasError = true;
+    }
+    if (lastName === "") {
+      document.getElementById("lastNameError").textContent = "Last name is required";
+      hasError = true;
+    }
+    if (email === "" || !email.endsWith("@gmail.com")) {
+      document.getElementById("emailError").textContent = "Valid @gmail.com email is required";
+      hasError = true;
+    }
+    if (!iti.isValidNumber()) {
+      document.getElementById("phoneError").textContent = "Enter a valid phone number";
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    try {
+      const response = await fetch('/api/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email, phone, nationality })
+      });
+
+      const data = await response.json();
+
+      if (data.iframe_url && data.order_id) {
+        // خزّن رقم الطلب محليًا
+        const orderId = data.order_id;
+        localStorage.setItem("order_id", orderId);
+
+        // افتح صفحة الدفع في تبويب جديد
+        window.open(data.iframe_url, '_blank');
+
+        // Start polling in the same tab
+        const interval = setInterval(async () => {
+          const res = await fetch(`/api/payment-status/${orderId}`);
+          const statusData = await res.json();
+          if (statusData.status === "success") {
+            clearInterval(interval);
+            window.location.href = "/success.html";
+          } else if (statusData.status === "fail") {
+            clearInterval(interval);
+            window.location.href = "/fail.html";
+          }
+        }, 4000);
+      } else {
+        alert("Something went wrong while redirecting to payment.");
       }
-      if (lastName === "") {
-        document.getElementById("lastNameError").textContent = "Last name is required";
-        hasError = true;
-      }
-      if (email === "" || !email.endsWith("@gmail.com")) {
-        document.getElementById("emailError").textContent = "Valid @gmail.com email is required";
-        hasError = true;
-      }
-      if (!iti.isValidNumber()) {
-        document.getElementById("phoneError").textContent = "Enter a valid phone number";
-        hasError = true;
-      }
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Something went wrong. Please try again later.");
+    }
+  });
+</script>
 
-      if (hasError) return;
-
-      try {
-        const response = await fetch('/api/pay', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ firstName, lastName, email, phone, nationality })
-        });
-
-        const data = await response.json();
-
-        if (data.iframe_url) {
-          window.location.href = data.iframe_url; // فتح صفحة الدفع مباشرة
-        } else {
-          alert("Something went wrong while redirecting to payment.");
-        }
-      } catch (err) {
-        console.error("Error:", err);
-        alert("Something went wrong. Please try again later.");
-      }
-    });
-  </script>
 </body>
 </html>
