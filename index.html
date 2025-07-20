@@ -73,7 +73,7 @@
 <body>
 
 <div class="container">
-  <h2>ادخل بياناتك</h2>
+  <h2>Your contact details</h2>
   <form id="payment-form">
     <label>First Name</label>
     <input type="text" id="firstName" />
@@ -157,12 +157,24 @@
       const data = await response.json();
 
       if (data.iframe_url && data.order_id) {
-        // Store orderId and iframe URL
         localStorage.setItem("order_id", data.order_id);
         localStorage.setItem("iframe_url", data.iframe_url);
 
-        // Redirect to payment.html
-        window.location.href = "/payment.html";
+        // Redirect in same tab
+        window.location.href = data.iframe_url;
+
+        // Start polling for result
+        const interval = setInterval(async () => {
+          const res = await fetch(`/api/payment-status/${data.order_id}`);
+          const statusData = await res.json();
+          if (statusData.status === "success") {
+            clearInterval(interval);
+            window.location.href = "/success.html";
+          } else if (statusData.status === "fail") {
+            clearInterval(interval);
+            window.location.href = "/fail.html";
+          }
+        }, 4000);
       } else {
         alert("Something went wrong while redirecting to payment.");
       }
