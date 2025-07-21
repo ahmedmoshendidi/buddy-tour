@@ -128,39 +128,26 @@ router.post("/payment-callback", async (req, res) => {
   try {
     const event = req.body;
     
-    // ✅ الـ transaction ID الحقيقي من الـ webhook
-    const webhookOrderId = event.obj?.id;
+    // ✅ استخدم الـ order.id الأصلي (ده اللي يطابق الـ polling)
+    const orderId = event.obj?.order?.id;
     
-    // ✅ الـ acquirer ID من داخل الـ data (ده اللي يطابق الـ polling)
-    const acquirerOrderId = event.obj?.data?.migs_transaction?.acquirer?.id;
-    
-    console.log(`📋 Webhook Order ID: ${webhookOrderId}`);
-    console.log(`📋 Acquirer Order ID: ${acquirerOrderId}`);
-    
-    // ✅ استخدم الـ acquirer ID عشان يطابق الـ polling
-    const orderId = acquirerOrderId || webhookOrderId;
+    console.log(`📋 Order ID from webhook: ${orderId}`);
     
     if (!orderId) {
       console.error("❌ No order ID found in webhook payload");
-      console.log("🔍 Available IDs:", {
-        webhook_id: webhookOrderId,
-        acquirer_id: acquirerOrderId,
-        payment_claims_order_id: event.obj?.payment_key_claims?.order_id,
-        order_id: event.obj?.order?.id
-      });
       res.status(400).send("No order ID found");
       return;
     }
 
     const billingData = event.obj?.payment_key_claims?.billing_data;
     
-    console.log(`📋 Using Order ID: ${orderId} for status update`);
     console.log(`📋 Transaction pending: ${event.obj?.pending}`);
-    console.log(`📋 Transaction success check: pending=${event.obj?.pending}, type=${event.type}`);
+    console.log(`📋 Transaction success: ${event.obj?.success}`);
 
     if (
       event.type === "TRANSACTION" &&
-      event.obj?.pending === false  // ✅ لما pending يبقى false يعني نجح
+      event.obj?.pending === false &&
+      event.obj?.success === true
     ) {
       // ✅ حدث الحالة للـ success
       paymentStatus.set(orderId.toString(), "success");
@@ -177,12 +164,8 @@ router.post("/payment-callback", async (req, res) => {
           console.error("❌ Email sending failed:", emailError.message);
         }
       }
-    } else if (event.obj?.pending === true) {
-      // لسه معلق
-      paymentStatus.set(orderId.toString(), "pending");
-      console.log(`⏳ Payment still PENDING for Order ID: ${orderId}`);
     } else {
-      // فشل أو حالة غير معروفة
+      // فشل
       paymentStatus.set(orderId.toString(), "fail");
       console.log(`❌ Payment marked as FAILED for Order ID: ${orderId}`);
     }
