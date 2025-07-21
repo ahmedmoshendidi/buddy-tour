@@ -78,109 +78,64 @@ router.post("/pay", async (req, res) => {
   }
 });
 
-// router.post("/payment-callback", async (req, res) => {
-//   console.log("🔥 Webhook Received:");
-//   console.log(JSON.stringify(req.body, null, 2));
-
-//   try {
-//     const event = req.body;
-//     const orderId =
-//       event.obj?.payment_key_claims?.order_id ||
-//       event.obj?.order?.id ||
-//       event.obj?.order?.merchant_order_id;
-
-//     const billingData = event.obj?.payment_key_claims?.billing_data;
-
-//     if (
-//       event.type === "TRANSACTION" &&
-//       event.obj?.success === true &&
-//       billingData &&
-//       orderId
-//     ) {
-//       paymentStatus.set(orderId, "success");
-
-//       const email = billingData.email || "no-email@unknown.com";
-//       const name = billingData.first_name || "Guest";
-
-//       await sendConfirmationEmail(email, name);
-//       console.log("✅ Confirmation email sent to:", email);
-//     } else if (orderId) {
-//       paymentStatus.set(orderId, "fail");
-//     }
-
-//     res.sendStatus(200);
-//   } catch (error) {
-//     console.error("❌ Error in Webhook handler:", error.message);
-//     res.status(500).send("Internal Server Error");
-//   }
-// });
-
-// // Check payment status
-// router.get("/payment-status/:orderId", (req, res) => {
-//   const status = paymentStatus.get(req.params.orderId);
-//   res.json({ status: status || "pending" });
-// });
-
 router.post("/payment-callback", async (req, res) => {
   console.log("🔥 Webhook Received:");
   console.log(JSON.stringify(req.body, null, 2));
 
   try {
     const event = req.body;
-    
-    // ✅ استخدم الـ order.id الأصلي (ده اللي يطابق الـ polling)
     const orderId = event.obj?.order?.id;
     
     console.log(`📋 Order ID from webhook: ${orderId}`);
     
     if (!orderId) {
-      console.error("❌ No order ID found in webhook payload");
+      console.error("❌ No order ID found");
       res.status(400).send("No order ID found");
       return;
     }
 
-    const billingData = event.obj?.payment_key_claims?.billing_data;
-    
     console.log(`📋 Transaction pending: ${event.obj?.pending}`);
     console.log(`📋 Transaction success: ${event.obj?.success}`);
 
+    // ✅ شغل في كل الحالات، مش بس لو فيه billingData
     if (
       event.type === "TRANSACTION" &&
       event.obj?.pending === false &&
       event.obj?.success === true
     ) {
-      // ✅ حدث الحالة للـ success
       paymentStatus.set(orderId.toString(), "success");
       console.log(`✅ Payment marked as SUCCESS for Order ID: ${orderId}`);
 
+      // ✅ جرب ترسل إيميل بس لو فيه billing data
+      const billingData = event.obj?.payment_key_claims?.billing_data;
       if (billingData) {
         const email = billingData.email || "no-email@unknown.com";
         const name = billingData.first_name || "Guest";
-
         try {
           await sendConfirmationEmail(email, name);
-          console.log("✅ Confirmation email sent to:", email);
+          console.log("✅ Email sent to:", email);
         } catch (emailError) {
-          console.error("❌ Email sending failed:", emailError.message);
+          console.error("❌ Email failed:", emailError.message);
         }
+      } else {
+        console.log("⚠️ No billing data found, skipping email");
       }
     } else {
-      // فشل
       paymentStatus.set(orderId.toString(), "fail");
       console.log(`❌ Payment marked as FAILED for Order ID: ${orderId}`);
     }
 
-    // ✅ طباعة حالة كل الـ payments للتشخيص
-    console.log("💾 Current payment statuses:");
+    console.log("💾 Current statuses:");
     for (const [id, status] of paymentStatus.entries()) {
       console.log(`   ${id} -> ${status}`);
     }
 
     res.sendStatus(200);
   } catch (error) {
-    console.error("❌ Error in Webhook handler:", error.message);
+    console.error("❌ Webhook error:", error.message);
     res.status(500).send("Internal Server Error");
   }
 });
+
 
 module.exports = router;
