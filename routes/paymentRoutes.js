@@ -1,4 +1,3 @@
-// paymentRoutes.js
 const express = require("express");
 const axios = require("axios");
 const sendConfirmationEmail = require("../utils/sendConfirmationEmail");
@@ -6,50 +5,71 @@ require("dotenv").config();
 
 const router = express.Router();
 
+// تحسين: جلب كل الإعدادات من ملف البيئة
 const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
 const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID;
 const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "ahmedmoalshendidi@gmail.com";
 
-const paymentStatus = new Map(); // مؤقتًا، لتتبع حالة الطلب
+// تحسين: استخدام خريطة لتتبع حالات الدفع
+const paymentStatus = new Map();
 
-// === Get Paymob Auth Token ===
+// تحسين: إضافة معالجة الأخطاء للوظائف المساعدة
 async function getAuthToken() {
-  const response = await axios.post("https://accept.paymob.com/api/auth/tokens", {
-    api_key: PAYMOB_API_KEY,
-  });
-  return response.data.token;
+  try {
+    const response = await axios.post("https://accept.paymob.com/api/auth/tokens", {
+      api_key: PAYMOB_API_KEY,
+    });
+    return response.data.token;
+  } catch (error) {
+    console.error("❌ Failed to get auth token:", error.response?.data || error.message);
+    throw new Error("Failed to authenticate with Paymob");
+  }
 }
 
-// === Create Order ===
 async function createOrder(token) {
-  const response = await axios.post("https://accept.paymob.com/api/ecommerce/orders", {
-    auth_token: token,
-    delivery_needed: false,
-    amount_cents: 500,
-    currency: "EGP",
-    items: [],
-  });
-  return response.data.id;
+  try {
+    const response = await axios.post("https://accept.paymob.com/api/ecommerce/orders", {
+      auth_token: token,
+      delivery_needed: false,
+      amount_cents: 500,
+      currency: "EGP",
+      items: [],
+    });
+    return response.data.id;
+  } catch (error) {
+    console.error("❌ Failed to create order:", error.response?.data || error.message);
+    throw new Error("Failed to create order");
+  }
 }
 
-// === Generate Payment Key ===
 async function generatePaymentKey(token, orderId, billingData) {
-  const response = await axios.post("https://accept.paymob.com/api/acceptance/payment_keys", {
-    auth_token: token,
-    amount_cents: 500,
-    expiration: 3600,
-    order_id: orderId,
-    billing_data: billingData,
-    currency: "EGP",
-    integration_id: PAYMOB_INTEGRATION_ID,
-    lock_order_when_paid: true
-  });
-  return response.data.token;
+  try {
+    const response = await axios.post("https://accept.paymob.com/api/acceptance/payment_keys", {
+      auth_token: token,
+      amount_cents: 500,
+      expiration: 3600,
+      order_id: orderId,
+      billing_data: billingData,
+      currency: "EGP",
+      integration_id: PAYMOB_INTEGRATION_ID,
+      lock_order_when_paid: true
+    });
+    return response.data.token;
+  } catch (error) {
+    console.error("❌ Failed to generate payment key:", error.response?.data || error.message);
+    throw new Error("Failed to generate payment key");
+  }
 }
 
 router.post("/pay", async (req, res) => {
   try {
     const { firstName, lastName, email, phone } = req.body;
+
+    // تحسين: إضافة تحقق من البيانات المطلوبة
+    if (!firstName || !lastName || !email || !phone) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
     const billingData = {
       first_name: firstName,
@@ -71,76 +91,81 @@ router.post("/pay", async (req, res) => {
 
     const iframeUrl = `https://accept.paymob.com/api/acceptance/iframes/${PAYMOB_IFRAME_ID}?payment_token=${paymentToken}`;
 
-    res.json({ iframe_url: iframeUrl, order_id: orderId });
+    // تحسين: إضافة حالة الدفع الأولية
+    paymentStatus.set(orderId.toString(), "pending");
+    console.log(`🔄 Payment initiated for Order ID: ${orderId}`);
+
+    res.json({ 
+      iframe_url: iframeUrl, 
+      order_id: orderId,
+      status: "pending"
+    });
   } catch (err) {
-    console.error("❌ Error during payment:", err.response?.data || err.message);
-    res.status(500).json({ error: "Payment initiation failed" });
+    console.error("❌ Error during payment:", err.message);
+    res.status(500).json({ 
+      error: "Payment initiation failed",
+      details: err.message
+    });
   }
 });
 
 router.post("/payment-callback", async (req, res) => {
-  console.log("🔥 Webhook Received:");
-  console.log(JSON.stringify(req.body, null, 2));
+  console.log("🔥 Webhook Received:", JSON.stringify(req.body, null, 2));
 
   try {
     const event = req.body;
-    
-    // ✅ استخدم الـ order.id الأصلي 
     const orderId = event.obj?.order?.id;
-    
-    console.log(`📋 Order ID from webhook: ${orderId}`);
-    
+
     if (!orderId) {
       console.error("❌ No order ID found in webhook payload");
-      res.status(400).send("No order ID found");
-      return;
+      return res.status(400).send("No order ID found");
     }
 
-    console.log(`📋 Transaction pending: ${event.obj?.pending}`);
-    console.log(`📋 Transaction success: ${event.obj?.success}`);
+    // تحسين: تسجيل تفاصيل أكثر
+    console.log(`📋 Processing webhook for Order ID: ${orderId}`);
+    console.log(`📋 Transaction status - Pending: ${event.obj?.pending}, Success: ${event.obj?.success}`);
 
-    // ✅ الشرط المبسط - مفيش billingData requirement
-    if (
-      event.type === "TRANSACTION" &&
-      event.obj?.pending === false &&
-      event.obj?.success === true
-    ) {
-      // ✅ حدث الحالة للـ success
-      paymentStatus.set(orderId.toString(), "success");
-      console.log(`✅ Payment marked as SUCCESS for Order ID: ${orderId}`);
+    if (event.type === "TRANSACTION" && event.obj?.pending === false) {
+      if (event.obj?.success === true) {
+        paymentStatus.set(orderId.toString(), "success");
+        console.log(`✅ Payment SUCCESS for Order ID: ${orderId}`);
 
-      // ✅ جرب ترسل إيميل لو فيه بيانات
-      const shippingData = event.obj?.order?.shipping_data;
-      if (shippingData) {
-        const email = "ahmedmoalshendidi@gmail.com"; // أو من merchant emails
-        const name = shippingData.first_name || "Guest";
+        // تحسين: محاولة إرسال إيميل حتى لو لم تكن هناك بيانات شحن
+        const email = event.obj?.order?.shipping_data?.email || ADMIN_EMAIL;
+        const name = event.obj?.order?.shipping_data?.first_name || "Customer";
 
         try {
           await sendConfirmationEmail(email, name);
-          console.log("✅ Confirmation email sent to:", email);
+          console.log(`✅ Confirmation email sent to: ${email}`);
         } catch (emailError) {
           console.error("❌ Email sending failed:", emailError.message);
         }
       } else {
-        console.log("⚠️ No shipping data found, skipping email");
+        paymentStatus.set(orderId.toString(), "failed");
+        console.log(`❌ Payment FAILED for Order ID: ${orderId}`);
       }
-    } else {
-      // ✅ فشل
-      paymentStatus.set(orderId.toString(), "fail");
-      console.log(`❌ Payment marked as FAILED for Order ID: ${orderId}`);
     }
 
-    // ✅ طباعة حالة كل الـ payments للتشخيص
+    // تحسين: إضافة نقطة فحص للتأكد من استلام البيانات
     console.log("💾 Current payment statuses:");
-    for (const [id, status] of paymentStatus.entries()) {
+    paymentStatus.forEach((status, id) => {
       console.log(`   ${id} -> ${status}`);
-    }
+    });
 
     res.sendStatus(200);
   } catch (error) {
     console.error("❌ Error in Webhook handler:", error.message);
     res.status(500).send("Internal Server Error");
   }
+});
+
+// تحسين: إضافة نقطة نهاية للتحقق من حالة الدفع
+router.get("/payment-status/:orderId", (req, res) => {
+  const status = paymentStatus.get(req.params.orderId);
+  if (!status) {
+    return res.status(404).json({ error: "Order not found" });
+  }
+  res.json({ status });
 });
 
 module.exports = router;
