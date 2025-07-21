@@ -84,12 +84,14 @@ router.post("/payment-callback", async (req, res) => {
 
   try {
     const event = req.body;
+    
+    // ✅ استخدم الـ order.id الأصلي 
     const orderId = event.obj?.order?.id;
     
     console.log(`📋 Order ID from webhook: ${orderId}`);
     
     if (!orderId) {
-      console.error("❌ No order ID found");
+      console.error("❌ No order ID found in webhook payload");
       res.status(400).send("No order ID found");
       return;
     }
@@ -97,45 +99,48 @@ router.post("/payment-callback", async (req, res) => {
     console.log(`📋 Transaction pending: ${event.obj?.pending}`);
     console.log(`📋 Transaction success: ${event.obj?.success}`);
 
-    // ✅ شغل في كل الحالات، مش بس لو فيه billingData
+    // ✅ الشرط المبسط - مفيش billingData requirement
     if (
       event.type === "TRANSACTION" &&
       event.obj?.pending === false &&
       event.obj?.success === true
     ) {
+      // ✅ حدث الحالة للـ success
       paymentStatus.set(orderId.toString(), "success");
       console.log(`✅ Payment marked as SUCCESS for Order ID: ${orderId}`);
 
-      // ✅ جرب ترسل إيميل بس لو فيه billing data
-      const billingData = event.obj?.payment_key_claims?.billing_data;
-      if (billingData) {
-        const email = billingData.email || "no-email@unknown.com";
-        const name = billingData.first_name || "Guest";
+      // ✅ جرب ترسل إيميل لو فيه بيانات
+      const shippingData = event.obj?.order?.shipping_data;
+      if (shippingData) {
+        const email = "ahmedmoalshendidi@gmail.com"; // أو من merchant emails
+        const name = shippingData.first_name || "Guest";
+
         try {
           await sendConfirmationEmail(email, name);
-          console.log("✅ Email sent to:", email);
+          console.log("✅ Confirmation email sent to:", email);
         } catch (emailError) {
-          console.error("❌ Email failed:", emailError.message);
+          console.error("❌ Email sending failed:", emailError.message);
         }
       } else {
-        console.log("⚠️ No billing data found, skipping email");
+        console.log("⚠️ No shipping data found, skipping email");
       }
     } else {
+      // ✅ فشل
       paymentStatus.set(orderId.toString(), "fail");
       console.log(`❌ Payment marked as FAILED for Order ID: ${orderId}`);
     }
 
-    console.log("💾 Current statuses:");
+    // ✅ طباعة حالة كل الـ payments للتشخيص
+    console.log("💾 Current payment statuses:");
     for (const [id, status] of paymentStatus.entries()) {
       console.log(`   ${id} -> ${status}`);
     }
 
     res.sendStatus(200);
   } catch (error) {
-    console.error("❌ Webhook error:", error.message);
+    console.error("❌ Error in Webhook handler:", error.message);
     res.status(500).send("Internal Server Error");
   }
 });
-
 
 module.exports = router;
