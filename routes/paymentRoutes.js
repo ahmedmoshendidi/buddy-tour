@@ -111,30 +111,29 @@ router.post("/pay", async (req, res) => {
 
 router.post("/payment-callback", async (req, res) => {
   try {
-    console.log("🔥 Raw Webhook Data:", JSON.stringify(req.body));
+    console.log("📦 Raw Body:", req.rawBody); // سجل البيانات الخام
     
-    if (!req.body || typeof req.body !== 'object') {
-      console.error("❌ Invalid request body");
-      return res.status(400).json({ error: "Invalid request body" });
+    if (!req.body || Object.keys(req.body).length === 0) {
+      console.error("❌ Empty request body");
+      return res.status(400).json({ error: "Request body is empty" });
     }
 
-    // تحقق من وجود البيانات الأساسية
-    const transactionData = req.body.obj || req.body;
-    const orderId = transactionData.order?.id || transactionData.order_id;
+    const { type, obj } = req.body;
     
-    if (!orderId) {
-      console.error("❌ Missing order ID in payload:", req.body);
-      return res.status(400).json({ error: "Order ID is required" });
+    if (!obj || !obj.order) {
+      console.error("❌ Invalid Paymob payload structure");
+      return res.status(400).json({ error: "Invalid payload structure" });
     }
 
-    console.log(`✅ Valid webhook received for order: ${orderId}`);
-    
-    // باقي معالجة الدفع...
-    res.status(200).json({ success: true, orderId });
+    console.log("✅ Valid Paymob webhook received");
+    res.status(200).json({ status: "received" });
 
   } catch (error) {
-    console.error("❌ Webhook processing error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("❌ Webhook processing failed:", error.message);
+    res.status(400).json({ 
+      error: "Invalid request",
+      details: error.message
+    });
   }
 });
 

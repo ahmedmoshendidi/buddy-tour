@@ -11,6 +11,18 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+app.use(express.json({
+  verify: (req, res, buf) => {
+    try {
+      JSON.parse(buf.toString()); // تحقق من صحة JSON
+      req.rawBody = buf.toString();
+    } catch (e) {
+      console.error('❌ Invalid JSON:', buf.toString());
+      throw new Error('Invalid JSON');
+    }
+  }
+}));
+
 // تقديم ملفات static (index.html, success.html, fail.html)
 app.use(express.static(path.join(__dirname)));
 
