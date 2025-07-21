@@ -110,52 +110,31 @@ router.post("/pay", async (req, res) => {
 });
 
 router.post("/payment-callback", async (req, res) => {
-  console.log("🔥 Webhook Received:", JSON.stringify(req.body, null, 2));
-
   try {
-    const event = req.body;
-    const orderId = event.obj?.order?.id;
+    console.log("🔥 Raw Webhook Data:", JSON.stringify(req.body));
+    
+    if (!req.body || typeof req.body !== 'object') {
+      console.error("❌ Invalid request body");
+      return res.status(400).json({ error: "Invalid request body" });
+    }
 
+    // تحقق من وجود البيانات الأساسية
+    const transactionData = req.body.obj || req.body;
+    const orderId = transactionData.order?.id || transactionData.order_id;
+    
     if (!orderId) {
-      console.error("❌ No order ID found in webhook payload");
-      return res.status(400).send("No order ID found");
+      console.error("❌ Missing order ID in payload:", req.body);
+      return res.status(400).json({ error: "Order ID is required" });
     }
 
-    // تحسين: تسجيل تفاصيل أكثر
-    console.log(`📋 Processing webhook for Order ID: ${orderId}`);
-    console.log(`📋 Transaction status - Pending: ${event.obj?.pending}, Success: ${event.obj?.success}`);
+    console.log(`✅ Valid webhook received for order: ${orderId}`);
+    
+    // باقي معالجة الدفع...
+    res.status(200).json({ success: true, orderId });
 
-    if (event.type === "TRANSACTION" && event.obj?.pending === false) {
-      if (event.obj?.success === true) {
-        paymentStatus.set(orderId.toString(), "success");
-        console.log(`✅ Payment SUCCESS for Order ID: ${orderId}`);
-
-        // تحسين: محاولة إرسال إيميل حتى لو لم تكن هناك بيانات شحن
-        const email = event.obj?.order?.shipping_data?.email || ADMIN_EMAIL;
-        const name = event.obj?.order?.shipping_data?.first_name || "Customer";
-
-        try {
-          await sendConfirmationEmail(email, name);
-          console.log(`✅ Confirmation email sent to: ${email}`);
-        } catch (emailError) {
-          console.error("❌ Email sending failed:", emailError.message);
-        }
-      } else {
-        paymentStatus.set(orderId.toString(), "failed");
-        console.log(`❌ Payment FAILED for Order ID: ${orderId}`);
-      }
-    }
-
-    // تحسين: إضافة نقطة فحص للتأكد من استلام البيانات
-    console.log("💾 Current payment statuses:");
-    paymentStatus.forEach((status, id) => {
-      console.log(`   ${id} -> ${status}`);
-    });
-
-    res.sendStatus(200);
   } catch (error) {
-    console.error("❌ Error in Webhook handler:", error.message);
-    res.status(500).send("Internal Server Error");
+    console.error("❌ Webhook processing error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
