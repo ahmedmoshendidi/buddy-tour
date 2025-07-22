@@ -53,7 +53,7 @@ app.post("/api/payment/initiate", async (req, res) => {
       "https://accept.paymob.com/api/acceptance/payment_keys",
       {
         auth_token: auth.token,
-        amount_cents: Math.round(req.body.amount * 100),
+        amount_cents: 500,
         integration_id: process.env.PAYMOB_INTEGRATION_ID,
         currency: "EGP",
         billing_data: req.body.billing_data || {
