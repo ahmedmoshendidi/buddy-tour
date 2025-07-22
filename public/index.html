@@ -196,7 +196,7 @@
           throw new Error(data.error || 'No payment link received');
         }
 
-        window.location.href = data.iframe_url; // go to payment page
+        window.location.href = data.iframe_url;
 
       } catch (error) {
         showError(error.message || 'Payment processing failed');
@@ -217,13 +217,15 @@
 
     function displayErrors(errors) {
       Object.entries(errors).forEach(([field, message]) => {
-        document.getElementById(`${field}Error`).textContent = message;
+        const el = document.getElementById(`${field}Error`);
+        if (el) el.textContent = message;
       });
     }
 
     function clearErrors() {
-      ["firstName", "lastName", "email", "phone", "nationality"].forEach(field => {
-        document.getElementById(`${field}Error`).textContent = "";
+      ["firstName", "lastName", "email", "phone"].forEach(field => {
+        const el = document.getElementById(`${field}Error`);
+        if (el) el.textContent = "";
       });
     }
 

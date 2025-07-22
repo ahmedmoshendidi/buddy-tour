@@ -26,20 +26,28 @@ app.use(
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
+        "default-src": ["'self'"],
         "script-src": [
           "'self'",
-          "https://cdn.jsdelivr.net", // اسمح بـ CDN
-          "'unsafe-inline'" // اسمح بالسكريبتات داخل HTML
+          "https://cdn.jsdelivr.net",
+          "'unsafe-inline'"
         ],
         "style-src": [
           "'self'",
-          "https://cdn.jsdelivr.net", 
+          "https://cdn.jsdelivr.net",
           "'unsafe-inline'"
-        ]
+        ],
+        "img-src": [
+          "'self'",
+          "data:",
+          "https://cdn.jsdelivr.net"  // ✅ أضف هذا السطر
+        ],
+        "connect-src": ["'self'", "https://accept.paymob.com"]
       }
     }
   })
 );
+
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
