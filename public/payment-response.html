@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Redirecting...</title>
+  <script>
+    async function checkPaymentStatus() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get("id");
+      
+      if (!orderId) {
+        return window.location.href = "/fail.html";
+      }
+
+      try {
+        const response = await fetch(`/api/payment-status/${orderId}`);
+        const data = await response.json();
+
+        if (data.status === "success") {
+          window.location.href = "/success.html";
+        } else {
+          window.location.href = "/fail.html";
+        }
+      } catch (err) {
+        console.error("Error checking payment status", err);
+        window.location.href = "/fail.html";
+      }
+    }
+
+    window.onload = checkPaymentStatus;
+  </script>
+</head>
+<body>
+  <p>جارٍ التحقق من الدفع...</p>
+</body>
+</html>
