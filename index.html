@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Your contact details</title>
+  <title>Payment Form</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/css/intlTelInput.min.css"/>
   <style>
-    /* تحسينات CSS */
     body {
       background-color: #f5f5f5;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -26,11 +25,6 @@
       width: 100%;
       max-width: 450px;
       box-sizing: border-box;
-      transition: transform 0.3s ease;
-    }
-
-    .container:hover {
-      transform: translateY(-5px);
     }
 
     h2 {
@@ -55,13 +49,6 @@
       border-radius: 6px;
       box-sizing: border-box;
       font-size: 15px;
-      transition: border 0.3s;
-    }
-
-    input:focus, select:focus {
-      border-color: #27ae60;
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.2);
     }
 
     .error {
@@ -82,22 +69,11 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    button:hover {
-      background-color: #219150;
-      transform: translateY(-2px);
-    }
-
-    button:active {
-      transform: translateY(0);
     }
 
     button:disabled {
       background-color: #95a5a6;
       cursor: not-allowed;
-      transform: none;
     }
 
     .loading {
@@ -125,18 +101,12 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* تحسينات للهواتف */
     @media (max-width: 480px) {
       .container {
         padding: 25px 20px;
       }
-      
       h2 {
         font-size: 20px;
-      }
-      
-      button {
-        padding: 12px;
       }
     }
   </style>
@@ -147,28 +117,27 @@
   <h2>Your contact details</h2>
   <form id="payment-form">
     <label for="firstName">First Name</label>
-    <input type="text" id="firstName" placeholder="Enter your first name" />
+    <input type="text" id="firstName" required placeholder="Enter your first name" />
     <div class="error" id="firstNameError"></div>
 
     <label for="lastName">Last Name</label>
-    <input type="text" id="lastName" placeholder="Enter your last name" />
+    <input type="text" id="lastName" required placeholder="Enter your last name" />
     <div class="error" id="lastNameError"></div>
 
     <label for="email">Email</label>
-    <input type="email" id="email" placeholder="example@gmail.com" />
+    <input type="email" id="email" required placeholder="example@gmail.com" />
     <div class="error" id="emailError"></div>
 
     <label for="phone">Phone</label>
-    <input type="tel" id="phone" placeholder="Enter your phone number" />
+    <input type="tel" id="phone" required placeholder="Enter your phone number" />
     <div class="error" id="phoneError"></div>
 
     <label for="nationality">Nationality</label>
-    <select id="nationality">
+    <select id="nationality" required>
       <option value="" disabled selected>Select your country</option>
       <option value="egypt">Egypt</option>
       <option value="ksa">Saudi Arabia</option>
       <option value="uae">UAE</option>
-      <option value="other">Other</option>
     </select>
 
     <button type="submit" id="submitBtn">Pay Now</button>
@@ -181,184 +150,112 @@
 
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/intlTelInput.min.js"></script>
 <script>
-  // تحسينات JavaScript
   document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('payment-form');
     const phoneInput = document.getElementById('phone');
     const submitBtn = document.getElementById('submitBtn');
     const loadingMsg = document.getElementById('loadingMsg');
     
-    // تهيئة إدخال الهاتف الدولي
+    // Initialize phone input
     const iti = window.intlTelInput(phoneInput, {
       initialCountry: "eg",
       separateDialCode: true,
-      preferredCountries: ["eg", "sa", "ae", "us", "gb"],
       utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/utils.js"
-    });
-
-    // تحسين تجربة المستخدم: إرسال بالنقر على Enter
-    form.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter' && !submitBtn.disabled) {
-        form.dispatchEvent(new Event('submit'));
-      }
     });
 
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
-
-      // إعادة تعيين رسائل الخطأ
       clearErrors();
 
-      const firstName = document.getElementById('firstName').value.trim();
-      const lastName = document.getElementById('lastName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const phone = iti.getNumber();
-      const nationality = document.getElementById('nationality').value;
+      const formData = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        phone: iti.getNumber(),
+        nationality: document.getElementById('nationality').value,
+        return_url: window.location.origin + "/payment-response"
+      };
 
-      // التحقق من الصحة
-      const errors = validateForm(firstName, lastName, email, phone, nationality);
+      // Validate form
+      const errors = validateForm(formData);
       if (Object.keys(errors).length > 0) {
         displayErrors(errors);
         return;
       }
 
-      // عرض حالة التحميل
       setLoadingState(true);
 
       try {
-        console.log('🚀 Starting payment process...');
-        
         const response = await fetch('/api/pay', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: JSON.stringify({ 
-            firstName, 
-            lastName, 
-            email, 
-            phone, 
-            nationality 
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
         });
 
-        const data = await handleResponse(response);
-
-        if (data.iframe_url && data.order_id) {
-          // حفظ بيانات الدفع
-          savePaymentData(data.order_id, data.iframe_url);
-          
-          // الانتقال إلى صفحة الدفع
-          window.location.href = "/payment.html";
-        } else {
-          throw new Error("Invalid response: Missing required data");
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.message || 'Payment failed');
         }
-        
-      } catch (err) {
-        console.error("❌ Payment Error:", err);
-        showErrorAlert(err);
+
+        const data = await response.json();
+        if (data.iframe_url) {
+          window.location.href = data.iframe_url;
+        } else {
+          throw new Error('No payment link received');
+        }
+      } catch (error) {
+        showError(error.message || 'Payment processing failed');
       } finally {
         setLoadingState(false);
       }
     });
 
-    // وظائف مساعدة
-    function clearErrors() {
-      ["firstName", "lastName", "email", "phone"].forEach(field => {
-        document.getElementById(field + "Error").textContent = "";
-      });
-    }
-
-    function validateForm(firstName, lastName, email, phone, nationality) {
+    function validateForm(data) {
       const errors = {};
-      
-      if (!firstName) errors.firstName = "First name is required";
-      else if (firstName.length < 2) errors.firstName = "Name is too short";
-      
-      if (!lastName) errors.lastName = "Last name is required";
-      
-      if (!email) errors.email = "Email is required";
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Enter a valid email";
-      
-      if (!iti.isValidNumber()) errors.phone = "Enter a valid phone number";
-      
-      if (!nationality) errors.nationality = "Please select your nationality";
-      
+      if (!data.firstName) errors.firstName = "First name is required";
+      if (!data.lastName) errors.lastName = "Last name is required";
+      if (!data.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errors.email = "Valid email required";
+      if (!iti.isValidNumber()) errors.phone = "Valid phone number required";
+      if (!data.nationality) errors.nationality = "Please select nationality";
       return errors;
     }
 
     function displayErrors(errors) {
-      for (const [field, message] of Object.entries(errors)) {
-        document.getElementById(field + "Error").textContent = message;
-      }
-      
-      // التركيز على أول حقل به خطأ
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField) {
-        document.getElementById(firstErrorField).focus();
-      }
+      Object.entries(errors).forEach(([field, message]) => {
+        document.getElementById(`${field}Error`).textContent = message;
+      });
+    }
+
+    function clearErrors() {
+      ["firstName", "lastName", "email", "phone", "nationality"].forEach(field => {
+        document.getElementById(`${field}Error`).textContent = "";
+      });
     }
 
     function setLoadingState(isLoading) {
       submitBtn.disabled = isLoading;
-      submitBtn.textContent = isLoading ? "Processing..." : "Pay Now";
       loadingMsg.style.display = isLoading ? "block" : "none";
     }
 
-    async function handleResponse(response) {
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
-        throw new Error(errorMessage);
-      }
-      return response.json();
-    }
-
-    function savePaymentData(orderId, iframeUrl) {
-      localStorage.setItem("order_id", orderId);
-      localStorage.setItem("iframe_url", iframeUrl);
-      console.log(`💾 Saved payment data for Order ID: ${orderId}`);
-    }
-
-    function showErrorAlert(error) {
-      let errorMessage = "Something went wrong. Please try again.";
-      
-      if (error.message.includes('HTTP 500')) {
-        errorMessage = "Server error. Please try again later.";
-      } else if (error.message.includes('HTTP 400')) {
-        errorMessage = "Invalid data. Please check your information.";
-      } else if (error.message.includes('network')) {
-        errorMessage = "Network error. Please check your connection.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      // عرض الخطأ في واجهة المستخدم بدلاً من alert
-      const errorContainer = document.createElement('div');
-      errorContainer.className = 'error-message';
-      errorContainer.textContent = errorMessage;
-      errorContainer.style.color = '#e74c3c';
-      errorContainer.style.marginTop = '10px';
-      errorContainer.style.textAlign = 'center';
+    function showError(message) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error';
+      errorDiv.textContent = message;
+      errorDiv.style.textAlign = 'center';
+      errorDiv.style.marginTop = '20px';
       
       const existingError = document.querySelector('.error-message');
       if (existingError) existingError.remove();
       
-      form.appendChild(errorContainer);
+      errorDiv.className = 'error-message';
+      form.appendChild(errorDiv);
       
-      // إخفاء الرسالة بعد 5 ثوان
       setTimeout(() => {
-        errorContainer.style.transition = 'opacity 0.5s';
-        errorContainer.style.opacity = '0';
-        setTimeout(() => errorContainer.remove(), 500);
+        errorDiv.style.transition = 'opacity 0.5s';
+        errorDiv.style.opacity = '0';
+        setTimeout(() => errorDiv.remove(), 500);
       }, 5000);
     }
-
-    // مسح بيانات الدفع القديمة عند التحميل
-    localStorage.removeItem("order_id");
-    localStorage.removeItem("iframe_url");
-    console.log('🧹 Cleared old payment data');
   });
 </script>
 
