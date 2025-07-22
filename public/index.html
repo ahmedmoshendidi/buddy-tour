@@ -140,7 +140,7 @@
       <option value="uae">UAE</option>
     </select>
 
-    <button type="submit" id="submitBtn">Pay Now</button>
+    <button type="submit" id="submitBtn">Next</button>
     <div class="loading" id="loadingMsg">
       <span class="spinner"></span>
       Processing payment...
@@ -156,7 +156,6 @@
     const submitBtn = document.getElementById('submitBtn');
     const loadingMsg = document.getElementById('loadingMsg');
     
-    // Initialize phone input
     const iti = window.intlTelInput(phoneInput, {
       initialCountry: "eg",
       separateDialCode: true,
@@ -172,11 +171,9 @@
         lastName: document.getElementById('lastName').value.trim(),
         email: document.getElementById('email').value.trim(),
         phone: iti.getNumber(),
-        nationality: document.getElementById('nationality').value,
-        return_url: window.location.origin + "/payment-response"
+        nationality: document.getElementById('nationality').value
       };
 
-      // Validate form
       const errors = validateForm(formData);
       if (Object.keys(errors).length > 0) {
         displayErrors(errors);
@@ -199,6 +196,7 @@
 
         const data = await response.json();
         if (data.iframe_url) {
+          // redirect to paymob iframe (with return_url already attached in backend)
           window.location.href = data.iframe_url;
         } else {
           throw new Error('No payment link received');

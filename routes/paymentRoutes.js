@@ -1,238 +1,160 @@
 const express = require("express");
 const axios = require("axios");
-const crypto = require("crypto");
+const path = require("path");
 const sendConfirmationEmail = require("../utils/sendConfirmationEmail");
 require("dotenv").config();
 
 const router = express.Router();
 
-// إعدادات Paymob من ملف البيئة
-const {
-  PAYMOB_API_KEY,
-  PAYMOB_INTEGRATION_ID,
-  PAYMOB_IFRAME_ID,
-  PAYMOB_HMAC_SECRET,
-  ADMIN_EMAIL = "ahmedmoalshendidi@gmail.com",
-  FRONTEND_URL = "http://localhost:3000" // قيمة افتراضية للتطوير
-} = process.env;
+const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
+const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID;
+const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID;
+const DOMAIN = "https://buddy-tour-production.up.railway.app";
 
-// تخزين مؤقت لحالات الدفع
 const paymentStatus = new Map();
 
-// ============== Middleware محسّن للتحقق من HMAC ==============
-function verifyHMAC(req, res, next) {
-  if (!PAYMOB_HMAC_SECRET) {
-    console.warn('⚠️ HMAC secret not configured, skipping verification');
-    return next();
-  }
-
-  try {
-    const receivedHash = req.query.hmac || req.headers['x-paymob-signature'];
-    if (!receivedHash) {
-      return res.status(403).json({ error: "Missing HMAC signature" });
-    }
-
-    const data = req.method === 'GET' 
-      ? Object.entries(req.query)
-          .filter(([key]) => key !== 'hmac')
-          .sort()
-          .toString() 
-      : JSON.stringify(req.body);
-
-    const generatedHash = crypto
-      .createHmac('sha512', PAYMOB_HMAC_SECRET)
-      .update(data)
-      .digest('hex');
-
-    if (receivedHash !== generatedHash) {
-      console.error('❌ HMAC verification failed', {
-        received: receivedHash,
-        generated: generatedHash
-      });
-      return res.status(403).json({ error: "Invalid HMAC signature" });
-    }
-
-    next();
-  } catch (error) {
-    console.error('❌ HMAC verification error:', error);
-    res.status(500).json({ error: "HMAC verification failed" });
-  }
+// === Get Paymob Auth Token ===
+async function getAuthToken() {
+  const response = await axios.post("https://accept.paymob.com/api/auth/tokens", {
+    api_key: PAYMOB_API_KEY,
+  });
+  return response.data.token;
 }
 
-// ============== Routes محسنة مع معالجة أخطاء شاملة ==============
-router.post("/initiate", async (req, res) => {
+// === Create Order ===
+async function createOrder(token, amountCents = 500) {
+  const response = await axios.post("https://accept.paymob.com/api/ecommerce/orders", {
+    auth_token: token,
+    delivery_needed: false,
+    amount_cents: amountCents,
+    currency: "EGP",
+    items: [],
+  });
+  return response.data.id;
+}
+
+// === Generate Payment Key ===
+async function generatePaymentKey(token, orderId, billingData, returnUrl) {
+  const response = await axios.post("https://accept.paymob.com/api/acceptance/payment_keys", {
+    auth_token: token,
+    amount_cents: 500,
+    expiration: 3600,
+    order_id: orderId,
+    billing_data: billingData,
+    currency: "EGP",
+    integration_id: PAYMOB_INTEGRATION_ID,
+    lock_order_when_paid: true,
+    return_url: returnUrl,
+  });
+  return response.data.token;
+}
+
+// === /api/pay ===
+router.post("/pay", async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, amount = 500 } = req.body;
-
-    // تحقق متقدم من البيانات
-    if (!firstName || !lastName || !email || !phone) {
-      return res.status(400).json({ 
-        error: "Missing required fields",
-        required: ["firstName", "lastName", "email", "phone"]
-      });
-    }
-
-    if (isNaN(amount) || amount < 1) {
-      return res.status(400).json({ 
-        error: "Invalid amount",
-        message: "Amount must be a positive number"
-      });
-    }
+    const { firstName, lastName, email, phone, nationality } = req.body;
 
     const billingData = {
       first_name: firstName,
       last_name: lastName,
       email,
       phone_number: phone,
+      apartment: "NA",
+      floor: "NA",
+      street: "NA",
+      building: "NA",
       city: "Cairo",
-      country: "EG"
+      country: "EG",
+      state: "NA"
     };
 
-    // 1. الحصول على token من Paymob
-    const authResponse = await axios.post(
-      "https://accept.paymob.com/api/auth/tokens",
-      { api_key: PAYMOB_API_KEY },
-      { timeout: 5000 }
-    );
+    const token = await getAuthToken();
+    const orderId = await createOrder(token, 500);
+    const returnUrl = `${DOMAIN}/payment-response.html?order_id=${orderId}`;
+    const paymentToken = await generatePaymentKey(token, orderId, billingData, returnUrl);
 
-    // 2. إنشاء طلب
-    const orderResponse = await axios.post(
-      "https://accept.paymob.com/api/ecommerce/orders",
-      {
-        auth_token: authResponse.data.token,
-        delivery_needed: false,
-        amount_cents: Math.round(amount * 100),
-        currency: "EGP",
-        items: []
-      },
-      { timeout: 5000 }
-    );
+    const iframeUrl = `https://accept.paymob.com/api/acceptance/iframes/${PAYMOB_IFRAME_ID}?payment_token=${paymentToken}`;
 
-    // 3. إنشاء مفتاح دفع
-    const paymentKeyResponse = await axios.post(
-      "https://accept.paymob.com/api/acceptance/payment_keys",
-      {
-        auth_token: authResponse.data.token,
-        amount_cents: Math.round(amount * 100),
-        expiration: 3600,
-        order_id: orderResponse.data.id,
-        billing_data: billingData,
-        currency: "EGP",
-        integration_id: PAYMOB_INTEGRATION_ID
-      },
-      { timeout: 5000 }
-    );
-
-    const iframeUrl = `https://accept.paymob.com/api/acceptance/iframes/${PAYMOB_IFRAME_ID}?payment_token=${paymentKeyResponse.data.token}`;
-    
-    // حفظ حالة الدفع
-    paymentStatus.set(orderResponse.data.id.toString(), {
+    paymentStatus.set(orderId.toString(), {
       status: "pending",
-      iframeUrl,
-      createdAt: new Date(),
-      amount,
-      customer: { firstName, lastName, email, phone }
+      billingData,
+      createdAt: new Date()
     });
 
-    res.json({ 
-      success: true,
-      iframeUrl,
-      orderId: orderResponse.data.id,
-      message: "Payment initiated successfully"
-    });
-
-  } catch (error) {
-    console.error("❌ Payment initiation failed:", {
-      error: error.response?.data || error.message,
-      stack: error.stack
-    });
-
-    const statusCode = error.response?.status || 500;
-    res.status(statusCode).json({ 
-      success: false,
-      error: "Payment initiation failed",
-      details: process.env.NODE_ENV === 'development' 
-        ? error.message 
-        : undefined
-    });
+    res.json({ iframe_url: iframeUrl, order_id: orderId });
+  } catch (err) {
+    console.error("❌ Payment error:", err.response?.data || err.message);
+    res.status(500).json({ error: "Payment initiation failed" });
   }
 });
 
-// ============== Callbacks محسنة مع التحقق المزدوج ==============
-router.all("/callback", verifyHMAC, async (req, res) => {
-  try {
-    const { order, success, pending, id } = req.method === 'GET' ? req.query : req.body.obj || {};
-    const orderId = (order?.id || id)?.toString();
+// === /api/payment-callback ===
+router.post("/payment-callback", async (req, res) => {
+  console.log("🔥 Webhook received:", JSON.stringify(req.body, null, 2));
 
-    if (!orderId) {
-      return res.status(400).json({ error: "Missing order ID" });
-    }
+  const event = req.body;
+  const transaction = event.obj;
 
-    const isSuccess = success === 'true' || success === true;
-    const isPending = pending === 'true' || pending === true;
+  if (!transaction || !transaction.order) {
+    return res.status(400).send("Invalid transaction data");
+  }
 
-    if (isSuccess && !isPending) {
-      const orderData = paymentStatus.get(orderId) || {};
-      
-      paymentStatus.set(orderId, { 
-        ...orderData,
-        status: "completed",
-        completedAt: new Date(),
-        paymentMethod: req.body.obj?.payment_method || req.query.payment_method
-      });
+  const orderId = transaction.order.id.toString();
 
-      // إرسال إيميل التأكيد
+  if (event.type === "TRANSACTION" && !transaction.pending) {
+    const isSuccess = transaction.success;
+
+    const existing = paymentStatus.get(orderId) || {};
+    paymentStatus.set(orderId, {
+      ...existing,
+      status: isSuccess ? "success" : "failed",
+      transactionId: transaction.id,
+      amountCents: transaction.amount_cents,
+      updatedAt: new Date()
+    });
+
+    if (isSuccess) {
+      console.log(`✅ Payment success: Order ${orderId}`);
+
       try {
-        await sendConfirmationEmail(
-          orderData.customer?.email || ADMIN_EMAIL,
-          orderData.customer?.firstName || "Customer",
-          orderId,
-          orderData.amount
-        );
-      } catch (emailError) {
-        console.error("❌ Failed to send confirmation email:", emailError);
+        const data = paymentStatus.get(orderId);
+        const { billingData } = data;
+
+        if (billingData?.email) {
+          await sendConfirmationEmail(
+            billingData.email,
+            `${billingData.first_name} ${billingData.last_name}`,
+            orderId,
+            transaction.amount_cents / 100
+          );
+          console.log("📨 Confirmation email sent.");
+        } else {
+          console.warn("⚠️ No billing data available for email.");
+        }
+      } catch (emailErr) {
+        console.error("❌ Failed to send confirmation email:", emailErr);
       }
-
-      return res.status(200).json({ status: "completed" });
+    } else {
+      console.log(`❌ Payment failed: Order ${orderId}`);
     }
-
-    res.status(200).json({ status: "pending" });
-
-  } catch (error) {
-    console.error("❌ Callback processing failed:", error);
-    res.status(500).json({ error: "Callback processing failed" });
   }
+
+  res.status(200).send("Callback processed");
 });
 
-// ============== Route لفحص حالة الدفع مع تحسينات ==============
-router.get("/status/:orderId", (req, res) => {
-  try {
-    const order = paymentStatus.get(req.params.orderId);
-    if (!order) {
-      return res.status(404).json({ 
-        error: "Order not found",
-        suggestion: "Check the order ID or verify if payment was initiated"
-      });
-    }
+// === /api/payment-status/:orderId ===
+router.get("/payment-status/:orderId", (req, res) => {
+  const { orderId } = req.params;
+  const statusData = paymentStatus.get(orderId);
 
-    // إذا كانت العملية معلقة لأكثر من ساعة
-    if (order.status === "pending" && 
-        new Date() - new Date(order.createdAt) > 3600000) {
-      order.status = "expired";
-    }
-
-    res.json({
-      status: order.status,
-      createdAt: order.createdAt,
-      completedAt: order.completedAt,
-      amount: order.amount,
-      customer: order.customer
-    });
-
-  } catch (error) {
-    console.error("❌ Payment status check failed:", error);
-    res.status(500).json({ error: "Failed to check payment status" });
+  if (!statusData) {
+    return res.status(404).json({ error: "Order not found" });
   }
+
+  res.json({ 
+    status: statusData.status,
+    transactionId: statusData.transactionId || null
+  });
 });
 
 module.exports = router;
