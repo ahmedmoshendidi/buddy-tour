@@ -1,99 +1,112 @@
-// index.js
+// ======================
+// Required Dependencies
+// ======================
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const paymentRoutes = require("./routes/paymentRoutes");
+const crypto = require("crypto");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ======================
-// Middleware Configurations
+// Critical Security Setup
 // ======================
+app.set('trust proxy', true); // Essential for Railway/Heroku deployment
 
-// 1. الأمان الأساسي
+// ======================
+// Middleware Stack
+// ======================
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "*",
-  methods: ["GET", "POST"]
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  credentials: true
 }));
 
-// 2. Rate Limiting (100 requests per 15 minutes)
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Rate Limiter (100 requests/15min)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
+  message: "Too many requests, please try again later"
 });
-app.use(limiter);
+app.use("/api", limiter);
 
-// 3. Body Parsing with JSON verification
-app.use(express.json({
-  limit: '10mb',
-  verify: (req, res, buf) => {
-    try {
-      JSON.parse(buf.toString());
-      req.rawBody = buf.toString();
-    } catch (e) {
-      console.error('❌ Invalid JSON:', buf.toString());
-      throw new Error('Invalid JSON payload');
-    }
+// ======================
+// Paymob Payment Routes
+// ======================
+app.post("/api/payment/initiate", async (req, res) => {
+  try {
+    // 1. Authenticate with Paymob
+    const { data: auth } = await axios.post(
+      "https://accept.paymob.com/api/auth/tokens",
+      { api_key: process.env.PAYMOB_API_KEY }
+    );
+
+    // 2. Create Payment Request
+    const { data: paymentKey } = await axios.post(
+      "https://accept.paymob.com/api/acceptance/payment_keys",
+      {
+        auth_token: auth.token,
+        amount_cents: Math.round(req.body.amount * 100),
+        integration_id: process.env.PAYMOB_INTEGRATION_ID,
+        currency: "EGP",
+        billing_data: req.body.billing_data || {
+          email: "customer@example.com",
+          phone_number: "01012345678"
+        }
+      }
+    );
+
+    // 3. Return Payment URL
+    res.json({
+      payment_url: `https://accept.paymob.com/api/acceptance/iframes/${process.env.PAYMOB_IFRAME_ID}?payment_token=${paymentKey.token}`
+    });
+
+  } catch (error) {
+    console.error("Payment Error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Payment processing failed" });
   }
-}));
+});
 
 // ======================
-// Static Files Serving
+// Static Files & Frontend Routes
 // ======================
-app.use(express.static(path.join(__dirname), {
-  setHeaders: (res) => {
-    res.set('Cache-Control', 'public, max-age=3600');
-  }
-}));
+app.use(express.static(path.join(__dirname, "public")));
 
-// ======================
-// API Routes
-// ======================
-app.use("/api", paymentRoutes);
+// Payment Status Pages
+app.get("/payment/success", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/success.html"));
+});
 
-// ======================
-// Explicit Page Routes
-// ======================
-const servePage = (pageName) => (req, res) => {
-  res.sendFile(path.join(__dirname, `${pageName}.html`), {
-    headers: {
-      'Content-Security-Policy': "default-src 'self'"
-    }
-  });
-};
-
-app.get("/success", servePage("success"));
-app.get("/fail", servePage("fail"));
-app.get("/payment", servePage("index"));
+app.get("/payment/failure", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/fail.html"));
+});
 
 // ======================
 // Error Handling
 // ======================
-app.use((err, req, res, next) => {
-  console.error('🔥 Server Error:', err.stack);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, "public/404.html"));
 });
 
-// 404 Handler
-app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, "404.html"));
+app.use((err, req, res, next) => {
+  console.error("Server Error:", err.stack);
+  res.status(500).send("Internal Server Error");
 });
 
 // ======================
-// Server Startup
+// Server Initialization
 // ======================
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
-  console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`
+  🚀 Server running on port ${PORT}
+  🌐 Frontend: ${process.env.FRONTEND_URL}
+  🔒 HMAC Enabled: ${!!process.env.PAYMOB_HMAC_SECRET}
+  `);
 });
