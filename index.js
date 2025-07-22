@@ -2,42 +2,98 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const paymentRoutes = require("./routes/paymentRoutes");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json());
+// ======================
+// Middleware Configurations
+// ======================
 
+// 1. الأمان الأساسي
+app.use(helmet());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "*",
+  methods: ["GET", "POST"]
+}));
+
+// 2. Rate Limiting (100 requests per 15 minutes)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
+
+// 3. Body Parsing with JSON verification
 app.use(express.json({
+  limit: '10mb',
   verify: (req, res, buf) => {
     try {
-      JSON.parse(buf.toString()); // تحقق من صحة JSON
+      JSON.parse(buf.toString());
       req.rawBody = buf.toString();
     } catch (e) {
       console.error('❌ Invalid JSON:', buf.toString());
-      throw new Error('Invalid JSON');
+      throw new Error('Invalid JSON payload');
     }
   }
 }));
 
-// تقديم ملفات static (index.html, success.html, fail.html)
-app.use(express.static(path.join(__dirname)));
+// ======================
+// Static Files Serving
+// ======================
+app.use(express.static(path.join(__dirname), {
+  setHeaders: (res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+  }
+}));
 
-// مسارات API للدفع
+// ======================
+// API Routes
+// ======================
 app.use("/api", paymentRoutes);
 
-// مسارات صريحة لصفحات النجاح والفشل
-app.get("/success.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "success.html"));
+// ======================
+// Explicit Page Routes
+// ======================
+const servePage = (pageName) => (req, res) => {
+  res.sendFile(path.join(__dirname, `${pageName}.html`), {
+    headers: {
+      'Content-Security-Policy': "default-src 'self'"
+    }
+  });
+};
+
+app.get("/success", servePage("success"));
+app.get("/fail", servePage("fail"));
+app.get("/payment", servePage("index"));
+
+// ======================
+// Error Handling
+// ======================
+app.use((err, req, res, next) => {
+  console.error('🔥 Server Error:', err.stack);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
 
-app.get("/fail.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "fail.html"));
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, "404.html"));
 });
 
+// ======================
+// Server Startup
+// ======================
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
+  console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
