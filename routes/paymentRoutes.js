@@ -34,7 +34,9 @@ async function createOrder(token, amountCents = 500) {
 }
 
 // === Generate Payment Key ===
-async function generatePaymentKey(token, orderId, billingData, returnUrl) {
+const FRONTEND_URL = process.env.FRONTEND_URL;
+
+async function generatePaymentKey(token, orderId, billingData) {
   const response = await axios.post("https://accept.paymob.com/api/acceptance/payment_keys", {
     auth_token: token,
     amount_cents: 500,
@@ -44,7 +46,7 @@ async function generatePaymentKey(token, orderId, billingData, returnUrl) {
     currency: "EGP",
     integration_id: PAYMOB_INTEGRATION_ID,
     lock_order_when_paid: true,
-    return_url: returnUrl,
+    return_url: `${FRONTEND_URL}/payment-response.html?id=${orderId}`
   });
   return response.data.token;
 }
