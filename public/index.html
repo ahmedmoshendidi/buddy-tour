@@ -189,18 +189,15 @@
           body: JSON.stringify(formData)
         });
 
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({}));
-          throw new Error(error.message || 'Payment failed');
+        const data = await response.json();
+        console.log("Response:", data);
+
+        if (!response.ok || !data.iframe_url) {
+          throw new Error(data.error || 'No payment link received');
         }
 
-        const data = await response.json();
-        if (data.iframe_url) {
-          // redirect to paymob iframe (with return_url already attached in backend)
-          window.location.href = data.iframe_url;
-        } else {
-          throw new Error('No payment link received');
-        }
+        window.location.href = data.iframe_url; // go to payment page
+
       } catch (error) {
         showError(error.message || 'Payment processing failed');
       } finally {
@@ -237,7 +234,7 @@
 
     function showError(message) {
       const errorDiv = document.createElement('div');
-      errorDiv.className = 'error';
+      errorDiv.className = 'error-message';
       errorDiv.textContent = message;
       errorDiv.style.textAlign = 'center';
       errorDiv.style.marginTop = '20px';
@@ -245,7 +242,6 @@
       const existingError = document.querySelector('.error-message');
       if (existingError) existingError.remove();
       
-      errorDiv.className = 'error-message';
       form.appendChild(errorDiv);
       
       setTimeout(() => {
