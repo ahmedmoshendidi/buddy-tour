@@ -21,7 +21,25 @@ app.set("trust proxy", true); // Essential for Railway/Heroku deployment
 // ======================
 // Middleware Stack
 // ======================
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        "script-src": [
+          "'self'",
+          "https://cdn.jsdelivr.net", // اسمح بـ CDN
+          "'unsafe-inline'" // اسمح بالسكريبتات داخل HTML
+        ],
+        "style-src": [
+          "'self'",
+          "https://cdn.jsdelivr.net", 
+          "'unsafe-inline'"
+        ]
+      }
+    }
+  })
+);
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
