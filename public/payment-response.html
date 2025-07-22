@@ -17,11 +17,12 @@
         const response = await fetch(`/api/payment-status/${orderId}`);
         const data = await response.json();
 
-        if (data.status === "success") {
-          window.location.href = "/success.html";
-        } else {
-          window.location.href = "/fail.html";
-        }
+       if (data.status.toLowerCase() === "captured") {
+       window.location.href = "/success.html";
+       } else {
+       window.location.href = "/fail.html";
+       }
+
       } catch (err) {
         console.error("Error checking payment status", err);
         window.location.href = "/fail.html";
