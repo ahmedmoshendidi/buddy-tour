@@ -189,7 +189,7 @@ router.get("/payment-response", async (req, res) => {
     }
 
     
-    return res.redirect("/fail.html");
+    // return res.redirect("/fail.html");
 
 
   } catch (error) {
