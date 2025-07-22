@@ -159,4 +159,46 @@ router.get("/payment-status/:orderId", (req, res) => {
   });
 });
 
+// routes/paymentRoutes.js
+router.get("/payment-response", async (req, res) => {
+  try {
+    const query = req.query;
+    const orderId = query.id;
+
+    if (query.success === "true") {
+      const paymentData = paymentStatus.get(orderId);
+
+      if (paymentData && paymentData.billingData) {
+        const { billingData } = paymentData;
+
+        await sendConfirmationEmail(
+          billingData.email,
+          `${billingData.first_name} ${billingData.last_name}`,
+          orderId,
+          paymentData.amountCents / 100
+        );
+
+        console.log("📨 Email sent from payment-response");
+
+        
+        return res.redirect("/success.html");
+
+      } else {
+        console.warn("⚠️ No billing data found for order:", orderId);
+      }
+    }
+
+    
+    return res.redirect("/fail.html");
+
+
+  } catch (error) {
+    console.error("Redirect error:", error);
+    return res.redirect("/fail.html");
+
+  }
+});
+
+
+
 module.exports = router;
