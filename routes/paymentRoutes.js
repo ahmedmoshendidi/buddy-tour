@@ -123,7 +123,9 @@ router.post("/payment-callback", async (req, res) => {
 
       try {
         const data = paymentStatus.get(transactionId);
-        const { billingData } = data;
+        // const { billingData } = data;
+        const billingData = data.payment_key_claims?.billing_data;
+
 
         if (billingData?.email) {
           await sendConfirmationEmail(
