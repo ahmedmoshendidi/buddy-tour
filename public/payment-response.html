@@ -5,32 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Redirecting...</title>
   <script>
-    async function checkPaymentStatus() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const transactionId = urlParams.get("id"); // ✅ تغيير الاسم
+  async function checkPaymentStatus() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const transactionId = urlParams.get("id");
 
-      if (!transactionId) {
-        return window.location.href = "/fail.html";
-      }
-
-      try {
-        const response = await fetch(`/api/payment-status/${transactionId}`); // ✅ استخدام الاسم الصح
-        const data = await response.json();
-
-        if (data.status?.toLowerCase() === "captured") {
-          window.location.href = "/success.html";
-        } else {
-          window.location.href = "/fail.html";
-        }
-
-      } catch (err) {
-        console.error("Error checking payment status", err);
-        window.location.href = "/fail.html";
-      }
+    if (!transactionId) {
+      return window.location.href = "/fail.html";
     }
 
-    window.onload = checkPaymentStatus;
-  </script>
+    try {
+      const response = await fetch(`/api/payment-status/${transactionId}`);
+      const data = await response.json();
+
+      if (data.status?.toLowerCase() === "captured") {
+        window.location.href = `/success.html?id=${transactionId}&amount_cents=${data.amountCents}`;
+      } else {
+        window.location.href = "/fail.html";
+      }
+
+    } catch (err) {
+      console.error("Error checking payment status", err);
+      window.location.href = "/fail.html";
+    }
+  }
+
+  window.onload = checkPaymentStatus;
+</script>
+
 </head>
 <body>
   <p>جارٍ التحقق من الدفع...</p>
