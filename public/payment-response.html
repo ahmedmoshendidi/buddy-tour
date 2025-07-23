@@ -18,7 +18,7 @@
       const data = await response.json();
 
       if (data.status?.toLowerCase() === "captured") {
-        window.location.href = `/success.html?id=${transactionId}&amount_cents=${data.data.amount}`;
+        window.location.href = `/success.html?id=${transactionId}&amount_cents=${data.amount_cents}`;
       } else {
         window.location.href = "/fail.html";
       }
