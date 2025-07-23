@@ -160,7 +160,8 @@ router.get("/payment-status/:transactionId", (req, res) => {
     status: statusData.status,
     transactionId: statusData.transactionId,
     orderId: statusData.orderId,
-    amount_cents: statusData.amount_cents,
+    amount_cents: statusData.amountCents,
+
   });
 });
 
