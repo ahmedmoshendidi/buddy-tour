@@ -7,21 +7,21 @@
   <script>
     async function checkPaymentStatus() {
       const urlParams = new URLSearchParams(window.location.search);
-      const orderId = urlParams.get("id");
-      
-      if (!orderId) {
+      const transactionId = urlParams.get("id"); // ✅ تغيير الاسم
+
+      if (!transactionId) {
         return window.location.href = "/fail.html";
       }
 
       try {
-        const response = await fetch(`/api/payment-status/${orderId}`);
+        const response = await fetch(`/api/payment-status/${transactionId}`); // ✅ استخدام الاسم الصح
         const data = await response.json();
 
-       if (data.status.toLowerCase() === "captured") {
-       window.location.href = "/success.html";
-       } else {
-       window.location.href = "/fail.html";
-       }
+        if (data.status?.toLowerCase() === "captured") {
+          window.location.href = "/success.html";
+        } else {
+          window.location.href = "/fail.html";
+        }
 
       } catch (err) {
         console.error("Error checking payment status", err);

@@ -101,25 +101,28 @@ router.post("/payment-callback", async (req, res) => {
     return res.status(400).send("Invalid transaction data");
   }
 
+  const transactionId = transaction.id.toString(); // ✅ المفتاح الجديد
   const orderId = transaction.order.id.toString();
 
   if (event.type === "TRANSACTION" && !transaction.pending) {
     const isSuccess = transaction.success;
 
-    const existing = paymentStatus.get(orderId) || {};
-    paymentStatus.set(orderId, {
+    const existing = paymentStatus.get(transactionId) || {};
+    paymentStatus.set(transactionId, {
       ...existing,
-      status: isSuccess ? "success" : "failed",
-      transactionId: transaction.id,
+      status: isSuccess ? "captured" : "failed", // ✅ مهم عشان HTML يعرف يقارن
+      transactionId: transactionId,
+      orderId: orderId,
       amountCents: transaction.amount_cents,
+      billingData: transaction.billing_data || null,
       updatedAt: new Date()
     });
 
     if (isSuccess) {
-      console.log(`✅ Payment success: Order ${orderId}`);
+      console.log(`✅ Payment success: Transaction ${transactionId}`);
 
       try {
-        const data = paymentStatus.get(orderId);
+        const data = paymentStatus.get(transactionId);
         const { billingData } = data;
 
         if (billingData?.email) {
@@ -137,67 +140,32 @@ router.post("/payment-callback", async (req, res) => {
         console.error("❌ Failed to send confirmation email:", emailErr);
       }
     } else {
-      console.log(`❌ Payment failed: Order ${orderId}`);
+      console.log(`❌ Payment failed: Transaction ${transactionId}`);
     }
   }
 
   res.status(200).send("Callback processed");
 });
 
-// === /api/payment-status/:orderId ===
-router.get("/payment-status/:orderId", (req, res) => {
-  const { orderId } = req.params;
-  const statusData = paymentStatus.get(orderId);
+
+router.get("/payment-status/:transactionId", (req, res) => {
+  const { transactionId } = req.params;
+  const statusData = paymentStatus.get(transactionId);
 
   if (!statusData) {
-    return res.status(404).json({ error: "Order not found" });
+    return res.status(404).json({ error: "Transaction not found" });
   }
 
-  res.json({ 
+  res.json({
     status: statusData.status,
-    transactionId: statusData.transactionId || null
+    transactionId: statusData.transactionId,
+    orderId: statusData.orderId,
   });
 });
 
-// routes/paymentRoutes.js
-// router.get("/payment-response", async (req, res) => {
-//   try {
-//     const query = req.query;
-//     const orderId = query.id;
-
-//     if (query.success === "true") {
-//       const paymentData = paymentStatus.get(orderId);
-
-//       if (paymentData && paymentData.billingData) {
-//         const { billingData } = paymentData;
-
-//         await sendConfirmationEmail(
-//           billingData.email,
-//           `${billingData.first_name} ${billingData.last_name}`,
-//           orderId,
-//           paymentData.amountCents / 100
-//         );
-
-//         console.log("📨 Email sent from payment-response");
-
-        
-//         return res.redirect("/success.html");
-
-//       } else {
-//         console.warn("⚠️ No billing data found for order:", orderId);
-//       }
-//     }
-
-    
-//     // return res.redirect("/fail.html");
 
 
-//   } catch (error) {
-//     console.error("Redirect error:", error);
-//     return res.redirect("/fail.html");
 
-//   }
-// });
 
 
 
