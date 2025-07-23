@@ -101,20 +101,22 @@ router.post("/payment-callback", async (req, res) => {
     return res.status(400).send("Invalid transaction data");
   }
 
-  const transactionId = transaction.id.toString(); // ✅ المفتاح الجديد
+  const transactionId = transaction.id.toString();
   const orderId = transaction.order.id.toString();
 
   if (event.type === "TRANSACTION" && !transaction.pending) {
     const isSuccess = transaction.success;
+    const billingData = transaction.payment_key_claims?.billing_data || null;
 
+    // نحفظ البيانات
     const existing = paymentStatus.get(transactionId) || {};
     paymentStatus.set(transactionId, {
       ...existing,
-      status: isSuccess ? "captured" : "failed", // ✅ مهم عشان HTML يعرف يقارن
-      transactionId: transactionId,
-      orderId: orderId,
+      status: isSuccess ? "captured" : "failed",
+      transactionId,
+      orderId,
       amountCents: transaction.amount_cents,
-      billingData: transaction.billing_data || null,
+      billingData,
       updatedAt: new Date()
     });
 
@@ -122,11 +124,6 @@ router.post("/payment-callback", async (req, res) => {
       console.log(`✅ Payment success: Transaction ${transactionId}`);
 
       try {
-        const data = paymentStatus.get(transactionId);
-        // const { billingData } = data;
-        const billingData = data.payment_key_claims?.billing_data;
-
-
         if (billingData?.email) {
           await sendConfirmationEmail(
             billingData.email,
@@ -148,6 +145,7 @@ router.post("/payment-callback", async (req, res) => {
 
   res.status(200).send("Callback processed");
 });
+
 
 
 router.get("/payment-status/:transactionId", (req, res) => {
