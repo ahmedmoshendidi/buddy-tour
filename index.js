@@ -9,6 +9,9 @@ const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
 const paymentRoutes = require("./routes/paymentRoutes");
+const bookingRoutes = require('./routes/bookingRoutes');
+
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -70,6 +73,11 @@ app.use("/api", limiter);
 // Paymob Payment Routes
 // ======================
 app.use("/api", paymentRoutes);
+
+// ======================
+// Booking Tour Routes
+// ======================
+app.use('/api', bookingRoutes);
 
 // ======================
 // Static Files & Frontend Routes
