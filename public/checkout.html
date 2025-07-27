@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>checkout</title>
+  <title>Checkout</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/css/intlTelInput.min.css"/>
   <style>
     body {
@@ -105,7 +105,7 @@
 <body>
 
 <div class="container">
-  <h2>Your contact details</h2>
+  <h2>Your Contact Details</h2>
   <form id="payment-form">
     <label for="firstName">First Name</label>
     <input type="text" id="firstName" required placeholder="Enter your first name" />
@@ -153,7 +153,7 @@
       utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/utils.js"
     });
 
-    const bookingDataRaw = localStorage.getItem("bookingData");
+    const bookingDataRaw = sessionStorage.getItem("bookingInfo");
     if (!bookingDataRaw) {
       alert("Missing booking information. Please go back and try again.");
       return;
@@ -170,7 +170,7 @@
         email: document.getElementById('email').value.trim(),
         phone: iti.getNumber(),
         nationality: document.getElementById('nationality').value,
-        ...bookingData  // add tour_id, date, time, adults, children
+        ...bookingData
       };
 
       const errors = validateForm(formData);
