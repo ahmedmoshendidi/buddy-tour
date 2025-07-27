@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Payment Form</title>
+  <title>checkout</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/css/intlTelInput.min.css"/>
   <style>
     body {
@@ -100,15 +100,6 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-
-    @media (max-width: 480px) {
-      .container {
-        padding: 25px 20px;
-      }
-      h2 {
-        font-size: 20px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -162,13 +153,12 @@
       utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/utils.js"
     });
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const tourId = urlParams.get("tour_id");
-
-    if (!tourId) {
-      alert("Invalid tour ID in URL.");
-      throw new Error("Missing tour_id");
+    const bookingDataRaw = localStorage.getItem("bookingData");
+    if (!bookingDataRaw) {
+      alert("Missing booking information. Please go back and try again.");
+      return;
     }
+    const bookingData = JSON.parse(bookingDataRaw);
 
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -180,7 +170,7 @@
         email: document.getElementById('email').value.trim(),
         phone: iti.getNumber(),
         nationality: document.getElementById('nationality').value,
-        tour_id: tourId  // ✅ أضفنا tour_id هنا
+        ...bookingData  // add tour_id, date, time, adults, children
       };
 
       const errors = validateForm(formData);
@@ -199,14 +189,10 @@
         });
 
         const data = await response.json();
-        console.log("Response:", data);
-
         if (!response.ok || !data.iframe_url) {
           throw new Error(data.error || 'No payment link received');
         }
-
         window.location.href = data.iframe_url;
-
       } catch (error) {
         showError(error.message || 'Payment processing failed');
       } finally {
