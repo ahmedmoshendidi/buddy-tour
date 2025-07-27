@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tickets and Quantity</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h2, h3 {
+      text-align: center;
+    }
+
+    .price, .date-picker, .time-slots, .ticket-section {
+      margin-bottom: 20px;
+    }
+
+    .calendar-header, .weekdays, .days {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .day-box, .time-box {
+      background-color: #e0e0e0;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 5px;
+      flex: 1 0 20%;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .day-box.disabled, .time-box.disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .day-box.selected, .time-box.selected {
+      background-color: #1abc9c;
+      color: white;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 8px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #219150;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="loading">Loading...</h2>
+    <div class="price">
+      <h3>Price from :</h3>
+      <p id="price">...</p>
+    </div>
+
+    <div class="date-picker">
+      <h3>Choose a Tour Date</h3>
+      <div class="calendar-header" id="calendar-month-year">Month Year</div>
+      <div class="weekdays">
+        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+      </div>
+      <div class="days" id="calendar-days"></div>
+    </div>
+
+    <div class="time-slots">
+      <h3>Select Time Slot</h3>
+      <div id="available-times"></div>
+    </div>
+
+    <div class="ticket-section">
+      <h3>Select Tickets & Quantity</h3>
+      <div class="form-group">
+        <label for="adults">Adults (15+):</label>
+        <input type="number" id="adults" min="0" value="0">
+      </div>
+      <div class="form-group">
+        <label for="children">Children (<15):</label>
+        <input type="number" id="children" min="0" value="0">
+      </div>
+    </div>
+
+    <button id="checkout-btn">Checkout</button>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const tourId = urlParams.get('tourId');
+
+    async function loadTourData() {
+      const res = await fetch(`/api/tours/${tourId}`);
+      const data = await res.json();
+      if (!data || !data.tour) return;
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('price').textContent = `${data.tour.price} EGP`;
+      generateCalendar();
+    }
+
+    function generateCalendar() {
+      const calendarDays = document.getElementById("calendar-days");
+      const calendarHeader = document.getElementById("calendar-month-year");
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+
+      calendarHeader.textContent = now.toLocaleString('default', { month: 'long' }) + ' ' + year;
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = now.getDate();
+
+      calendarDays.innerHTML = "";
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayDiv = document.createElement("div");
+        dayDiv.className = "day-box";
+        dayDiv.textContent = day;
+        if (day < today) {
+          dayDiv.classList.add("disabled");
+        } else {
+          dayDiv.onclick = () => {
+            document.querySelectorAll(".day-box").forEach(el => el.classList.remove("selected"));
+            dayDiv.classList.add("selected");
+          }
+        }
+        calendarDays.appendChild(dayDiv);
+      }
+    }
+
+    loadTourData();
+  </script>
+</body>
+</html>
