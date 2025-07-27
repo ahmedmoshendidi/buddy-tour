@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tour Details - BuddyTour</title>
   <style>
     body {
@@ -62,33 +62,44 @@
 </head>
 <body>
   <header>BuddyTour</header>
-  <div class="container">
-    <h1 class="tour-title" id="title">Tour Title</h1>
+  <div class="container" id="tour-container">
+    <h1 class="tour-title" id="title">Loading...</h1>
     <div class="images">
-      <img id="img1" src="" alt="Tour image 1" />
-      <img id="img2" src="" alt="Tour image 2" />
+      <img id="img1" src="https://via.placeholder.com/400x250?text=Image+1" alt="Tour image 1" />
+      <img id="img2" src="https://via.placeholder.com/400x250?text=Image+2" alt="Tour image 2" />
     </div>
-    <p class="tour-description" id="description">Tour description will appear here.</p>
+    <p class="tour-description" id="description">Please wait while we load the tour details.</p>
     <a id="bookNow" class="book-button" href="#">Book Now</a>
   </div>
 
   <script>
-    // Example dummy data for now (replace later with real data from URL params or fetch)
-    const tour = {
-      id: 1,
-      title: "Bibliotheca Alexandrina Tour",
-      description: "Explore the modern Bibliotheca Alexandrina with a historical overview and guided walk.",
-      images: [
-        "https://example.com/biblio1.jpg",
-        "https://example.com/biblio2.jpg"
-      ]
-    };
+    const params = new URLSearchParams(window.location.search);
+    const tourId = params.get("tour_id");
 
-    document.getElementById("title").textContent = tour.title;
-    document.getElementById("description").textContent = tour.description;
-    document.getElementById("img1").src = tour.images[0];
-    document.getElementById("img2").src = tour.images[1];
-    document.getElementById("bookNow").href = `tickets-and-quantity.html?tour_id=${tour.id}`;
+    if (!tourId) {
+      document.getElementById("tour-container").innerHTML = "<p>❌ Invalid tour ID.</p>";
+      throw new Error("No tour_id in URL");
+    }
+
+    fetch(`/api/tours/${tourId}`)
+      .then(res => {
+        if (!res.ok) throw new Error("Tour not found");
+        return res.json();
+      })
+      .then(data => {
+        const tour = data.tour;
+        document.getElementById("title").textContent = tour.title;
+        document.getElementById("description").textContent = tour.description;
+        document.getElementById("bookNow").href = `tickets-and-quantity.html?tour_id=${tour.id}`;
+
+        // هنا تقدر تضيف صور حقيقية لو موجودة في قاعدة البيانات لاحقاً
+        document.getElementById("img1").src = "https://via.placeholder.com/400x250?text=Tour+Image+1";
+        document.getElementById("img2").src = "https://via.placeholder.com/400x250?text=Tour+Image+2";
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById("tour-container").innerHTML = "<p>❌ Tour not found or failed to load.</p>";
+      });
   </script>
 </body>
 </html>
