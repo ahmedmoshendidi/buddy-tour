@@ -127,8 +127,13 @@
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const tourId = urlParams.get('tourId');
+    const tourId = urlParams.get('tour_id');
 
+    if (!tourId) {
+    alert("Invalid tour link. Please go back and choose a tour.");
+    throw new Error("Missing tour_id in URL");
+    }
+    
     async function loadTourData() {
       const res = await fetch(`/api/tours/${tourId}`);
       const data = await res.json();
