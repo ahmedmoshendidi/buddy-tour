@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
+require('dotenv').config();
 
-// الاتصال بقاعدة البيانات
+// الاتصال بقاعدة البيانات المستضافة على Railway
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'buddy_tour_db',
-  password: 'yaya', 
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 // POST /api/book-tour
@@ -28,15 +28,12 @@ router.post('/book-tour', async (req, res) => {
       numberOfPeople,
     } = req.body;
 
-    // تحقق إن البيانات الأساسية موجودة
     if (!tourId || !date || !time || !numberOfPeople || !fullName || !email) {
       return res.status(400).json({ error: 'Missing required fields.' });
     }
 
-    // بدء Transaction
     await client.query('BEGIN');
 
-    // حساب المقاعد المحجوزة بالفعل
     const checkRes = await client.query(
       `
       SELECT COALESCE(SUM(number_of_people), 0) AS total_booked
@@ -55,7 +52,6 @@ router.post('/book-tour', async (req, res) => {
       return res.status(409).json({ error: 'Not enough available seats.' });
     }
 
-    // سجل الحجز كـ "pending" لحد ما يتم الدفع
     const insertRes = await client.query(
       `
       INSERT INTO bookings (
@@ -74,7 +70,6 @@ router.post('/book-tour', async (req, res) => {
 
     await client.query('COMMIT');
 
-    // رجّع الحجز المسجّل (قبل الدفع)
     res.status(200).json({
       message: 'Tour reserved successfully. Awaiting payment.',
       booking: insertRes.rows[0],
@@ -86,6 +81,36 @@ router.post('/book-tour', async (req, res) => {
     res.status(500).json({ error: 'Server error while booking tour.' });
   } finally {
     client.release();
+  }
+});
+
+// GET /api/tours/:id
+router.get("/tours/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const tourRes = await pool.query(
+      `SELECT id, title, description, price_per_person FROM tours WHERE id = $1`,
+      [id]
+    );
+
+    if (tourRes.rows.length === 0) {
+      return res.status(404).json({ error: "Tour not found" });
+    }
+
+    const timeSlotsRes = await pool.query(
+      `SELECT date, time FROM time_slots WHERE tour_id = $1 ORDER BY date, time`,
+      [id]
+    );
+
+    res.json({
+      tour: tourRes.rows[0],
+      time_slots: timeSlotsRes.rows,
+    });
+
+  } catch (err) {
+    console.error("Error loading tour:", err);
+    res.status(500).json({ error: "Server error while loading tour data." });
   }
 });
 
