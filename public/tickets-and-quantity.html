@@ -88,12 +88,15 @@
     }
   </style>
 </head>
+<!-- ابدأ من داخل <body> -->
 <body>
   <div class="container">
     <h2 id="loading">Loading...</h2>
+    
     <div class="price">
-      <h3>Price from :</h3>
-      <p id="price">...</p>
+      <h3>
+        Price from : <span id="price" style="font-weight: normal;"></span>
+      </h3>
     </div>
 
     <div class="date-picker">
@@ -102,7 +105,7 @@
       <div class="weekdays">
         <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
       </div>
-      <div class="days" id="calendar-days"></div>
+      <div class="days" id="calendar-days" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
     </div>
 
     <div class="time-slots">
@@ -114,12 +117,17 @@
       <h3>Select Tickets & Quantity</h3>
       <div class="form-group">
         <label for="adults">Adults (15+):</label>
-        <input type="number" id="adults" min="0" value="0">
+        <input type="number" id="adults" min="0" value="0" inputmode="numeric" pattern="[0-9]*">
       </div>
       <div class="form-group">
         <label for="children">Children (<15):</label>
-        <input type="number" id="children" min="0" value="0">
+        <input type="number" id="children" min="0" value="0" inputmode="numeric" pattern="[0-9]*">
       </div>
+    </div>
+
+    <div class="form-group">
+      <label><strong>Total Price:</strong></label>
+      <p id="total-price">0 EGP</p>
     </div>
 
     <button id="checkout-btn">Checkout</button>
@@ -134,9 +142,7 @@
       throw new Error("Missing tour_id in URL");
     }
 
-
-    const normalizeNumber = str => Number(str).toLocaleString('en-US', { useGrouping: false });
-
+    let basePrice = 0;
 
     async function loadTourData() {
       try {
@@ -144,10 +150,13 @@
         const data = await res.json();
         if (!data || !data.tour) return;
 
+        basePrice = data.tour.price_per_person;
+
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('price').textContent = `${data.tour.price_per_person} EGP`;
+        document.getElementById('price').textContent = `${basePrice} EGP`;
 
         generateCalendar();
+        updateTotalPrice();
       } catch (err) {
         console.error("Error loading tour:", err);
       }
@@ -160,12 +169,19 @@
       const year = now.getFullYear();
       const month = now.getMonth();
 
-      calendarHeader.textContent = now.toLocaleString('en-US', { month: 'long' }) + ' ' + year.toLocaleString('en-US');
+      calendarHeader.textContent = now.toLocaleString('en-US', { month: 'long' }) + ' ' + year;
 
       const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstDay = new Date(year, month, 1).getDay(); // Sunday = 0
       const today = now.getDate();
 
       calendarDays.innerHTML = "";
+
+      // إضافة فراغات للبداية حسب اليوم الأول
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement("div");
+        calendarDays.appendChild(empty);
+      }
 
       for (let day = 1; day <= daysInMonth; day++) {
         const dayDiv = document.createElement("div");
@@ -180,19 +196,29 @@
             dayDiv.classList.add("selected");
           }
         }
+
         calendarDays.appendChild(dayDiv);
       }
     }
 
-    // زر Checkout
+    function updateTotalPrice() {
+      const adults = parseInt(document.getElementById("adults").value) || 0;
+      const children = parseInt(document.getElementById("children").value) || 0;
+      const childPrice = basePrice * 0.8;
+      const total = (adults * basePrice) + (children * childPrice);
+
+      document.getElementById("total-price").textContent = `${Math.round(total)} EGP`;
+    }
+
+    document.getElementById("adults").addEventListener("input", updateTotalPrice);
+    document.getElementById("children").addEventListener("input", updateTotalPrice);
+
     document.getElementById("checkout-btn").addEventListener("click", () => {
-      const adults = normalizeNumber(document.getElementById("adults").value);
-      const children = normalizeNumber(document.getElementById("children").value);
-      console.log("Adults:", adults, "Children:", children);
-      // هنا تقدر تكمل الكود وتحفظ البيانات أو تروح للخطوة التالية
+      window.location.href = `checkout.html?tour_id=${tourId}`;
     });
 
     loadTourData();
   </script>
 </body>
+
 </html>
