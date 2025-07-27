@@ -208,27 +208,43 @@
   }
 
   function showTimeSlotsForDate(date) {
-    const container = document.getElementById("available-times");
-    container.innerHTML = "";
+  const container = document.getElementById("available-times");
+  container.innerHTML = "";
 
-    const slots = timeSlots.filter(slot => slot.date === date);
-    if (slots.length === 0) {
-      container.innerHTML = "<p>No available times for this day.</p>";
-      return;
-    }
+  const slots = timeSlots.filter(slot => {
+    if (!slot.date) return false;
+    const slotDate = new Date(slot.date).toISOString().split("T")[0];
+    return slotDate === date;
+  });
 
-    slots.forEach(slot => {
-      const btn = document.createElement("button");
-      btn.textContent = slot.time.slice(0,5);
-      btn.style.margin = "5px";
-      btn.onclick = () => {
-        document.querySelectorAll("#available-times button").forEach(b => b.style.backgroundColor = "#27ae60");
-        btn.style.backgroundColor = "#1abc9c";
-        selectedTime = slot.time;
-      };
-      container.appendChild(btn);
-    });
+  if (slots.length === 0) {
+    container.innerHTML = "<p>No available times for this day.</p>";
+    return;
   }
+
+  slots.forEach(slot => {
+    const btn = document.createElement("button");
+    btn.textContent = slot.time.slice(0, 5); // "HH:MM"
+    btn.style.margin = "5px";
+    btn.style.backgroundColor = "#27ae60";
+    btn.style.color = "white";
+    btn.style.border = "none";
+    btn.style.padding = "10px";
+    btn.style.borderRadius = "5px";
+    btn.style.cursor = "pointer";
+
+    btn.onclick = () => {
+      document.querySelectorAll("#available-times button").forEach(b => {
+        b.style.backgroundColor = "#27ae60";
+      });
+      btn.style.backgroundColor = "#1abc9c";
+      selectedTime = slot.time;
+    };
+
+    container.appendChild(btn);
+  });
+}
+
 
   function updateTotalPrice() {
     const adults = parseInt(document.getElementById("adults").value) || 0;
