@@ -38,24 +38,23 @@
       flex-wrap: wrap;
     }
 
-    .day-box, .time-box {
-      background-color: #e0e0e0;
-      padding: 10px;
-      border-radius: 5px;
-      margin: 5px;
-      flex: 1 0 20%;
-      text-align: center;
+    .day-box {
+      background: none;
+      padding: 5px;
+      margin: 2px;
+      font-weight: bold;
       cursor: pointer;
+      border: none;
     }
 
-    .day-box.disabled, .time-box.disabled {
-      background-color: #ccc;
+    .day-box.disabled {
+      color: #aaa;
       cursor: not-allowed;
     }
 
-    .day-box.selected, .time-box.selected {
-      background-color: #1abc9c;
-      color: white;
+    .day-box.selected {
+      color: #1abc9c;
+      text-decoration: underline;
     }
 
     .form-group {
@@ -70,6 +69,7 @@
     input[type="number"] {
       width: 100%;
       padding: 8px;
+      font-family: Arial, sans-serif;
     }
 
     button {
@@ -130,18 +130,27 @@
     const tourId = urlParams.get('tour_id');
 
     if (!tourId) {
-    alert("Invalid tour link. Please go back and choose a tour.");
-    throw new Error("Missing tour_id in URL");
+      alert("Invalid tour link.");
+      throw new Error("Missing tour_id in URL");
     }
-    
-    async function loadTourData() {
-      const res = await fetch(`/api/tours/${tourId}`);
-      const data = await res.json();
-      if (!data || !data.tour) return;
 
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('price').textContent = `${data.tour.price} EGP`;
-      generateCalendar();
+
+    const normalizeNumber = str => Number(str).toLocaleString('en-US', { useGrouping: false });
+
+
+    async function loadTourData() {
+      try {
+        const res = await fetch(`/api/tours/${tourId}`);
+        const data = await res.json();
+        if (!data || !data.tour) return;
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('price').textContent = `${data.tour.price_per_person} EGP`;
+
+        generateCalendar();
+      } catch (err) {
+        console.error("Error loading tour:", err);
+      }
     }
 
     function generateCalendar() {
@@ -151,7 +160,7 @@
       const year = now.getFullYear();
       const month = now.getMonth();
 
-      calendarHeader.textContent = now.toLocaleString('default', { month: 'long' }) + ' ' + year;
+      calendarHeader.textContent = now.toLocaleString('en-US', { month: 'long' }) + ' ' + year.toLocaleString('en-US');
 
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const today = now.getDate();
@@ -162,6 +171,7 @@
         const dayDiv = document.createElement("div");
         dayDiv.className = "day-box";
         dayDiv.textContent = day;
+
         if (day < today) {
           dayDiv.classList.add("disabled");
         } else {
@@ -173,6 +183,14 @@
         calendarDays.appendChild(dayDiv);
       }
     }
+
+    // زر Checkout
+    document.getElementById("checkout-btn").addEventListener("click", () => {
+      const adults = normalizeNumber(document.getElementById("adults").value);
+      const children = normalizeNumber(document.getElementById("children").value);
+      console.log("Adults:", adults, "Children:", children);
+      // هنا تقدر تكمل الكود وتحفظ البيانات أو تروح للخطوة التالية
+    });
 
     loadTourData();
   </script>
