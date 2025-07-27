@@ -155,12 +155,20 @@
     const phoneInput = document.getElementById('phone');
     const submitBtn = document.getElementById('submitBtn');
     const loadingMsg = document.getElementById('loadingMsg');
-    
+
     const iti = window.intlTelInput(phoneInput, {
       initialCountry: "eg",
       separateDialCode: true,
       utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/utils.js"
     });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const tourId = urlParams.get("tour_id");
+
+    if (!tourId) {
+      alert("Invalid tour ID in URL.");
+      throw new Error("Missing tour_id");
+    }
 
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -171,7 +179,8 @@
         lastName: document.getElementById('lastName').value.trim(),
         email: document.getElementById('email').value.trim(),
         phone: iti.getNumber(),
-        nationality: document.getElementById('nationality').value
+        nationality: document.getElementById('nationality').value,
+        tour_id: tourId  // ✅ أضفنا tour_id هنا
       };
 
       const errors = validateForm(formData);
@@ -240,12 +249,12 @@
       errorDiv.textContent = message;
       errorDiv.style.textAlign = 'center';
       errorDiv.style.marginTop = '20px';
-      
+
       const existingError = document.querySelector('.error-message');
       if (existingError) existingError.remove();
-      
+
       form.appendChild(errorDiv);
-      
+
       setTimeout(() => {
         errorDiv.style.transition = 'opacity 0.5s';
         errorDiv.style.opacity = '0';
