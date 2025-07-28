@@ -153,12 +153,21 @@
       utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/utils.js"
     });
 
+    // Get booking info from sessionStorage
     const bookingDataRaw = sessionStorage.getItem("bookingInfo");
     if (!bookingDataRaw) {
       alert("Missing booking information. Please go back and try again.");
       return;
     }
+
     const bookingData = JSON.parse(bookingDataRaw);
+
+    // Optional: Validate tour_id from URL and sessionStorage
+    const urlTourId = new URLSearchParams(window.location.search).get("tour_id");
+    if (urlTourId !== bookingData.tour_id) {
+      alert("Invalid tour ID");
+      return;
+    }
 
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -192,6 +201,7 @@
         if (!response.ok || !data.iframe_url) {
           throw new Error(data.error || 'No payment link received');
         }
+
         window.location.href = data.iframe_url;
       } catch (error) {
         showError(error.message || 'Payment processing failed');
