@@ -153,7 +153,6 @@
       utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@17.0.8/build/js/utils.js"
     });
 
-    // Get booking info from sessionStorage
     const bookingDataRaw = sessionStorage.getItem("bookingInfo");
     if (!bookingDataRaw) {
       alert("Missing booking information. Please go back and try again.");
@@ -162,9 +161,9 @@
 
     const bookingData = JSON.parse(bookingDataRaw);
 
-    // Optional: Validate tour_id from URL and sessionStorage
+    // Validate tour ID from URL if available
     const urlTourId = new URLSearchParams(window.location.search).get("tour_id");
-    if (urlTourId !== bookingData.tour_id) {
+    if (urlTourId && parseInt(urlTourId) !== parseInt(bookingData.tour_id)) {
       alert("Invalid tour ID");
       return;
     }
