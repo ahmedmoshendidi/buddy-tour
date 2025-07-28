@@ -62,6 +62,8 @@ async function generatePaymentKey(token, orderId, billingData, amountCents) {
 // === /api/pay ===
 router.post("/pay", async (req, res) => {
   try {
+    console.log("✅ Incoming payment request:", req.body);
+
     const {
       firstName,
       lastName,
