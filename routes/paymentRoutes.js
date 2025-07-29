@@ -62,15 +62,13 @@ async function generatePaymentKey(token, orderId, billingData, amountCents) {
 // === /api/pay ===
 router.post("/pay", async (req, res) => {
   try {
-    console.log("✅ Incoming payment request:", req.body);
-
     const {
       firstName,
       lastName,
       email,
       phone,
       nationality,
-      tourId,
+      tour_id,
       selectedDate,
       timeSlot,
       peopleCount // { adults: number, children: number }
@@ -90,9 +88,9 @@ router.post("/pay", async (req, res) => {
       state: "NA",
     };
 
-    // Get tour price
+    // ✅ Get tour price using tour_id
     const client = await pool.connect();
-    const tourRes = await client.query("SELECT price_per_person FROM tours WHERE id = $1", [tourId]);
+    const tourRes = await client.query("SELECT price_per_person FROM tours WHERE id = $1", [tour_id]);
     client.release();
 
     if (tourRes.rows.length === 0) {
@@ -101,7 +99,7 @@ router.post("/pay", async (req, res) => {
 
     const basePrice = tourRes.rows[0].price_per_person;
     const adultPrice = basePrice * peopleCount.adults;
-    const childPrice = basePrice * 0.8 * peopleCount.children; // 20% discount for children
+    const childPrice = basePrice * 0.8 * peopleCount.children;
     const totalAmountCents = Math.round((adultPrice + childPrice) * 100);
 
     const token = await getAuthToken();
@@ -113,7 +111,7 @@ router.post("/pay", async (req, res) => {
     paymentStatus.set(orderId.toString(), {
       status: "pending",
       billingData,
-      tourId,
+      tour_id,
       selectedDate,
       timeSlot,
       peopleCount,
@@ -126,6 +124,7 @@ router.post("/pay", async (req, res) => {
     res.status(500).json({ error: "Payment initiation failed" });
   }
 });
+
 
 // === /api/payment-callback ===
 router.post("/payment-callback", async (req, res) => {
