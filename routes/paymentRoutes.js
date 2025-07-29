@@ -134,15 +134,26 @@ router.post("/payment-callback", async (req, res) => {
     const billingData = transaction.payment_key_claims?.billing_data || {};
     const existing = paymentStatus.get(orderId.toString()) || {};
 
-    paymentStatus.set(orderId.toString(), {
-      ...existing,
-      status: isSuccess ? "captured" : "failed",
-      transactionId,
-      orderId,
-      amountCents: transaction.amount_cents,
-      billingData,
-      updatedAt: new Date(),
-    });
+    // paymentStatus.set(orderId.toString(), {
+    //   ...existing,
+    //   status: isSuccess ? "captured" : "failed",
+    //   transactionId,
+    //   orderId,
+    //   amountCents: transaction.amount_cents,
+    //   billingData,
+    //   updatedAt: new Date(),
+    // });
+
+    paymentStatus.set(transactionId.toString(), {
+    ...existing,
+    status: isSuccess ? "captured" : "failed",
+    transactionId,
+    orderId,
+    amountCents: transaction.amount_cents,
+    billingData,
+    updatedAt: new Date(),
+  });
+
 
     if (isSuccess) {
       try {
