@@ -93,7 +93,9 @@ app.get("/payment/failure", (req, res) => {
   res.sendFile(path.join(__dirname, "public/fail.html"));
 });
 
-app.get("*", (req, res) => {
+// Path-to-RegExp v8 requires a named wildcard parameter
+// for catch-all routes instead of using "*" directly.
+app.get("/*rest", (req, res) => {
   res.sendFile(path.join(__dirname, "client/dist/index.html"));
 });
 
