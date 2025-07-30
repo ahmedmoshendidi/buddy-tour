@@ -93,7 +93,9 @@ app.get("/payment/failure", (req, res) => {
   res.sendFile(path.join(__dirname, "public/fail.html"));
 });
 
-app.get("*", (req, res) => {
+// In Express 5.x using path-to-regexp v8, bare "*" patterns are invalid.
+// Use a named wildcard parameter instead to catch all unmatched routes.
+app.get("/*splat", (req, res) => {
   res.sendFile(path.join(__dirname, "client/dist/index.html"));
 });
 
