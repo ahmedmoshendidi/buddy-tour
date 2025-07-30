@@ -82,6 +82,7 @@ app.use('/api', bookingRoutes);
 // ======================
 // Static Files & Frontend Routes
 // ======================
+app.use(express.static(path.join(__dirname, "client/dist")));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/payment/success", (req, res) => {
@@ -90,6 +91,10 @@ app.get("/payment/success", (req, res) => {
 
 app.get("/payment/failure", (req, res) => {
   res.sendFile(path.join(__dirname, "public/fail.html"));
+});
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/dist/index.html"));
 });
 
 // ======================
