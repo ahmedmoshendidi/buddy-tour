@@ -1,6 +1,6 @@
 const sendConfirmationEmail = require("./utils/sendConfirmationEmail");
 
-sendConfirmationEmail("ahmedmoalshendidi@gmail.com", "Ahmed")
+sendConfirmationEmail("ahmedmoalshendidi@gmail.com", "Ahmed Test", 12345, 100)
   .then(() => {
     console.log("✅ Test email sent successfully.");
   })
