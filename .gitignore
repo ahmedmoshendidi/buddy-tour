@@ -24,3 +24,7 @@ yarn-error.log*
 # مجلدات build
 dist/
 build/
+# React client
+client/node_modules/
+client/dist/
+
