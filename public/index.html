@@ -2,20 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BuddyTour - Explore Alexandria</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
+      font-family: Arial, sans-serif;
     }
 
     header {
       background-color: #1abc9c;
-      color: white;
       padding: 20px;
+      color: white;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -23,7 +21,6 @@
 
     header h1 {
       margin: 0;
-      font-size: 24px;
     }
 
     nav a {
@@ -34,21 +31,49 @@
     }
 
     .hero {
-      background-image: url('https://example.com/hero-image.jpg');
-      background-size: cover;
-      background-position: center;
+      position: relative;
+      height: 400px;
+      overflow: hidden;
       color: white;
       text-align: center;
-      padding: 100px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .hero-bg {
+      position: absolute;
+      top: 0;
+      left: 100%;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      transition: left 1s ease-in-out;
+      z-index: 0;
+    }
+
+    .hero-bg.active {
+      left: 0;
+      z-index: 1;
+    }
+
+    .hero h2, .hero p {
+      position: relative;
+      z-index: 2;
+      margin: 0.5em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
     }
 
     .hero h2 {
       font-size: 36px;
-      margin-bottom: 10px;
+      font-weight: bold;
     }
 
     .hero p {
       font-size: 18px;
+      font-weight: normal;
     }
 
     .listing {
@@ -107,55 +132,110 @@
   </header>
 
   <section class="hero">
-    <h2>Explore Alexandria with Local Guides</h2>
+    <div id="bg1" class="hero-bg active" style="background-image: url('images/roman theatre.jpg');"></div>
+    <div id="bg2" class="hero-bg"></div>
+
+    <h2 id="headline">Explore Roman Theatre with Your Local Buddy</h2>
     <p>Book unique experiences led by locals in Egypt's beautiful coastal city.</p>
   </section>
 
   <section class="listing">
-  <a href="tour-details.html?tour_id=1" class="tour-card">
-    <img src="images/Bibliotheca Alexandrina.jpg" alt="Bibliotheca Alexandrina" />
-    <div class="content">
-      <h3>Bibliotheca Alexandrina Tour</h3>
-      <p>Explore the modern library with a rich historical background.</p>
-      <p><strong>Duration:</strong> 2 hours</p>
-      <p><strong>Group Size:</strong> up to 15 people</p>
-      <p><strong>Price:</strong> $20</p>
-    </div>
-  </a>
+    <a href="tour-details.html?tour_id=1" class="tour-card">
+      <img src="images/Bibliotheca Alexandrina.jpg" alt="Bibliotheca Alexandrina" />
+      <div class="content">
+        <h3>Bibliotheca Alexandrina Tour</h3>
+        <p>Explore the modern library with a rich historical background.</p>
+        <p><strong>Price:</strong> $20</p>
+      </div>
+    </a>
 
-  <a href="tour-details.html?tour_id=2" class="tour-card">
-    <img src="images/qaitbay citadel.jpg" alt="Qaitbay Citadel" />
-    <div class="content">
-      <h3>Qaitbay Citadel Experience</h3>
-      <p>Discover the fortress that once guarded the ancient lighthouse.</p>
-      <p><strong>Duration:</strong> 1.5 hours</p>
-      <p><strong>Group Size:</strong> up to 15 people</p>
-      <p><strong>Price:</strong> $25</p>
-    </div>
-  </a>
+    <a href="tour-details.html?tour_id=2" class="tour-card">
+      <img src="images/qaitbay citadel.jpg" alt="Qaitbay Citadel" />
+      <div class="content">
+        <h3>Qaitbay Citadel Experience</h3>
+        <p>Discover the fortress that once guarded the ancient lighthouse.</p>
+        <p><strong>Price:</strong> $25</p>
+      </div>
+    </a>
 
-  <a href="tour-details.html?tour_id=3" class="tour-card">
-    <img src="images/montaza palace.jpg" alt="Montaza Palace" />
-    <div class="content">
-      <h3>Montaza Palace Gardens Walk</h3>
-      <p>Enjoy peaceful walks in royal gardens by the sea.</p>
-      <p><strong>Duration:</strong> 2 hours</p>
-      <p><strong>Group Size:</strong> up to 15 people</p>
-      <p><strong>Price:</strong> $18</p>
-    </div>
-  </a>
+    <a href="tour-details.html?tour_id=3" class="tour-card">
+      <img src="images/montaza palace.jpg" alt="Montaza Palace" />
+      <div class="content">
+        <h3>Montaza Palace Gardens Walk</h3>
+        <p>Enjoy peaceful walks in royal gardens by the sea.</p>
+        <p><strong>Price:</strong> $18</p>
+      </div>
+    </a>
 
-  <a href="tour-details.html?tour_id=4" class="tour-card">
-    <img src="images/roman theatre.jpg" alt="Roman Amphitheatre" />
-    <div class="content">
-      <h3>Roman Amphitheatre Tour</h3>
-      <p>Dive into Greco-Roman history in Alexandria.</p>
-      <p><strong>Duration:</strong> 1 hour</p>
-      <p><strong>Group Size:</strong> up to 15 people</p>
-      <p><strong>Price:</strong> $22</p>
-    </div>
-  </a>
-</section>
+    <a href="tour-details.html?tour_id=4" class="tour-card">
+      <img src="images/roman theatre.jpg" alt="Roman Amphitheatre" />
+      <div class="content">
+        <h3>Roman Amphitheatre Tour</h3>
+        <p>Dive into Greco-Roman history in Alexandria.</p>
+        <p><strong>Price:</strong> $22</p>
+      </div>
+    </a>
+  </section>
+
+  <script>
+  const images = [
+    { src: 'images/roman theatre.jpg', title: 'Roman Theatre' },
+    { src: 'images/montaza palace.jpg', title: 'Montaza Palace' },
+    { src: 'images/qaitbay citadel.jpg', title: 'Qaitbay Citadel' },
+    { src: 'images/Bibliotheca Alexandrina.jpg', title: 'Bibliotheca Alexandrina' }
+  ];
+
+  let index = 0;
+  const bg1 = document.getElementById('bg1');
+  const bg2 = document.getElementById('bg2');
+  const headline = document.getElementById('headline');
+  let showingBg1 = true;
+
+  function updateHero() {
+    const current = images[index];
+    const nextIndex = (index + 1) % images.length;
+    const next = images[nextIndex];
+
+    const activeBg = showingBg1 ? bg1 : bg2;
+    const inactiveBg = showingBg1 ? bg2 : bg1;
+
+    // Set next image in inactive background
+    inactiveBg.style.backgroundImage = `url('${next.src}')`;
+    inactiveBg.style.left = '100%';
+    inactiveBg.style.zIndex = 2;
+    activeBg.style.zIndex = 1;
+
+    // Trigger the slide animation
+    setTimeout(() => {
+      inactiveBg.style.transition = 'left 1s ease-in-out';
+      activeBg.style.transition = 'left 1s ease-in-out';
+
+      inactiveBg.style.left = '0%';
+      activeBg.style.left = '-100%';
+    }, 20); // allow time for position reset before animating
+
+    // After animation, reset previous bg for next use
+    setTimeout(() => {
+      activeBg.style.transition = 'none';
+      activeBg.style.left = '100%';
+    }, 1100);
+
+    headline.textContent = `Explore ${next.title} with Your Local Buddy`;
+    index = nextIndex;
+    showingBg1 = !showingBg1;
+  }
+
+  // Start initial image setup
+  window.addEventListener('DOMContentLoaded', () => {
+    bg1.style.backgroundImage = `url('${images[0].src}')`;
+    bg1.style.left = '0%';
+    bg1.style.zIndex = 2;
+    bg2.style.left = '100%';
+    bg2.style.zIndex = 1;
+
+    setInterval(updateHero, 5000);
+  });
+</script>
 
 </body>
 </html>
