@@ -161,52 +161,43 @@
     <p>Book unique experiences led by locals in the beautiful coastal city of Alexandria, Egypt.</p>
   </section>
 
-  <section class="listing">
-    <a href="tour-details.html?tour_id=1" class="tour-card">
-      <img src="images/Bibliotheca Alexandrina.jpg" alt="Bibliotheca Alexandrina" />
-      <div class="content">
-        <h3>Bibliotheca Alexandrina Tour</h3>
-        <p>Explore the modern library with a rich historical background.</p>
-        <p><i class="fa-solid fa-clock"></i> Duration: 2 hours</p>
-        <p><i class="fa-solid fa-users"></i> Group Size: up to 15 people</p>
-        <p><i class="fa-solid fa-dollar-sign"></i> Price: $20</p>
-      </div>
-    </a>
+  <section class="listing" id="tour-listing"></section>
 
-<a href="tour-details.html?tour_id=2" class="tour-card">
-  <img src="images/qaitbay citadel.jpg" alt="Qaitbay Citadel" />
-  <div class="content">
-    <h3>Qaitbay Citadel Experience</h3>
-    <p>Discover the fortress that once guarded the ancient lighthouse.</p>
-    <p><i class="fa-solid fa-clock"></i> Duration: 1.5 hours</p>
-    <p><i class="fa-solid fa-users"></i> Group Size: up to 12 people</p>
-    <p><i class="fa-solid fa-dollar-sign"></i> Price: $25</p>
-  </div>
-</a>
+  <script>
+fetch('/api/tours')
+  .then(res => res.json())
+  .then(data => {
+    const container = document.getElementById('tour-listing');
+    container.innerHTML = '';
 
-<a href="tour-details.html?tour_id=3" class="tour-card">
-  <img src="images/montaza palace.jpg" alt="Montaza Palace" />
-  <div class="content">
-    <h3>Montaza Palace Gardens Walk</h3>
-    <p>Enjoy peaceful walks in royal gardens by the sea.</p>
-    <p><i class="fa-solid fa-clock"></i> Duration: 1 hour</p>
-    <p><i class="fa-solid fa-users"></i> Group Size: up to 20 people</p>
-    <p><i class="fa-solid fa-dollar-sign"></i> Price: $18</p>
-  </div>
-</a>
+    data.tours.forEach(tour => {
+      const card = document.createElement('a');
+      card.className = 'tour-card';
+      card.href = `tour-details.html?tour_id=${tour.id}`;
 
-<a href="tour-details.html?tour_id=4" class="tour-card">
-  <img src="images/roman theatre.jpg" alt="Roman Amphitheatre" />
-  <div class="content">
-    <h3>Roman Amphitheatre Tour</h3>
-    <p>Dive into Greco-Roman history in Alexandria.</p>
-    <p><i class="fa-solid fa-clock"></i> Duration: 1.5 hours</p>
-    <p><i class="fa-solid fa-users"></i> Group Size: up to 10 people</p>
-    <p><i class="fa-solid fa-dollar-sign"></i> Price: $22</p>
-  </div>
-</a>
+      const imageSrc = (tour.image_urls && tour.image_urls.length > 0)
+        ? tour.image_urls[0]
+        : 'https://via.placeholder.com/400x200?text=No+Image';
 
-  </section>
+      card.innerHTML = `
+        <img src="${imageSrc}" alt="${tour.title}" />
+        <div class="content">
+          <h3>${tour.title}</h3>
+          <p>${tour.description}</p>
+          <p><i class="fa-solid fa-clock"></i> Duration: ${tour.duration}</p>
+          <p><i class="fa-solid fa-users"></i> Group Size: up to ${tour.max_group_size} people</p>
+          <p><i class="fa-solid fa-dollar-sign"></i> Price: $${tour.price_per_person / 10}</p>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+  })
+  .catch(err => {
+    console.error("Failed to load tours:", err);
+  });
+</script>
+
 
   <script>
     const images = [

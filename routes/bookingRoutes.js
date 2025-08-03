@@ -114,4 +114,19 @@ router.get("/tours/:id", async (req, res) => {
   }
 });
 
+
+// GET /api/tours
+router.get("/tours", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, title, description, duration, price_per_person, max_group_size, image_urls FROM tours`
+    );
+    res.json({ tours: result.rows });
+  } catch (err) {
+    console.error("Error fetching tours:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 module.exports = router;
