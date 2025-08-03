@@ -35,13 +35,13 @@
       font-size: 16px;
       color: #555;
     }
-    .images {
+    .image {
       margin: 20px 0;
-      display: flex;
-      gap: 10px;
+      text-align: center;
     }
-    .images img {
-      width: 48%;
+    .image img {
+      width: 100%;
+      max-width: 600px;
       border-radius: 6px;
     }
     .book-button {
@@ -64,9 +64,8 @@
   <header>BuddyTour</header>
   <div class="container" id="tour-container">
     <h1 class="tour-title" id="title">Loading...</h1>
-    <div class="images">
-      <img id="img1" src="https://via.placeholder.com/400x250?text=Image+1" alt="Tour image 1" />
-      <img id="img2" src="https://via.placeholder.com/400x250?text=Image+2" alt="Tour image 2" />
+    <div class="image">
+      <img id="img1" src="https://via.placeholder.com/600x350?text=Loading+Image" alt="Tour image" />
     </div>
     <p class="tour-description" id="description">Please wait while we load the tour details.</p>
     <a id="bookNow" class="book-button" href="#">Book Now</a>
@@ -92,9 +91,12 @@
         document.getElementById("description").textContent = tour.description;
         document.getElementById("bookNow").href = `tickets-and-quantity.html?tour_id=${tour.id}`;
 
-        // هنا تقدر تضيف صور حقيقية لو موجودة في قاعدة البيانات لاحقاً
-        document.getElementById("img1").src = "https://via.placeholder.com/400x250?text=Tour+Image+1";
-        document.getElementById("img2").src = "https://via.placeholder.com/400x250?text=Tour+Image+2";
+        // تحميل صورة من قاعدة البيانات إن وجدت، أو صورة افتراضية
+        if (tour.image_urls && tour.image_urls.length > 0) {
+          document.getElementById("img1").src = tour.image_urls[0];
+        } else {
+          document.getElementById("img1").src = "https://via.placeholder.com/600x350?text=" + encodeURIComponent(tour.title);
+        }
       })
       .catch(err => {
         console.error(err);
