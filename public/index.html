@@ -6,8 +6,6 @@
   <title>BuddyTour - Explore Alexandria</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="css/all.css" />
-
-
   <style>
     body {
       margin: 0;
@@ -21,10 +19,16 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     header h1 {
       margin: 0;
+      font-size: 24px;
+    }
+
+    nav {
+      margin-top: 10px;
     }
 
     nav a {
@@ -36,7 +40,7 @@
 
     .hero {
       position: relative;
-      height: 400px;
+      height: 300px;
       overflow: hidden;
       color: white;
       text-align: center;
@@ -44,6 +48,7 @@
       justify-content: center;
       align-items: center;
       flex-direction: column;
+      padding: 10px;
     }
 
     .hero-bg {
@@ -71,19 +76,18 @@
     }
 
     .hero h2 {
-      font-size: 36px;
+      font-size: 24px;
       font-weight: bold;
     }
 
     .hero p {
-      font-size: 18px;
-      font-weight: normal;
+      font-size: 16px;
     }
 
     .listing {
-      padding: 40px 20px;
+      padding: 20px;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
       max-width: 1200px;
       margin: auto;
@@ -123,9 +127,19 @@
       font-size: 14px;
       color: #555;
     }
+
     .tour-card .content p i {
       margin-right: 8px;
       color: #1abc9c;
+    }
+
+    @media (max-width: 480px) {
+      .hero h2 {
+        font-size: 20px;
+      }
+      .hero p {
+        font-size: 14px;
+      }
     }
   </style>
 </head>
@@ -148,16 +162,16 @@
   </section>
 
   <section class="listing">
-   <a href="tour-details.html?tour_id=1" class="tour-card">
-  <img src="images/Bibliotheca Alexandrina.jpg" alt="Bibliotheca Alexandrina" />
-  <div class="content">
-    <h3>Bibliotheca Alexandrina Tour</h3>
-    <p>Explore the modern library with a rich historical background.</p>
-    <p><i class="fa-solid fa-clock"></i> Duration: 2 hours</p>
-    <p><i class="fa-solid fa-users"></i> Group Size: up to 15 people</p>
-    <p><i class="fa-solid fa-dollar-sign"></i> Price: $20</p>
-  </div>
-</a>
+    <a href="tour-details.html?tour_id=1" class="tour-card">
+      <img src="images/Bibliotheca Alexandrina.jpg" alt="Bibliotheca Alexandrina" />
+      <div class="content">
+        <h3>Bibliotheca Alexandrina Tour</h3>
+        <p>Explore the modern library with a rich historical background.</p>
+        <p><i class="fa-solid fa-clock"></i> Duration: 2 hours</p>
+        <p><i class="fa-solid fa-users"></i> Group Size: up to 15 people</p>
+        <p><i class="fa-solid fa-dollar-sign"></i> Price: $20</p>
+      </div>
+    </a>
 
 <a href="tour-details.html?tour_id=2" class="tour-card">
   <img src="images/qaitbay citadel.jpg" alt="Qaitbay Citadel" />
@@ -195,64 +209,59 @@
   </section>
 
   <script>
-  const images = [
-    { src: 'images/roman theatre.jpg', title: 'Roman Theatre' },
-    { src: 'images/montaza palace.jpg', title: 'Montaza Palace' },
-    { src: 'images/qaitbay citadel.jpg', title: 'Qaitbay Citadel' },
-    { src: 'images/Bibliotheca Alexandrina.jpg', title: 'Bibliotheca Alexandrina' }
-  ];
+    const images = [
+      { src: 'images/roman theatre.jpg', title: 'Roman Theatre' },
+      { src: 'images/montaza palace.jpg', title: 'Montaza Palace' },
+      { src: 'images/qaitbay citadel.jpg', title: 'Qaitbay Citadel' },
+      { src: 'images/Bibliotheca Alexandrina.jpg', title: 'Bibliotheca Alexandrina' }
+    ];
 
-  let index = 0;
-  const bg1 = document.getElementById('bg1');
-  const bg2 = document.getElementById('bg2');
-  const headline = document.getElementById('headline');
-  let showingBg1 = true;
+    let index = 0;
+    const bg1 = document.getElementById('bg1');
+    const bg2 = document.getElementById('bg2');
+    const headline = document.getElementById('headline');
+    let showingBg1 = true;
 
-  function updateHero() {
-    const current = images[index];
-    const nextIndex = (index + 1) % images.length;
-    const next = images[nextIndex];
+    function updateHero() {
+      const current = images[index];
+      const nextIndex = (index + 1) % images.length;
+      const next = images[nextIndex];
 
-    const activeBg = showingBg1 ? bg1 : bg2;
-    const inactiveBg = showingBg1 ? bg2 : bg1;
+      const activeBg = showingBg1 ? bg1 : bg2;
+      const inactiveBg = showingBg1 ? bg2 : bg1;
 
-    // Set next image in inactive background
-    inactiveBg.style.backgroundImage = `url('${next.src}')`;
-    inactiveBg.style.left = '100%';
-    inactiveBg.style.zIndex = 2;
-    activeBg.style.zIndex = 1;
+      inactiveBg.style.backgroundImage = `url('${next.src}')`;
+      inactiveBg.style.left = '100%';
+      inactiveBg.style.zIndex = 2;
+      activeBg.style.zIndex = 1;
 
-    // Trigger the slide animation
-    setTimeout(() => {
-      inactiveBg.style.transition = 'left 1s ease-in-out';
-      activeBg.style.transition = 'left 1s ease-in-out';
+      setTimeout(() => {
+        inactiveBg.style.transition = 'left 1s ease-in-out';
+        activeBg.style.transition = 'left 1s ease-in-out';
 
-      inactiveBg.style.left = '0%';
-      activeBg.style.left = '-100%';
-    }, 20); // allow time for position reset before animating
+        inactiveBg.style.left = '0%';
+        activeBg.style.left = '-100%';
+      }, 20);
 
-    // After animation, reset previous bg for next use
-    setTimeout(() => {
-      activeBg.style.transition = 'none';
-      activeBg.style.left = '100%';
-    }, 1100);
+      setTimeout(() => {
+        activeBg.style.transition = 'none';
+        activeBg.style.left = '100%';
+      }, 1100);
 
-    headline.textContent = `Explore ${next.title} with Your Local Buddy`;
-    index = nextIndex;
-    showingBg1 = !showingBg1;
-  }
+      headline.textContent = `Explore ${next.title} with Your Local Buddy`;
+      index = nextIndex;
+      showingBg1 = !showingBg1;
+    }
 
-  // Start initial image setup
-  window.addEventListener('DOMContentLoaded', () => {
-    bg1.style.backgroundImage = `url('${images[0].src}')`;
-    bg1.style.left = '0%';
-    bg1.style.zIndex = 2;
-    bg2.style.left = '100%';
-    bg2.style.zIndex = 1;
+    window.addEventListener('DOMContentLoaded', () => {
+      bg1.style.backgroundImage = `url('${images[0].src}')`;
+      bg1.style.left = '0%';
+      bg1.style.zIndex = 2;
+      bg2.style.left = '100%';
+      bg2.style.zIndex = 1;
 
-    setInterval(updateHero, 5000);
-  });
-</script>
-
+      setInterval(updateHero, 5000);
+    });
+  </script>
 </body>
 </html>
