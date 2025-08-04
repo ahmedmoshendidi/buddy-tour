@@ -122,25 +122,25 @@
       <div class="form-group">
         <label for="adults">Adults (15+):</label>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <button type="button" onclick="changeCount('adults', -1)">-</button>
+          <button type="button" id="adults-decrease">-</button>
           <span id="adults-count">0</span>
-          <button type="button" onclick="changeCount('adults', 1)">+</button>
+          <button type="button" id="adults-increase">+</button>
         </div>
       </div>
 
       <div class="form-group">
         <label for="children">Children (<15):</label>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <button type="button" onclick="changeCount('children', -1)">-</button>
+          <button type="button" id="children-decrease">-</button>
           <span id="children-count">0</span>
-          <button type="button" onclick="changeCount('children', 1)">+</button>
+          <button type="button" id="children-increase">+</button>
         </div>
       </div>
     </div>
 
     <div class="form-group">
       <label><strong>Total Price:</strong></label>
-      <p id="total-price">0 USD</p>
+      <p id="total-price">0.00 $</p>
     </div>
 
     <button id="checkout-btn">Checkout</button>
@@ -171,7 +171,6 @@
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('price').textContent = `${basePrice} $`;
-
 
         generateCalendar();
         updateTotalPrice();
@@ -261,8 +260,7 @@
       const children = parseInt(document.getElementById("children-count").textContent) || 0;
       const childPrice = basePrice * 0.8;
       const total = (adults * basePrice) + (children * childPrice);
-     document.getElementById("total-price").textContent = `${total.toFixed(2)} $`;
-
+      document.getElementById("total-price").textContent = `${total.toFixed(2)} $`;
     }
 
     function changeCount(type, delta) {
@@ -272,6 +270,11 @@
       countSpan.textContent = value;
       updateTotalPrice();
     }
+
+    document.getElementById("adults-increase").addEventListener("click", () => changeCount("adults", 1));
+    document.getElementById("adults-decrease").addEventListener("click", () => changeCount("adults", -1));
+    document.getElementById("children-increase").addEventListener("click", () => changeCount("children", 1));
+    document.getElementById("children-decrease").addEventListener("click", () => changeCount("children", -1));
 
     document.getElementById("checkout-btn").addEventListener("click", () => {
       const adults = parseInt(document.getElementById("adults-count").textContent) || 0;
