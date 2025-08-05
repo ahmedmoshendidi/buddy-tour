@@ -1,26 +1,34 @@
 const axios = require('axios');
 
-/**
- * Send confirmation email to the customer
- * @param {string} email - Customer's email address
- * @param {string} firstName - Customer's first name
- */
-const sendConfirmationEmail = async (email, firstName) => {
+const sendConfirmationEmail = async (email, firstName, lastName, bookingData) => {
   try {
     const response = await axios.post('https://api.mailersend.com/v1/email', {
       from: {
-        email: "noreply@test-xkjn41m7yy04z781.mlsender.net", // استخدم test domain أو verified domain
+        email: process.env.MAILERSEND_SENDER_EMAIL,
         name: "Buddy Tour"
       },
       to: [
         {
           email,
-          name: firstName
+          name: `${firstName} ${lastName}`
         }
       ],
-      subject: "Booking Confirmation",
-      text: `Hi ${firstName},\n\nThank you for booking your tour with Buddy Tour!`,
-      html: `<h3>Hi ${firstName},</h3><p>Thank you for booking your tour with <strong>Buddy Tour</strong>!</p>`
+      template_id: process.env.MAILERSEND_TEMPLATE_ID,
+      variables: [
+        {
+          email,
+          substitutions: [
+            { var: "firstName", value: firstName },
+            { var: "lastName", value: lastName },
+            { var: "tourTitle", value: bookingData.tourTitle },
+            { var: "date", value: bookingData.date },
+            { var: "time", value: bookingData.time },
+            { var: "adults", value: bookingData.adults.toString() },
+            { var: "children", value: bookingData.children.toString() },
+            { var: "amount", value: bookingData.amount.toFixed(2) }
+          ]
+        }
+      ]
     }, {
       headers: {
         Authorization: `Bearer ${process.env.MAILERSEND_API_TOKEN}`,
@@ -28,9 +36,9 @@ const sendConfirmationEmail = async (email, firstName) => {
       }
     });
 
-    console.log('✅ Email sent to:', email);
+    console.log('✅ Template email sent to:', email);
   } catch (err) {
-    console.error('❌ Error sending email:', err.response?.data || err.message);
+    console.error('❌ Error sending template email:', err.response?.data || err.message);
   }
 };
 

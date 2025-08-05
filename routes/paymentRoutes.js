@@ -90,10 +90,11 @@ router.post("/pay", async (req, res) => {
     };
 
     const client = await pool.connect();
-    const tourRes = await client.query("SELECT price_per_person FROM tours WHERE id = $1", [tour_id]);
+    const tourRes = await client.query("SELECT price_per_person, title FROM tours WHERE id = $1", [tour_id]);
     if (tourRes.rows.length === 0) return res.status(400).json({ error: "Invalid tour ID" });
 
     const basePrice = tourRes.rows[0].price_per_person;
+    const tourTitle = tourRes.rows[0].title;
     const totalAmountCents = Math.round((basePrice * adults + basePrice * 0.8 * children) * 100);
 
     const token = await getAuthToken();
@@ -106,6 +107,7 @@ router.post("/pay", async (req, res) => {
       status: "pending",
       billingData,
       tourId: parseInt(tour_id),
+      tourTitle,
       selectedDate: date,
       timeSlot: time,
       peopleCount: { adults, children },
@@ -134,26 +136,15 @@ router.post("/payment-callback", async (req, res) => {
     const billingData = transaction.payment_key_claims?.billing_data || {};
     const existing = paymentStatus.get(orderId.toString()) || {};
 
-    // paymentStatus.set(orderId.toString(), {
-    //   ...existing,
-    //   status: isSuccess ? "captured" : "failed",
-    //   transactionId,
-    //   orderId,
-    //   amountCents: transaction.amount_cents,
-    //   billingData,
-    //   updatedAt: new Date(),
-    // });
-
     paymentStatus.set(transactionId.toString(), {
-    ...existing,
-    status: isSuccess ? "captured" : "failed",
-    transactionId,
-    orderId,
-    amountCents: transaction.amount_cents,
-    billingData,
-    updatedAt: new Date(),
-  });
-
+      ...existing,
+      status: isSuccess ? "captured" : "failed",
+      transactionId,
+      orderId,
+      amountCents: transaction.amount_cents,
+      billingData,
+      updatedAt: new Date(),
+    });
 
     if (isSuccess) {
       try {
@@ -165,6 +156,7 @@ router.post("/payment-callback", async (req, res) => {
 
         const {
           tourId,
+          tourTitle,
           guideId = 1,
           selectedDate,
           timeSlot,
@@ -183,7 +175,18 @@ router.post("/payment-callback", async (req, res) => {
           [orderId, transactionId, email, fullName, transaction.amount_cents, "captured"]
         );
 
-        await sendConfirmationEmail(email, fullName, orderId, transaction.amount_cents / 100);
+        const [firstName, ...rest] = fullName.split(" ");
+        const lastName = rest.join(" ") || "-";
+
+        await sendConfirmationEmail(email, firstName, lastName, {
+          tourTitle,
+          date: selectedDate,
+          time: timeSlot,
+          adults: peopleCount.adults,
+          children: peopleCount.children,
+          amount: transaction.amount_cents / 100
+        });
+
         console.log("📨 Confirmation email sent.");
         client.release();
       } catch (err) {
