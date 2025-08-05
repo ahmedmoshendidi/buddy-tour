@@ -175,17 +175,20 @@ router.post("/payment-callback", async (req, res) => {
           [orderId, transactionId, email, fullName, transaction.amount_cents, "captured"]
         );
 
-        const [firstName, ...rest] = fullName.split(" ");
-        const lastName = rest.join(" ") || "-";
+        
 
-        await sendConfirmationEmail(email, firstName, lastName, {
-          tourTitle,
-          date: selectedDate,
-          time: timeSlot,
-          adults: peopleCount.adults,
-          children: peopleCount.children,
-          amount: transaction.amount_cents / 100
-        });
+      await sendConfirmationEmail(email, "Booking Confirmation", {
+        firstName: billingData.first_name,
+        lastName: billingData.last_name || "-",
+        tourTitle,
+        date: selectedDate,
+        time: timeSlot,
+        adults: peopleCount.adults,
+        children: peopleCount.children,
+        amount: transaction.amount_cents / 100,
+      });
+
+
 
         console.log("📨 Confirmation email sent.");
         client.release();

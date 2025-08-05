@@ -1,8 +1,14 @@
-const axios = require('axios');
+const axios = require("axios");
 
-const sendConfirmationEmail = async (email, firstName, lastName, bookingData) => {
+/**
+ * Send template confirmation email
+ * @param {string} email - Customer's email address
+ * @param {string} subject - Email subject line
+ * @param {object} variables - Variables to fill in the template
+ */
+const sendConfirmationEmail = async (email, subject, variables) => {
   try {
-    const response = await axios.post('https://api.mailersend.com/v1/email', {
+    const response = await axios.post("https://api.mailersend.com/v1/email", {
       from: {
         email: process.env.MAILERSEND_SENDER_EMAIL,
         name: "Buddy Tour"
@@ -10,23 +16,18 @@ const sendConfirmationEmail = async (email, firstName, lastName, bookingData) =>
       to: [
         {
           email,
-          name: `${firstName} ${lastName}`
+          name: `${variables.firstName} ${variables.lastName}`
         }
       ],
+      subject: subject,
       template_id: process.env.MAILERSEND_TEMPLATE_ID,
       variables: [
         {
           email,
-          substitutions: [
-            { var: "firstName", value: firstName },
-            { var: "lastName", value: lastName },
-            { var: "tourTitle", value: bookingData.tourTitle },
-            { var: "date", value: bookingData.date },
-            { var: "time", value: bookingData.time },
-            { var: "adults", value: bookingData.adults.toString() },
-            { var: "children", value: bookingData.children.toString() },
-            { var: "amount", value: bookingData.amount.toFixed(2) }
-          ]
+          substitutions: Object.entries(variables).map(([key, value]) => ({
+            var: key,
+            value: String(value)
+          }))
         }
       ]
     }, {
