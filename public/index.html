@@ -218,11 +218,11 @@
     }
     .tour-card:hover img { transform: scale(1.03); }
     .tour-card .content {
-      padding: 18px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px;
       height: calc(420px - 180px);
     }
     .tour-card .content h3 {
@@ -239,11 +239,23 @@
       -webkit-box-orient: vertical;
     }
     .tour-card .content p:first-of-type {
-      font-size: 14px; color: var(--muted);
-      line-height: 1.45; margin-bottom: 6px;
-      height: 56px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin-bottom: 4px;
+      height: 44px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
-    .tour-card .content p { font-size: 14px; color: #405; margin: 2px 0; }
+    .tour-card .content p {
+      font-size: 14px;
+      color: #405;
+      margin: 0;
+      line-height: 1.35;
+    }
     .tour-card .content p i { margin-right: 8px; color: var(--primary); }
 
     /* Skeletons (placeholder before data loads) */
