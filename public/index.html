@@ -141,6 +141,9 @@
       text-decoration: none;
       color: inherit;
       transition: transform 0.2s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
 
     .tour-card:hover {
@@ -155,7 +158,17 @@
 
     .tour-card .content {
       padding: 15px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
+
+    .tour-card .content p:first-of-type {
+      min-height: 50px;
+      overflow: hidden;
+    }
+
 
     .tour-card .content h3 {
       margin: 0 0 10px 0;
