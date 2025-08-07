@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Alexandria Tours & Guides | Book Local Trips with BuddyTour</title>
 
-  <meta name="description" content="Discover and book affordable Alexandria tours with expert local guides. Explore Egypt’s best sights with BuddyTour. Easy online booking!" />
+  <meta name="description" content="Discover and book affordable Alexandria tours with expert local guides. Explore Egypt's best sights with BuddyTour. Easy online booking!" />
   <meta name="keywords" content="Alexandria tour, Egypt tours, tour guide Alexandria, walking tour, Buddy Tour" />
   <meta name="robots" content="index, follow" />
 
@@ -24,7 +24,6 @@
   <meta name="twitter:description" content="Book amazing experiences in Alexandria with trusted local tour guides.">
   <meta name="twitter:image" content="https://buddy-tour-production.up.railway.app/images/roman%20theatre.jpg">
 
-
   <!-- ✅ JSON-LD Structured Data -->
   <script type="application/ld+json">
   {
@@ -32,7 +31,7 @@
     "@type": "TouristDestination",
     "name": "BuddyTour",
     "url": "https://buddy-tour-production.up.railway.app/",
-    "description": "Book Alexandria tours with expert local guides. Explore Egypt’s top attractions easily with BuddyTour.",
+    "description": "Book Alexandria tours with expert local guides. Explore Egypt's top attractions easily with BuddyTour.",
     "image": "https://buddy-tour-production.up.railway.app/images/roman%20theatre.jpg",
     "address": {
       "@type": "PostalAddress",
@@ -49,6 +48,7 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
     }
 
     header {
@@ -124,70 +124,145 @@
     }
 
     .listing {
-      padding: 20px;
+      padding: 40px 20px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      max-width: 1200px;
-      margin: auto;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
     }
 
     .tour-card {
       background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       overflow: hidden;
       cursor: pointer;
       text-decoration: none;
       color: inherit;
-      transition: transform 0.2s ease-in-out;
+      transition: all 0.3s ease;
       display: flex;
       flex-direction: column;
-      height: 100%;
+      height: 420px;
+      max-width: 320px;
+      margin: 0 auto;
     }
 
     .tour-card:hover {
-      transform: scale(1.02);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
     }
 
     .tour-card img {
       width: 100%;
-      height: 200px;
+      height: 180px;
       object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .tour-card:hover img {
+      transform: scale(1.05);
     }
 
     .tour-card .content {
-      padding: 15px;
+      padding: 20px;
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 100%;
-    }
-
-    .tour-card .content p:first-of-type {
-      min-height: 48px;
-      max-height: 48px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 6px;
+      height: calc(420px - 180px);
     }
 
     .tour-card .content h3 {
-      margin: 0 0 10px 0;
-      font-size: 20px;
-      margin-bottom: 6px;
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c3e50;
+      line-height: 1.3;
+      height: 48px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
-    .tour-card .content p {
+    .tour-card .content p:first-of-type {
       font-size: 14px;
-      color: #555;
-      margin:4px 0;
+      color: #6c757d;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      height: 56px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
     }
 
-    .tour-card .content p i {
+    .tour-card .content .tour-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .tour-card .content .tour-details p {
+      font-size: 13px;
+      color: #495057;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+    }
+
+    .tour-card .content .tour-details p i {
       margin-right: 8px;
       color: #1abc9c;
+      width: 16px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .tour-card .content .tour-details .price {
+      color: #e74c3c;
+      font-weight: 600;
+      font-size: 16px;
+      margin-top: 4px;
+    }
+
+    .tour-card .content .tour-details .price i {
+      color: #e74c3c;
+    }
+
+    @media (max-width: 768px) {
+      .listing {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 20px 16px;
+      }
+      
+      .tour-card {
+        max-width: 100%;
+        height: 380px;
+      }
+      
+      .tour-card img {
+        height: 160px;
+      }
+      
+      .tour-card .content {
+        padding: 16px;
+        height: calc(380px - 160px);
+      }
+      
+      .tour-card .content h3 {
+        font-size: 16px;
+        height: 40px;
+      }
+      
+      .tour-card .content p:first-of-type {
+        height: 48px;
+        -webkit-line-clamp: 2;
+      }
     }
 
     @media (max-width: 480px) {
@@ -241,9 +316,11 @@ fetch('/api/tours')
         <div class="content">
           <h3>${tour.title}</h3>
           <p>${tour.description}</p>
-          <p><i class="fa-solid fa-clock"></i> Duration: ${tour.duration}</p>
-          <p><i class="fa-solid fa-users"></i> Group Size: up to ${tour.max_group_size} people</p>
-          <p><i class="fa-solid fa-dollar-sign"></i> Price: $${tour.price_per_person}</p>
+          <div class="tour-details">
+            <p><i class="fa-solid fa-clock"></i> Duration: ${tour.duration}</p>
+            <p><i class="fa-solid fa-users"></i> Group Size: up to ${tour.max_group_size} people</p>
+            <p class="price"><i class="fa-solid fa-dollar-sign"></i> Price: $${tour.price_per_person}</p>
+          </div>
         </div>
       `;
 
@@ -254,7 +331,6 @@ fetch('/api/tours')
     console.error("Failed to load tours:", err);
   });
 </script>
-
 
   <script>
     const images = [
