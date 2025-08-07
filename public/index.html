@@ -126,9 +126,9 @@
     .listing {
       padding: 40px 20px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 24px;
-      max-width: 1400px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
       margin: 0 auto;
     }
 
@@ -198,39 +198,15 @@
       -webkit-box-orient: vertical;
     }
 
-    .tour-card .content .tour-details {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: auto;
+    .tour-card .content p {
+      font-size: 14px;
+      color: #555;
+      margin: 4px 0;
     }
 
-    .tour-card .content .tour-details p {
-      font-size: 13px;
-      color: #495057;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      font-weight: 500;
-    }
-
-    .tour-card .content .tour-details p i {
+    .tour-card .content p i {
       margin-right: 8px;
       color: #1abc9c;
-      width: 16px;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    .tour-card .content .tour-details .price {
-      color: #e74c3c;
-      font-weight: 600;
-      font-size: 16px;
-      margin-top: 4px;
-    }
-
-    .tour-card .content .tour-details .price i {
-      color: #e74c3c;
     }
 
     @media (max-width: 768px) {
@@ -316,11 +292,9 @@ fetch('/api/tours')
         <div class="content">
           <h3>${tour.title}</h3>
           <p>${tour.description}</p>
-          <div class="tour-details">
-            <p><i class="fa-solid fa-clock"></i> Duration: ${tour.duration}</p>
-            <p><i class="fa-solid fa-users"></i> Group Size: up to ${tour.max_group_size} people</p>
-            <p class="price"><i class="fa-solid fa-dollar-sign"></i> Price: $${tour.price_per_person}</p>
-          </div>
+          <p><i class="fa-solid fa-clock"></i> Duration: ${tour.duration}</p>
+          <p><i class="fa-solid fa-users"></i> Group Size: up to ${tour.max_group_size} people</p>
+          <p><i class="fa-solid fa-dollar-sign"></i> Price: ${tour.price_per_person}</p>
         </div>
       `;
 
