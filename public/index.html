@@ -4,27 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Alexandria Tours & Guides | Book Local Trips with BuddyTour</title>
-
   <meta name="description" content="Discover and book affordable Alexandria tours with expert local guides. Explore Egypt's best sights with BuddyTour. Easy online booking!" />
   <meta name="keywords" content="Alexandria tour, Egypt tours, tour guide Alexandria, walking tour, Buddy Tour" />
   <meta name="robots" content="index, follow" />
-
-  <!-- ✅ Canonical tag -->
   <link rel="canonical" href="https://buddy-tour-production.up.railway.app/" />
-
-  <!-- ✅ OG Meta tags (Social sharing) -->
   <meta property="og:title" content="BuddyTour - Alexandria Tours with Local Guides" />
   <meta property="og:description" content="Book amazing experiences in Alexandria with trusted local tour guides." />
   <meta property="og:image" content="https://buddy-tour-production.up.railway.app/images/roman%20theatre.jpg" />
   <meta property="og:url" content="https://buddy-tour-production.up.railway.app/" />
   <meta property="og:type" content="website" />
-  <!-- ✅ Twitter Card meta tags -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="BuddyTour - Alexandria Tours with Local Guides">
   <meta name="twitter:description" content="Book amazing experiences in Alexandria with trusted local tour guides.">
   <meta name="twitter:image" content="https://buddy-tour-production.up.railway.app/images/roman%20theatre.jpg">
-
-  <!-- ✅ JSON-LD Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -40,180 +32,204 @@
     }
   }
   </script>
-
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="css/all.css" />
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f8f9fa;
+    :root{
+      --primary: #16a085; /* Teal */
+      --primary-600: #10907a;
+      --primary-700: #0b7e69;
+      --bg: #f7f9fb;
+      --card: #ffffff;
+      --text: #23313f;
+      --muted: #6b7a8a;
+      --ring: rgba(22,160,133,0.35);
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --radius: 14px;
+      --radius-sm: 10px;
     }
 
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    /* Skip link for accessibility */
+    .skip-link {
+      position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;
+    }
+    .skip-link:focus {
+      left: 16px; top: 16px; width: auto; height: auto; padding: 8px 12px; background: #fff; border-radius: 8px; box-shadow: var(--shadow);
+      z-index: 1001;
+    }
+
+    /* Header */
     header {
-      background-color: #1abc9c;
-      padding: 20px 40px;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       position: sticky;
       top: 0;
       z-index: 1000;
+      background: rgba(255,255,255,0.7);
       backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
     }
-
-    header h1 {
-      margin: 0;
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    nav {
-      margin: 0;
-    }
-
-    nav a {
-      color: white;
-      text-decoration: none;
-      margin-left: 32px;
-      font-weight: 500;
-      font-size: 15px;
-      transition: all 0.2s ease;
-      padding: 8px 16px;
-      border-radius: 6px;
-      position: relative;
-    }
-
-    nav a:hover {
-      background-color: rgba(255, 255, 255, 0.15);
-      transform: translateY(-1px);
-    }
-
-    nav a:first-child {
-      margin-left: 0;
-    }
-
-
-    .hero-bg-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100px;
-      width: 100%;
-      background: linear-gradient(to bottom, rgba(26, 188, 156, 1), rgba(26, 188, 156, 0));
-      z-index: 1;
-    }
-
-    .hero {
-      position: relative;
-      height: 500px;
-      overflow: hidden;
-      color: white;
-      text-align: center;
+    .nav-wrap {
       display: flex;
-      justify-content: center;
       align-items: center;
-      flex-direction: column;
-      padding: 10px 20px;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
     }
+    .brand {
+      display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.3px;
+      color: var(--primary-700);
+    }
+    .brand-mark {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), #2ecc71);
+      display: grid; place-items: center;
+      color: white; font-weight: 900;
+      box-shadow: 0 6px 18px rgba(22,160,133,0.35);
+    }
+    nav {
+      display: flex; align-items: center; gap: 8px;
+    }
+    nav a {
+      padding: 8px 14px; border-radius: 10px; color: #345; font-weight: 600; font-size: 14px;
+      transition: background .2s, transform .15s;
+    }
+    nav a:hover { background: rgba(0,0,0,0.04); transform: translateY(-1px); }
+    .cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--primary);
+      color: #fff; padding: 10px 16px; border-radius: 12px; font-weight: 700; box-shadow: 0 10px 20px var(--ring);
+      transition: transform .15s, background .2s;
+    }
+    .cta:hover { background: var(--primary-600); transform: translateY(-1px); }
+    .cta:focus { outline: 3px solid var(--ring); outline-offset: 2px; }
 
+    /* Hero */
+    .hero {
+      position: relative; height: 560px; overflow: hidden; color: white;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+    }
+    .hero .container { position: relative; z-index: 3; }
+    .hero-bg-overlay {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,.35)),
+        linear-gradient(to bottom, rgba(26,188,156, .85) 0, rgba(26,188,156, .0) 50%, rgba(26,188,156, .0) 100%);
+      z-index: 2;
+    }
     .hero-bg {
-      position: absolute;
-      top: 0;
-      left: 100%;
-      width: 100%;
-      height: 100%;
-      background-size: cover;
-      background-position: center;
-      transition: left 1s ease-in-out;
-      z-index: 0;
+      position: absolute; top: 0; left: 100%; width: 100%; height: 100%;
+      background-size: cover; background-position: center;
+      transition: left 1s ease-in-out; z-index: 1;
+      filter: saturate(1.1) contrast(1.05);
     }
-
-    .hero-bg.active {
-      left: 0;
-      z-index: 1;
+    .hero-bg.active { left: 0; z-index: 1; }
+    .hero-content {
+      max-width: 820px; margin: 0 auto; padding: 0 16px;
     }
-
+    .eyebrow {
+      display: inline-block; background: rgba(255,255,255,.18);
+      padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .4px; margin-bottom: 12px;
+      backdrop-filter: blur(6px);
+    }
     .hero h2 {
-      font-size: 28px;
-      font-weight: bold;
-      position: relative;
-      z-index: 2;
-      margin-top: 40px;
-      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
-      line-height: 1.4;
+      font-size: clamp(26px, 4vw, 44px);
+      line-height: 1.15;
+      margin: 8px 0 12px 0;
+      text-shadow: 0 10px 30px rgba(0,0,0,.35);
+      font-weight: 800;
     }
-
     .hero p {
-      font-size: 16px;
-      position: relative;
-      z-index: 2;
-      max-width: 600px;
-      margin: 12px auto;
-      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+      font-size: clamp(14px, 2vw, 18px); opacity: .95; margin: 0 auto 18px; max-width: 680px;
+      text-shadow: 0 6px 18px rgba(0,0,0,.35);
     }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; border-radius: 12px; font-weight: 700;
+      padding: 12px 16px; transition: transform .15s, background .2s, color .2s; border: 2px solid transparent;
+    }
+    .btn-primary { background: #fff; color: var(--primary-700); }
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-ghost { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.22); }
+    .btn-ghost:hover { background: rgba(255,255,255,.18); transform: translateY(-1px); }
 
+    /* Sections */
+    .section {
+      padding: 56px 0;
+    }
+    .section-header {
+      text-align: center; margin-bottom: 18px;
+    }
+    .section-header h3 {
+      font-size: clamp(20px, 3vw, 28px); margin: 0 0 8px; letter-spacing: -0.2px;
+    }
+    .section-header p { color: var(--muted); margin: 0 auto; max-width: 680px; font-size: 14px; }
+
+    /* Listing grid */
     .listing {
-      padding: 40px 20px;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
+      margin-top: 20px;
     }
 
+    /* Tour Card */
     .tour-card {
-      background-color: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      background-color: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
       overflow: hidden;
       cursor: pointer;
-      text-decoration: none;
       color: inherit;
-      transition: all 0.3s ease;
+      transition: transform .2s ease, box-shadow .2s ease;
       display: flex;
       flex-direction: column;
       height: 420px;
-      max-width: 320px;
-      margin: 0 auto;
+      max-width: 100%;
+      border: 1px solid rgba(0,0,0,0.04);
     }
-
-    .tour-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-    }
-
+    .tour-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.12); }
     .tour-card img {
       width: 100%;
       height: 180px;
       object-fit: cover;
       transition: transform 0.3s ease;
     }
-
-    .tour-card:hover img {
-      transform: scale(1.05);
-    }
-
+    .tour-card:hover img { transform: scale(1.03); }
     .tour-card .content {
-      padding: 20px;
-      flex: 1;
+      padding: 18px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      gap: 8px;
       height: calc(420px - 180px);
     }
-
     .tour-card .content h3 {
-      margin: 0 0 8px 0;
+      margin: 0 0 6px 0;
       font-size: 18px;
-      font-weight: 600;
-      color: #2c3e50;
+      font-weight: 700;
+      color: #22313f;
       line-height: 1.3;
       height: 48px;
       overflow: hidden;
@@ -222,145 +238,246 @@
       line-clamp: 2;
       -webkit-box-orient: vertical;
     }
-
     .tour-card .content p:first-of-type {
-      font-size: 14px;
-      color: #6c757d;
-      line-height: 1.4;
-      margin-bottom: 16px;
-      height: 56px;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      line-clamp: 3;
-      -webkit-box-orient: vertical;
+      font-size: 14px; color: var(--muted);
+      line-height: 1.45; margin-bottom: 6px;
+      height: 56px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;
+    }
+    .tour-card .content p { font-size: 14px; color: #405; margin: 2px 0; }
+    .tour-card .content p i { margin-right: 8px; color: var(--primary); }
+
+    /* Skeletons (placeholder before data loads) */
+    .skeleton-card {
+      height: 420px; background: var(--card); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+    .skeleton-thumb { height: 180px; background: linear-gradient(90deg, #e9eef3 0, #f3f6f9 50%, #e9eef3 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    .skeleton-body { padding: 18px; display: grid; gap: 10px; }
+    .skeleton-line { height: 12px; border-radius: 8px; background: linear-gradient(90deg, #e9eef3 0, #f3f6f9 50%, #e9eef3 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    .skeleton-line.lg { height: 16px; }
+    .skeleton-line.w70 { width: 70%; }
+    .skeleton-line.w50 { width: 50%; }
+    @keyframes shimmer { 0%{background-position: 200% 0} 100%{background-position: -200% 0} }
+
+    /* Footer */
+    footer {
+      margin-top: 56px;
+      background: #0d1720;
+      color: #cfe4db;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .footer-grid {
+      display: grid; grid-template-columns: 1.3fr .7fr .7fr .7fr; gap: 24px; padding: 36px 0;
+    }
+    .footer-brand { display: flex; align-items: center; gap: 12px; font-weight: 800; color: #e7fff7; }
+    .footer p, .footer a { font-size: 14px; color: #cfe4db; }
+    .footer a:hover { color: #ffffff; }
+    .social { display: flex; gap: 10px; margin-top: 10px; }
+    .social a {
+      width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: rgba(255,255,255,0.06);
+      transition: transform .15s, background .2s;
+    }
+    .social a:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.06); padding: 14px 0; text-align: center; color: #9cc8bb; font-size: 13px;
     }
 
-    .tour-card .content p {
-      font-size: 14px;
-      color: #555;
-      margin: 4px 0;
+    /* Responsive */
+    @media (max-width: 992px){
+      .footer-grid { grid-template-columns: 1fr 1fr; }
     }
-
-    .tour-card .content p i {
-      margin-right: 8px;
-      color: #1abc9c;
-    }
-
     @media (max-width: 768px) {
-      header {
-        padding: 12px 20px;
-        flex-direction: column;
-        gap: 16px;
-      }
-      
-      header h1 {
-        font-size: 22px;
-      }
-      
-      nav a {
-        margin: 0 12px;
-        padding: 6px 12px;
-        font-size: 14px;
-      }
-      
-      .listing {
-        grid-template-columns: 1fr;
-        gap: 16px;
-        padding: 20px 16px;
-      }
-      
-      .tour-card {
-        max-width: 100%;
-        height: 380px;
-      }
-      
-      .tour-card img {
-        height: 160px;
-      }
-      
-      .tour-card .content {
-        padding: 16px;
-        height: calc(380px - 160px);
-      }
-      
-      .tour-card .content h3 {
-        font-size: 16px;
-        height: 40px;
-      }
-      
-      .tour-card .content p:first-of-type {
-        height: 48px;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-      }
+      .nav-wrap { flex-direction: column; align-items: stretch; padding: 12px 0; gap: 12px; }
+      nav { justify-content: center; flex-wrap: wrap; }
+      .hero { height: 500px; }
+      .listing { grid-template-columns: 1fr; gap: 16px; }
+      .tour-card { height: 380px; }
+      .tour-card img { height: 160px; }
+      .tour-card .content { height: calc(380px - 160px); padding: 16px; }
+      .tour-card .content h3 { font-size: 16px; height: 40px; }
+      .tour-card .content p:first-of-type { height: 48px; -webkit-line-clamp: 2; line-clamp: 2; }
     }
-
-    @media (max-width: 480px) {
-      .hero h2 {
-        font-size: 20px;
-      }
-      .hero p {
-        font-size: 14px;
-      }
+    @media (max-width: 560px){
+      .footer-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
   <header>
-    <h1>BuddyTour</h1>
-    <nav>
-      <a href="#">Home</a>
-      <a href="#">About</a>
-      <a href="#">Contact</a>
-    </nav>
+    <div class="container nav-wrap" role="navigation" aria-label="Primary">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">B</div>
+        <span>BuddyTour</span>
+      </div>
+      <nav>
+        <a href="#">Home</a>
+        <a href="#tours">Tours</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+      </nav>
+      <a class="cta" href="#tours" aria-label="Browse tours">
+        <i class="fa-solid fa-compass"></i>
+        Explore Tours
+      </a>
+    </div>
   </header>
 
-  <section class="hero">
-    <div class="hero-bg-overlay"></div> <!-- ✅ overlay الجديد -->
+  <section class="hero" aria-label="Highlight">
+    <div class="hero-bg-overlay"></div>
     <div id="bg1" class="hero-bg active" style="background-image: url('images/Bibliotheca Alexandrina.webp');"></div>
     <div id="bg2" class="hero-bg"></div>
 
-    <h2 id="headline">Explore Bibliotheca Alexandrina with Your Local Buddy</h2>
-    <p>Book unique experiences led by locals in the beautiful coastal city of Alexandria, Egypt.</p>
+    <div class="container hero-content">
+      <span class="eyebrow">Local Guides • Authentic Experiences</span>
+      <h2 id="headline">Explore Bibliotheca Alexandrina with Your Local Buddy</h2>
+      <p>Book unique experiences led by locals in the beautiful coastal city of Alexandria, Egypt.</p>
+      <div class="hero-actions">
+        <a href="#tours" class="btn btn-primary">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          Browse Tours
+        </a>
+        <a href="#" class="btn btn-ghost">
+          <i class="fa-solid fa-circle-info"></i>
+          Why BuddyTour
+        </a>
+      </div>
+    </div>
   </section>
 
-  <section class="listing" id="tour-listing"></section>
+  <main id="main" class="section container">
+    <div id="tours" class="section-header">
+      <h3>Popular Tours in Alexandria</h3>
+      <p>Hand-picked experiences with trusted local guides. Easy booking, fair prices.</p>
+    </div>
+
+     Skeleton placeholders (will be cleared once data loads) 
+    <div class="listing" id="tour-listing" aria-live="polite" aria-busy="true">
+      <div class="skeleton-card">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line lg"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line w70"></div>
+          <div class="skeleton-line w50"></div>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line lg"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line w70"></div>
+          <div class="skeleton-line w50"></div>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line lg"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line w70"></div>
+          <div class="skeleton-line w50"></div>
+        </div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line lg"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line w70"></div>
+          <div class="skeleton-line w50"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container footer">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <div class="brand-mark" aria-hidden="true">B</div>
+            <span>BuddyTour</span>
+          </div>
+          <p style="margin-top:8px">Discover Alexandria with local experts. Authentic, affordable, and unforgettable.</p>
+          <div class="social" aria-label="Social media">
+            <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+          </div>
+        </div>
+        <div>
+          <p><strong>Explore</strong></p>
+          <a href="#tours">Tours</a><br/>
+          <a href="#">Guide Directory</a><br/>
+          <a href="#">Top Sights</a>
+        </div>
+        <div>
+          <p><strong>Company</strong></p>
+          <a href="#">About</a><br/>
+          <a href="#">Blog</a><br/>
+          <a href="#">Careers</a>
+        </div>
+        <div>
+          <p><strong>Support</strong></p>
+          <a href="#">Help Center</a><br/>
+          <a href="#">Contact</a><br/>
+          <a href="#">Terms & Privacy</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © <span id="year"></span> BuddyTour. All rights reserved.
+    </div>
+  </footer>
+
+   Keep your existing logic as-is 
+  <script>
+    // Year in footer
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
 
   <script>
-fetch('/api/tours')
-  .then(res => res.json())
-  .then(data => {
-    const container = document.getElementById('tour-listing');
-    container.innerHTML = '';
+    fetch('/api/tours')
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById('tour-listing');
+        // Clear skeletons
+        container.innerHTML = '';
+        container.setAttribute('aria-busy', 'false');
 
-    data.tours.forEach(tour => {
-      const card = document.createElement('a');
-      card.className = 'tour-card';
-      card.href = `tour-details.html?tour_id=${tour.id}`;
+        data.tours.forEach(tour => {
+          const card = document.createElement('a');
+          card.className = 'tour-card';
+          card.href = `tour-details.html?tour_id=${tour.id}`;
 
-      const imageSrc = (tour.image_urls && tour.image_urls.length > 0)
-        ? tour.image_urls[0]
-        : 'https://via.placeholder.com/400x200?text=No+Image';
+          const imageSrc = (tour.image_urls && tour.image_urls.length > 0)
+            ? tour.image_urls[0]
+            : 'https://via.placeholder.com/800x400?text=No+Image';
 
-      card.innerHTML = `
-        <img src="${imageSrc}" alt="${tour.title}" />
-        <div class="content">
-          <h3>${tour.title}</h3>
-          <p>${tour.description}</p>
-          <p><i class="fa-solid fa-clock"></i> Duration: ${tour.duration}</p>
-          <p><i class="fa-solid fa-users"></i> Group Size: up to ${tour.max_group_size} people</p>
-          <p><i class="fa-solid fa-dollar-sign"></i> Price: ${tour.price_per_person}</p>
-        </div>
-      `;
-
-      container.appendChild(card);
-    });
-  })
-  .catch(err => {
-    console.error("Failed to load tours:", err);
-  });
-</script>
+          card.innerHTML = `
+            <img src="${imageSrc}" alt="${tour.title}" />
+            <div class="content">
+              <div>
+                <h3>${tour.title}</h3>
+                <p>${tour.description}</p>
+              </div>
+              <div>
+                <p><i class="fa-solid fa-clock"></i> Duration: ${tour.duration}</p>
+                <p><i class="fa-solid fa-users"></i> Group Size: up to ${tour.max_group_size} people</p>
+                <p><i class="fa-solid fa-dollar-sign"></i> Price: ${tour.price_per_person}</p>
+              </div>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      })
+      .catch(err => {
+        console.error("Failed to load tours:", err);
+      });
+  </script>
 
   <script>
     const images = [
@@ -380,7 +497,6 @@ fetch('/api/tours')
       const current = images[index];
       const nextIndex = (index + 1) % images.length;
       const next = images[nextIndex];
-
       const activeBg = showingBg1 ? bg1 : bg2;
       const inactiveBg = showingBg1 ? bg2 : bg1;
 
@@ -392,7 +508,6 @@ fetch('/api/tours')
       setTimeout(() => {
         inactiveBg.style.transition = 'left 1s ease-in-out';
         activeBg.style.transition = 'left 1s ease-in-out';
-
         inactiveBg.style.left = '0%';
         activeBg.style.left = '-100%';
       }, 20);
@@ -413,7 +528,6 @@ fetch('/api/tours')
       bg1.style.zIndex = 2;
       bg2.style.left = '100%';
       bg2.style.zIndex = 1;
-
       setInterval(updateHero, 5000);
     });
   </script>
