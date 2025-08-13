@@ -90,7 +90,7 @@ router.get("/tours/:id", async (req, res) => {
 
   try {
     const tourRes = await pool.query(
-      `SELECT id, title, description, price_per_person, image_urls FROM tours WHERE id = $1`,
+      `SELECT id, title, description, duration, max_group_size, price_per_person, image_urls FROM tours WHERE id = $1`,
       [id]
     );
 
