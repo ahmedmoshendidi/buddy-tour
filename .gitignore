@@ -1,11 +1,11 @@
 # تبعيات node
 node_modules/
-package-lock.json
-yarn.lock
+
 
 # ملفات البيئة
 .env
 .env.local
+.env.* 
 
 # ملفات نظام التشغيل
 .DS_Store
@@ -24,7 +24,3 @@ yarn-error.log*
 # مجلدات build
 dist/
 build/
-# React client
-client/node_modules/
-client/dist/
-
