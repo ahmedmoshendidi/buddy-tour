@@ -114,8 +114,17 @@ if (fs.existsSync(FRONTEND_DIST)) {
 // ======================
 // Error Handling
 // ======================
+const notFound = path.join(__dirname, "public", "404.html");
+
 app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, "public/404.html"));
+  if (fs.existsSync(notFound)) {
+    return res.status(404).sendFile(notFound);
+  }
+  // fallback لو مفيش 404.html
+  if (req.accepts('html')) {
+    return res.status(404).type('html').send('<h1>404 – Not Found</h1>');
+  }
+  res.status(404).json({ error: 'Not Found' });
 });
 
 app.use((err, req, res, next) => {
