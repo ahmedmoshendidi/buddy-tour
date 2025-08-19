@@ -1,0 +1,121 @@
+/* لازم تكون أول 3 أسطر في الملف ده */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-size: 14px;
+
+  /* ألوان عامة */
+  --background: #fefdfb;
+  --foreground: #1a2332;
+  --card: #ffffff;
+  --card-foreground: #1a2332;
+  --popover: #ffffff;
+  --popover-foreground: #1a2332;
+
+  /* مهم: HSL أرقام فقط لأن Tailwind بيعمل hsl(var(--primary)) */
+  --primary: 170 83% 35%;          /* #0FA38A */
+  --primary-foreground: 0 0% 100%;
+  --ring: 170 83% 35%;
+
+  --secondary: #f5f5f4;
+  --secondary-foreground: #1a2332;
+  --muted: #f7f6f4;
+  --muted-foreground: #6b7280;
+  --accent: #fff7ed;
+  --accent-foreground: #1a2332;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: #e7e5e4;
+  --input: transparent;
+  --input-background: #f7f6f4;
+  --switch-background: #d6d3d1;
+
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+
+  /* غير مؤثرة على الزر */
+  --chart-1: #0f766e;
+  --chart-2: #d97706;
+  --chart-3: #ea580c;
+  --chart-4: #7c3aed;
+  --chart-5: #059669;
+
+  --radius: 0.625rem;
+
+  /* Sidebar */
+  --sidebar: #fefdfb;
+  --sidebar-foreground: #1a2332;
+  --sidebar-primary: #0f766e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f7f6f4;
+  --sidebar-accent-foreground: #1a2332;
+  --sidebar-border: #e7e5e4;
+  --sidebar-ring: #0f766e;
+}
+
+.dark {
+  --background: #1c1917;
+  --foreground: #fafaf9;
+  --card: #292524;
+  --card-foreground: #fafaf9;
+  --popover: #292524;
+  --popover-foreground: #fafaf9;
+
+  /* درجة أغمق في الدارك */
+  --primary: 170 84% 26%;
+  --primary-foreground: 24 10% 10%;
+  --ring: 170 84% 26%;
+
+  --secondary: #44403c;
+  --secondary-foreground: #fafaf9;
+  --muted: #44403c;
+  --muted-foreground: #a8a29e;
+  --accent: #44403c;
+  --accent-foreground: #fafaf9;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafaf9;
+  --border: #44403c;
+  --input: #44403c;
+
+  --chart-1: #14b8a6;
+  --chart-2: #f59e0b;
+  --chart-3: #f97316;
+  --chart-4: #8b5cf6;
+  --chart-5: #10b981;
+
+  --sidebar: #1c1917;
+  --sidebar-foreground: #fafaf9;
+  --sidebar-primary: #14b8a6;
+  --sidebar-primary-foreground: #1c1917;
+  --sidebar-accent: #44403c;
+  --sidebar-accent-foreground: #fafaf9;
+  --sidebar-border: #44403c;
+  --sidebar-ring: #14b8a6;
+}
+
+/* مفيش @custom-variant ولا @theme inline هنا */
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
+}
+
+/* Typography الأساسية */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 { font-size: var(--text-2xl); font-weight: var(--font-weight-medium); line-height: 1.5; }
+    h2 { font-size: var(--text-xl);  font-weight: var(--font-weight-medium); line-height: 1.5; }
+    h3 { font-size: var(--text-lg);  font-weight: var(--font-weight-medium); line-height: 1.5; }
+    h4 { font-size: var(--text-base);font-weight: var(--font-weight-medium); line-height: 1.5; }
+    p  { font-size: var(--text-base);font-weight: var(--font-weight-normal); line-height: 1.5; }
+    label { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+    button{ font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+    input { font-size: var(--text-base); font-weight: var(--font-weight-normal); line-height: 1.5; }
+  }
+}
+
+html { font-size: var(--font-size); }
