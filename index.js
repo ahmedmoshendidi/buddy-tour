@@ -6,6 +6,7 @@ const cors = require("cors");
 const path = require("path");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const fs = require("fs");
 require("dotenv").config();
 
 const paymentRoutes = require("./routes/paymentRoutes");
@@ -82,7 +83,8 @@ app.use('/api', bookingRoutes);
 // ======================
 // Static Files & Frontend Routes
 // ======================
-app.use(express.static(path.join(__dirname, "client/dist")));
+
+// ملفات public (لو محتاج صور/robots/sitemap قديمة)
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/payment/success", (req, res) => {
@@ -93,11 +95,21 @@ app.get("/payment/failure", (req, res) => {
   res.sendFile(path.join(__dirname, "public/fail.html"));
 });
 
-// Path-to-RegExp v8 requires a named wildcard parameter
-// for catch-all routes instead of using "*" directly.
-app.get("/*rest", (req, res) => {
-  res.sendFile(path.join(__dirname, "client/dist/index.html"));
-});
+// ===== NEW DEFAULT FRONTEND (Vite build in frontend/dist) =====
+const FRONTEND_DIST = path.join(__dirname, "frontend", "dist");
+
+if (fs.existsSync(FRONTEND_DIST)) {
+  // قدّم ملفات الواجهة على الجذر /
+  app.use(express.static(FRONTEND_DIST));
+
+  // Path-to-RegExp v8: catch-all باسم
+  app.get("/*rest", (req, res) => {
+    res.sendFile(path.join(FRONTEND_DIST, "index.html"));
+  });
+} else {
+  console.warn("⚠️ frontend/dist not found. Run: npm --prefix frontend run build");
+}
+
 
 // ======================
 // Error Handling
