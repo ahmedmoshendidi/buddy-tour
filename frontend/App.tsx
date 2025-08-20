@@ -24,27 +24,28 @@ interface Tour {
 }
 
 const heroImages = [
-  {
-    src: 'https://images.unsplash.com/photo-1539650116574-75c0c6d2d167?w=1200&h=600&fit=crop',
-    title: 'Bibliotheca Alexandrina',
-    subtitle: 'Modern Library of Alexandria'
+  { 
+    src: '/images/bibliotheca-alexandrina.webp', 
+    title: 'Bibliotheca Alexandrina', 
+    subtitle: 'Modern Library of Alexandria' 
   },
-  {
-    src: 'https://images.unsplash.com/photo-1580930986059-7b069b8f1a54?w=1200&h=600&fit=crop',
+  { 
+    src: '/images/roman-theatre.webp', 
     title: 'Roman Theatre',
-    subtitle: 'Ancient Roman Architecture'
+    subtitle: 'Ancient Roman Architecture' 
   },
-  {
-    src: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=1200&h=600&fit=crop',
+  { 
+    src: '/images/montaza-palace.webp',
     title: 'Montaza Palace',
-    subtitle: 'Royal Gardens & Palace'
+    subtitle: 'Royal Gardens & Palace' 
   },
-  {
-    src: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1200&h=600&fit=crop',
+  { 
+    src: '/images/qaitbay-citadel.webp',
     title: 'Qaitbay Citadel',
-    subtitle: 'Historic Fortress by the Sea'
-  }
+    subtitle: 'Historic Fortress by the Sea' 
+  },
 ];
+
 
 export default function App() {
   const [currentView, setCurrentView] = useState<AppView>('home');
