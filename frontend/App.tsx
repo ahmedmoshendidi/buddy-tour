@@ -62,31 +62,21 @@ export default function App() {
       
       try {
         const response = await fetch(`${API_PREFIX}/tours`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         
         const data = await response.json();
-        
         if (!data.tours || !Array.isArray(data.tours)) {
           throw new Error('Invalid tours data received from server');
         }
         
-        // Process tours data to ensure consistent format
         const processedTours = data.tours.map((tour: any) => {
-          // Ensure price_per_person is a string with $ prefix
           let pricePerPerson = tour.price_per_person;
-          if (typeof pricePerPerson === 'number') {
-            pricePerPerson = `$${pricePerPerson}`;
-          } else if (typeof pricePerPerson === 'string' && !pricePerPerson.startsWith('$')) {
-            pricePerPerson = `$${pricePerPerson}`;
-          }
+          if (typeof pricePerPerson === 'number') pricePerPerson = `$${pricePerPerson}`;
+          else if (typeof pricePerPerson === 'string' && !pricePerPerson.startsWith('$')) pricePerPerson = `$${pricePerPerson}`;
           
           return {
             ...tour,
             price_per_person: pricePerPerson,
-            // Add default values for fields that might not be in database
             duration: tour.duration || '2 hours',
             rating: tour.rating || 4.8,
             reviews_count: tour.reviews_count || 100,
@@ -95,7 +85,6 @@ export default function App() {
         });
         
         setTours(processedTours);
-        
       } catch (error: any) {
         console.error('Error loading tours:', error);
         setError(error.message || 'Failed to load tours');
@@ -146,16 +135,13 @@ export default function App() {
   const handleExploreTours = () => {
     const toursSection = document.getElementById('tours');
     if (toursSection) {
-      toursSection.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
-      });
+      toursSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
   const currentImage = heroImages[currentImageIndex];
 
-  // Render different views based on currentView
+  // Views
   if (currentView === 'tour-details' && selectedTourId) {
     return (
       <div className="min-h-screen bg-background">
@@ -165,15 +151,12 @@ export default function App() {
               <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
                 <Compass className="h-5 w-5 text-primary-foreground" />
               </div>
-              {/* شعار بدون heading للحفاظ على H1 واحد في الصفحة */}
               <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
                 BuddyTour
               </p>
             </div>
             <nav className="hidden md:flex items-center space-x-6">
-              <button onClick={handleBackToHome} className="hover:text-primary transition-colors font-medium">
-                Tours
-              </button>
+              <button onClick={handleBackToHome} className="hover:text-primary transition-colors font-medium">Tours</button>
             </nav>
           </div>
         </header>
@@ -243,7 +226,6 @@ export default function App() {
             <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
               <Compass className="h-5 w-5 text-primary-foreground" />
             </div>
-            {/* شعار بدون heading للحفاظ على H1 واحد */}
             <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
               BuddyTour
             </p>
@@ -253,7 +235,6 @@ export default function App() {
             <a href="#how-it-works" className="hover:text-primary transition-colors font-medium">How it Works</a>
             <a href="#about" className="hover:text-primary transition-colors font-medium">About</a>
           </nav>
-
         </div>
       </header>
 
@@ -265,8 +246,8 @@ export default function App() {
             alt={`${currentImage.title} - hero image`}
             className="w-full h-full object-cover"
           />
-          {/* أوفرلاي أقوى لتحسين التباين */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent" />
+          {/* stronger overlay for contrast */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
           {/* Arabic-inspired decorative element */}
           <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
             <div className="w-full h-full bg-gradient-to-br from-amber-400 to-coral-500 rounded-full blur-3xl"></div>
@@ -279,7 +260,7 @@ export default function App() {
               <Globe className="h-6 w-6 mr-2 text-amber-400" />
               <span className="text-amber-400 font-medium">Discover Alexandria</span>
             </div>
-            {/* H1 الوحيد في الصفحة */}
+            {/* Single page H1 */}
             <h1 className="text-4xl md:text-5xl mb-4 text-white" aria-live="polite">
               Explore {currentImage.title} with Local Experts
             </h1>
@@ -303,27 +284,46 @@ export default function App() {
           </div>
         </div>
 
-        {/* Hero Image Indicators with Arabic-inspired styling */}
+        {/* Hero Indicators – radiogroup/radio */}
         <div
           className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2"
-          role="tablist"
+          role="radiogroup"
           aria-label="Hero slides"
         >
-          {heroImages.map((img, index) => (
-            <button
-              key={index}
-              role="tab"
-              aria-label={`Show slide ${index + 1}: ${img.title}`}
-              aria-pressed={index === currentImageIndex}
-              className={`w-3 h-3 rounded-full transition-all border-2 ${
-                index === currentImageIndex 
-                  ? 'bg-amber-400 border-amber-400 shadow-lg' 
-                  : 'bg-white/30 border-white/50 hover:bg-white/50'
-              }`}
-              onClick={() => setCurrentImageIndex(index)}
-              type="button"
-            />
-          ))}
+          {heroImages.map((img, index) => {
+            const checked = index === currentImageIndex;
+            return (
+              <button
+                key={index}
+                role="radio"
+                aria-label={`Slide ${index + 1}: ${img.title}`}
+                aria-checked={checked}
+                tabIndex={checked ? 0 : -1}
+                type="button"
+                onClick={() => setCurrentImageIndex(index)}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+                  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setCurrentImageIndex((prev) => (prev - 1 + heroImages.length) % heroImages.length);
+                  } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    setCurrentImageIndex(0);
+                  } else if (e.key === 'End') {
+                    e.preventDefault();
+                    setCurrentImageIndex(heroImages.length - 1);
+                  }
+                }}
+                className={`w-3 h-3 rounded-full transition-all border-2 ${
+                  checked
+                    ? 'bg-amber-400 border-amber-400 shadow-lg'
+                    : 'bg-white/30 border-white/60 hover:bg-white/60'
+                }`}
+              />
+            );
+          })}
         </div>
       </section>
 
@@ -342,11 +342,10 @@ export default function App() {
       <section id="tours" className="py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center mb-4 px-4 py-2 bg-gradient-to-r from-teal-50 to-amber-50 rounded-full">
-              <Compass className="h-5 w-5 mr-2 text-primary" />
-              <span className="text-primary font-medium">Featured Experiences</span>
+            <div className="inline-flex items-center mb-4 px-4 py-2 bg-gradient-to-r from-teal-100 to-amber-100 rounded-full">
+              <Compass className="h-5 w-5 mr-2 text-slate-900" />
+              <span className="text-slate-900 font-semibold">Featured Experiences</span>
             </div>
-            {/* H2 للقسم */}
             <h2 className="text-3xl mb-4">Alexandria's Finest Walking Tours</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Discover Alexandria's most iconic landmarks with experienced local guides who bring history to life 
@@ -401,7 +400,7 @@ export default function App() {
                       </span>
                     </div>
                     
-                    <h4 className="mb-2 font-semibold">{tour.title}</h4>
+                    <h3 className="mb-2 font-semibold">{tour.title}</h3>
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                       {tour.description}
                     </p>
@@ -434,11 +433,10 @@ export default function App() {
       <section id="how-it-works" className="py-16 bg-gradient-to-b from-muted/30 to-amber-50/20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center mb-4 px-4 py-2 bg-gradient-to-r from-amber-50 to-teal-50 rounded-full">
-              <Globe className="h-5 w-5 mr-2 text-amber-600" />
-              <span className="text-primary font-medium">Simple Process</span>
+            <div className="inline-flex items-center mb-4 px-4 py-2 bg-gradient-to-r from-amber-100 to-teal-100 rounded-full">
+              <Globe className="h-5 w-5 mr-2 text-slate-900" />
+              <span className="text-slate-900 font-semibold">Simple Process</span>
             </div>
-            {/* H2 للقسم */}
             <h2 className="text-3xl mb-4">How BuddyTour Works</h2>
             <p className="text-lg text-muted-foreground">
               Connect with local Arabic culture in four simple steps
@@ -481,7 +479,7 @@ export default function App() {
                   <item.icon className="h-8 w-8 text-white" />
                 </div>
                 <div className="text-sm text-amber-600 mb-2 font-medium">Step {item.step}</div>
-                <h4 className="mb-3 font-semibold">{item.title}</h4>
+                <h3 className="mb-3 font-semibold">{item.title}</h3>
                 <p className="text-muted-foreground text-sm">{item.description}</p>
               </div>
             ))}
@@ -528,7 +526,7 @@ export default function App() {
             </div>
             
             <div>
-              <h4 className="mb-4 font-semibold text-primary">Tours</h4>
+              <h3 className="mb-4 font-semibold text-primary">Tours</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><button onClick={() => handleViewTourDetails(1)} className="hover:text-primary transition-colors">Bibliotheca Alexandrina</button></li>
                 <li><button onClick={() => handleViewTourDetails(2)} className="hover:text-primary transition-colors">Roman Theatre</button></li>
@@ -538,7 +536,7 @@ export default function App() {
             </div>
             
             <div>
-              <h4 className="mb-4 font-semibold text-primary">Support</h4>
+              <h3 className="mb-4 font-semibold text-primary">Support</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#" className="hover:text-primary transition-colors">Help Center</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Contact Us</a></li>
@@ -548,7 +546,7 @@ export default function App() {
             </div>
             
             <div>
-              <h4 className="mb-4 font-semibold text-primary">Company</h4>
+              <h3 className="mb-4 font-semibold text-primary">Company</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#" className="hover:text-primary transition-colors">About Us</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Become a Guide</a></li>
