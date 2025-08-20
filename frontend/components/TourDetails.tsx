@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_PREFIX } from '../config';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
+import { useCurrency } from './CurrencyContext';
 
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ArrowLeft, MapPin, Clock, Users, Star, CheckCircle, Compass } from 'lucide-react';
@@ -28,6 +29,7 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
   const [tour, setTour] = useState<Tour | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     const loadTourData = async () => {
@@ -124,10 +126,10 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
     );
   }
 
-  // Format price for display
-  const priceDisplay = typeof tour.price_per_person === 'number' 
-    ? `$${tour.price_per_person}` 
-    : tour.price_per_person;
+  // Extract numeric price for currency conversion
+  const numericPrice = typeof tour.price_per_person === 'number' 
+    ? tour.price_per_person 
+    : parseFloat(tour.price_per_person.toString().replace('$', ''));
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/30 to-amber-50/20 py-8">
@@ -164,6 +166,10 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
                   <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
                   <span className="font-semibold">{tour.rating}</span>
                   <span className="text-muted-foreground">({tour.reviews_count} reviews)</span>
+                </div>
+                <div className="ml-auto">
+                  <span className="text-2xl font-bold text-primary">{formatPrice(numericPrice)}</span>
+                  <span className="text-muted-foreground">/person</span>
                 </div>
               </div>
               

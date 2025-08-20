@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { ArrowLeft, Calendar as CalendarIcon, Clock, Users, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { API_PREFIX } from '../config';
+import { useCurrency } from './CurrencyContext';
 
 interface Tour {
   id: number;
@@ -33,6 +34,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
   const [children, setChildren] = useState<number>(0);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [error, setError] = useState<string>('');
+  const { formatPrice } = useCurrency();
 
   // Helper function to extract date from ISO string
   const extractDateFromISO = (isoString: string): string => {
@@ -300,7 +302,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
             {/* Price Display */}
             <div className="text-center">
               <Badge className="bg-gradient-to-r from-primary to-teal-600 text-white px-4 py-2 text-lg">
-                Price from: ${tour.price_per_person} per adult
+                Price from: {formatPrice(tour.price_per_person)} per adult
               </Badge>
             </div>
 
@@ -415,7 +417,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
                 <div className="flex items-center justify-between p-4 border rounded-lg bg-gradient-to-r from-white to-teal-50/30">
                   <div>
                     <div className="font-medium">Adults (15+)</div>
-                    <div className="text-sm text-muted-foreground">${tour.price_per_person} per person</div>
+                    <div className="text-sm text-muted-foreground">{formatPrice(tour.price_per_person)} per person</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Button
@@ -443,7 +445,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
                   <div>
                     <div className="font-medium">Children (&lt;15)</div>
                     <div className="text-sm text-muted-foreground">
-                      ${(tour.price_per_person * 0.8).toFixed(0)} per child (20% discount)
+                      {formatPrice(tour.price_per_person * 0.8)} per child (20% discount)
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -473,7 +475,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
             <div className="bg-gradient-to-r from-primary/5 to-teal-50 p-6 rounded-lg border border-primary/20">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold">Total Price:</span>
-                <span className="text-2xl font-bold text-primary">${calculateTotal().toFixed(2)}</span>
+                <span className="text-2xl font-bold text-primary">{formatPrice(calculateTotal())}</span>
               </div>
               {(adults > 0 || children > 0) && (
                 <div className="text-sm text-muted-foreground mt-2">

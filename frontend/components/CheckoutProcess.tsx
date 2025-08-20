@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Separator } from './ui/separator';
 import { Progress } from './ui/progress';
 import { Shield } from 'lucide-react';
+import { useCurrency } from './CurrencyContext';
 import { 
   User, 
   Mail, 
@@ -114,6 +115,7 @@ const countries = [
   { value: 'IE', label: 'Ireland 🇮🇪' },
   { value: 'IS', label: 'Iceland 🇮🇸' },
   { value: 'TR', label: 'Turkey 🇹🇷' },
+  { value: 'IL', label: 'Israel 🇮🇱' },
   { value: 'JO', label: 'Jordan 🇯🇴' },
   { value: 'LB', label: 'Lebanon 🇱🇧' },
   { value: 'SY', label: 'Syria 🇸🇾' },
@@ -181,6 +183,7 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
     nationality: '',
     paymentMethod: 'card'
   });
+  const { formatPrice } = useCurrency();
 
   // Load booking data from sessionStorage on component mount
   useEffect(() => {
@@ -544,7 +547,7 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
                       <Separator />
                       <div className="flex justify-between font-semibold text-primary">
                         <span>Total:</span>
-                        <span>${formData.total_amount?.toFixed(2)}</span>
+                        <span>{formatPrice(formData.total_amount)}</span>
                       </div>
                     </div>
                   </div>
@@ -620,7 +623,7 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
                     <Separator />
                     <div className="flex justify-between text-lg font-semibold text-primary">
                       <span>Total Amount:</span>
-                      <span>${(formData.total_amount || 0).toFixed(2)}</span>
+                      <span>{formatPrice(formData.total_amount || 0)}</span>
                     </div>
                   </div>
                 </div>

@@ -6,6 +6,8 @@ import { ImageWithFallback } from './components/figma/ImageWithFallback';
 import TourDetails from './components/TourDetails';
 import TicketsQuantity from './components/TicketsQuantity';
 import CheckoutProcess from './components/CheckoutProcess';
+import { CurrencyProvider, useCurrency } from './components/CurrencyContext';
+import CurrencySelector from './components/CurrencySelector';
 import { Clock, Users, MapPin, Star, Calendar, Shield, Compass, Globe } from 'lucide-react';
 import { API_PREFIX } from './config';
 
@@ -24,35 +26,37 @@ interface Tour {
 }
 
 const heroImages = [
-  { 
-    src: '/images/bibliotheca-alexandrina.webp', 
-    title: 'Bibliotheca Alexandrina', 
-    subtitle: 'Modern Library of Alexandria' 
+  {
+    src: 'https://images.unsplash.com/photo-1539650116574-75c0c6d2d167?w=1200&h=600&fit=crop',
+    title: 'Bibliotheca Alexandrina',
+    subtitle: 'Modern Library of Alexandria'
   },
-  { 
-    src: '/images/roman-theatre.webp', 
+  {
+    src: 'https://images.unsplash.com/photo-1580930986059-7b069b8f1a54?w=1200&h=600&fit=crop',
     title: 'Roman Theatre',
-    subtitle: 'Ancient Roman Architecture' 
+    subtitle: 'Ancient Roman Architecture'
   },
-  { 
-    src: '/images/montaza-palace.webp',
+  {
+    src: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=1200&h=600&fit=crop',
     title: 'Montaza Palace',
-    subtitle: 'Royal Gardens & Palace' 
+    subtitle: 'Royal Gardens & Palace'
   },
-  { 
-    src: '/images/qaitbay-citadel.webp',
+  {
+    src: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1200&h=600&fit=crop',
     title: 'Qaitbay Citadel',
-    subtitle: 'Historic Fortress by the Sea' 
-  },
+    subtitle: 'Historic Fortress by the Sea'
+  }
 ];
 
-export default function App() {
+// Inner App component that uses currency context
+function AppContent() {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [selectedTourId, setSelectedTourId] = useState<number | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const { formatPrice } = useCurrency();
 
   // Load tours from real API only
   useEffect(() => {
@@ -62,21 +66,29 @@ export default function App() {
       
       try {
         const response = await fetch(`${API_PREFIX}/tours`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
         
         const data = await response.json();
+        
         if (!data.tours || !Array.isArray(data.tours)) {
           throw new Error('Invalid tours data received from server');
         }
         
+        // Process tours data to ensure consistent format
         const processedTours = data.tours.map((tour: any) => {
-          let pricePerPerson = tour.price_per_person;
-          if (typeof pricePerPerson === 'number') pricePerPerson = `$${pricePerPerson}`;
-          else if (typeof pricePerPerson === 'string' && !pricePerPerson.startsWith('$')) pricePerPerson = `$${pricePerPerson}`;
+          // Extract numeric price for currency conversion
+          let numericPrice = tour.price_per_person;
+          if (typeof numericPrice === 'string') {
+            numericPrice = parseFloat(numericPrice.replace('$', ''));
+          }
           
           return {
             ...tour,
-            price_per_person: pricePerPerson,
+            price_per_person: numericPrice, // Store as number for conversion
+            // Add default values for fields that might not be in database
             duration: tour.duration || '2 hours',
             rating: tour.rating || 4.8,
             reviews_count: tour.reviews_count || 100,
@@ -85,6 +97,7 @@ export default function App() {
         });
         
         setTours(processedTours);
+        
       } catch (error: any) {
         console.error('Error loading tours:', error);
         setError(error.message || 'Failed to load tours');
@@ -131,17 +144,20 @@ export default function App() {
     setCurrentView('tickets');
   };
 
-  // Scroll to tours section
+  // Scroll to tours section - used by hero button
   const handleExploreTours = () => {
     const toursSection = document.getElementById('tours');
     if (toursSection) {
-      toursSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      toursSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
     }
   };
 
   const currentImage = heroImages[currentImageIndex];
 
-  // Views
+  // Render different views based on currentView
   if (currentView === 'tour-details' && selectedTourId) {
     return (
       <div className="min-h-screen bg-background">
@@ -151,13 +167,18 @@ export default function App() {
               <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
                 <Compass className="h-5 w-5 text-primary-foreground" />
               </div>
-              <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
                 BuddyTour
-              </p>
+              </h1>
             </div>
-            <nav className="hidden md:flex items-center space-x-6">
-              <button onClick={handleBackToHome} className="hover:text-primary transition-colors font-medium">Tours</button>
-            </nav>
+            <div className="flex items-center space-x-4">
+              <CurrencySelector />
+              <nav className="hidden md:flex items-center space-x-6">
+                <button onClick={handleBackToHome} className="hover:text-primary transition-colors font-medium">
+                  Back to Home
+                </button>
+              </nav>
+            </div>
           </div>
         </header>
         
@@ -179,10 +200,11 @@ export default function App() {
               <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
                 <Compass className="h-5 w-5 text-primary-foreground" />
               </div>
-              <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
                 BuddyTour
-              </p>
+              </h1>
             </div>
+            <CurrencySelector />
           </div>
         </header>
         
@@ -204,10 +226,11 @@ export default function App() {
               <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
                 <Compass className="h-5 w-5 text-primary-foreground" />
               </div>
-              <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
                 BuddyTour
-              </p>
+              </h1>
             </div>
+            <CurrencySelector />
           </div>
         </header>
         
@@ -226,15 +249,17 @@ export default function App() {
             <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
               <Compass className="h-5 w-5 text-primary-foreground" />
             </div>
-            <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
+            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
               BuddyTour
-            </p>
+            </h1>
           </div>
-          <nav className="hidden md:flex items-center space-x-6">
-            <a href="#tours" className="hover:text-primary transition-colors font-medium">Tours</a>
-            <a href="#how-it-works" className="hover:text-primary transition-colors font-medium">How it Works</a>
-            <a href="#about" className="hover:text-primary transition-colors font-medium">About</a>
-          </nav>
+          <div className="flex items-center space-x-4">
+            <CurrencySelector />
+            <nav className="hidden md:flex items-center space-x-6">
+              <a href="#how-it-works" className="hover:text-primary transition-colors font-medium">How it Works</a>
+              <a href="#about" className="hover:text-primary transition-colors font-medium">About</a>
+            </nav>
+          </div>
         </div>
       </header>
 
@@ -243,11 +268,10 @@ export default function App() {
         <div className="absolute inset-0 transition-all duration-1000">
           <ImageWithFallback
             src={currentImage.src}
-            alt={`${currentImage.title} - hero image`}
+            alt={currentImage.title}
             className="w-full h-full object-cover"
           />
-          {/* stronger overlay for contrast */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-transparent" />
           {/* Arabic-inspired decorative element */}
           <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
             <div className="w-full h-full bg-gradient-to-br from-amber-400 to-coral-500 rounded-full blur-3xl"></div>
@@ -260,10 +284,9 @@ export default function App() {
               <Globe className="h-6 w-6 mr-2 text-amber-400" />
               <span className="text-amber-400 font-medium">Discover Alexandria</span>
             </div>
-            {/* Single page H1 */}
-            <h1 className="text-4xl md:text-5xl mb-4 text-white" aria-live="polite">
+            <h2 className="text-4xl md:text-5xl mb-4 text-white">
               Explore {currentImage.title} with Local Experts
-            </h1>
+            </h2>
             <p className="text-xl mb-2 text-white/90 font-medium">
               {currentImage.subtitle}
             </p>
@@ -284,46 +307,19 @@ export default function App() {
           </div>
         </div>
 
-        {/* Hero Indicators – radiogroup/radio */}
-        <div
-          className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2"
-          role="radiogroup"
-          aria-label="Hero slides"
-        >
-          {heroImages.map((img, index) => {
-            const checked = index === currentImageIndex;
-            return (
-              <button
-                key={index}
-                role="radio"
-                aria-label={`Slide ${index + 1}: ${img.title}`}
-                aria-checked={checked}
-                tabIndex={checked ? 0 : -1}
-                type="button"
-                onClick={() => setCurrentImageIndex(index)}
-                onKeyDown={(e) => {
-                  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
-                  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    setCurrentImageIndex((prev) => (prev - 1 + heroImages.length) % heroImages.length);
-                  } else if (e.key === 'Home') {
-                    e.preventDefault();
-                    setCurrentImageIndex(0);
-                  } else if (e.key === 'End') {
-                    e.preventDefault();
-                    setCurrentImageIndex(heroImages.length - 1);
-                  }
-                }}
-                className={`w-3 h-3 rounded-full transition-all border-2 ${
-                  checked
-                    ? 'bg-amber-400 border-amber-400 shadow-lg'
-                    : 'bg-white/30 border-white/60 hover:bg-white/60'
-                }`}
-              />
-            );
-          })}
+        {/* Hero Image Indicators with Arabic-inspired styling */}
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
+          {heroImages.map((_, index) => (
+            <button
+              key={index}
+              className={`w-3 h-3 rounded-full transition-all border-2 ${
+                index === currentImageIndex 
+                  ? 'bg-amber-400 border-amber-400 shadow-lg' 
+                  : 'bg-white/30 border-white/50 hover:bg-white/50'
+              }`}
+              onClick={() => setCurrentImageIndex(index)}
+            />
+          ))}
         </div>
       </section>
 
@@ -342,11 +338,11 @@ export default function App() {
       <section id="tours" className="py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center mb-4 px-4 py-2 bg-gradient-to-r from-teal-100 to-amber-100 rounded-full">
-              <Compass className="h-5 w-5 mr-2 text-slate-900" />
-              <span className="text-slate-900 font-semibold">Featured Experiences</span>
+            <div className="inline-flex items-center mb-4 px-4 py-2 bg-gradient-to-r from-teal-50 to-amber-50 rounded-full">
+              <Compass className="h-5 w-5 mr-2 text-primary" />
+              <span className="text-primary font-medium">Featured Experiences</span>
             </div>
-            <h2 className="text-3xl mb-4">Alexandria's Finest Walking Tours</h2>
+            <h3 className="text-3xl mb-4">Alexandria's Finest Walking Tours</h3>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Discover Alexandria's most iconic landmarks with experienced local guides who bring history to life 
               through authentic Arabic storytelling and cultural insights.
@@ -370,23 +366,15 @@ export default function App() {
                   key={tour.id} 
                   className="overflow-hidden hover:shadow-xl transition-all duration-300 group border border-border hover:border-primary/20 bg-gradient-to-b from-white to-teal-50/30 cursor-pointer"
                   onClick={() => handleViewTourDetails(tour.id)}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`View details for ${tour.title}`}
-                  onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleViewTourDetails(tour.id);
-                    }
-                  }}
                 >
                   <div className="relative">
                     <ImageWithFallback
                       src={tour.image_urls?.[0] || 'https://images.unsplash.com/photo-1539650116574-75c0c6d2d167?w=400&h=250&fit=crop'}
-                      alt={`${tour.title} tour preview`}
+                      alt={tour.title}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
                   </div>
                   
                   <CardContent className="p-4">
@@ -400,7 +388,7 @@ export default function App() {
                       </span>
                     </div>
                     
-                    <h3 className="mb-2 font-semibold">{tour.title}</h3>
+                    <h4 className="mb-2 font-semibold">{tour.title}</h4>
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                       {tour.description}
                     </p>
@@ -417,7 +405,12 @@ export default function App() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-lg font-semibold text-primary">{tour.price_per_person}</span>
+                        <span className="text-lg font-semibold text-primary">
+                          {formatPrice(typeof tour.price_per_person === 'string' 
+                            ? parseFloat(tour.price_per_person.replace('$', '')) 
+                            : tour.price_per_person
+                          )}
+                        </span>
                         <span className="text-sm text-muted-foreground">/person</span>
                       </div>
                     </div>
@@ -433,11 +426,11 @@ export default function App() {
       <section id="how-it-works" className="py-16 bg-gradient-to-b from-muted/30 to-amber-50/20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center mb-4 px-4 py-2 bg-gradient-to-r from-amber-100 to-teal-100 rounded-full">
-              <Globe className="h-5 w-5 mr-2 text-slate-900" />
-              <span className="text-slate-900 font-semibold">Simple Process</span>
+            <div className="inline-flex items-center mb-4 px-4 py-2 bg-gradient-to-r from-amber-50 to-teal-50 rounded-full">
+              <Globe className="h-5 w-5 mr-2 text-amber-600" />
+              <span className="text-primary font-medium">Simple Process</span>
             </div>
-            <h2 className="text-3xl mb-4">How BuddyTour Works</h2>
+            <h3 className="text-3xl mb-4">How BuddyTour Works</h3>
             <p className="text-lg text-muted-foreground">
               Connect with local Arabic culture in four simple steps
             </p>
@@ -479,7 +472,7 @@ export default function App() {
                   <item.icon className="h-8 w-8 text-white" />
                 </div>
                 <div className="text-sm text-amber-600 mb-2 font-medium">Step {item.step}</div>
-                <h3 className="mb-3 font-semibold">{item.title}</h3>
+                <h4 className="mb-3 font-semibold">{item.title}</h4>
                 <p className="text-muted-foreground text-sm">{item.description}</p>
               </div>
             ))}
@@ -516,9 +509,9 @@ export default function App() {
                 <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary to-teal-600 rounded-lg shadow-md">
                   <Compass className="h-5 w-5 text-white" />
                 </div>
-                <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
+                <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
                   BuddyTour
-                </p>
+                </h1>
               </div>
               <p className="text-muted-foreground">
                 Connecting travelers with local guides for authentic Alexandria experiences rooted in Arabic culture and Mediterranean heritage.
@@ -526,7 +519,7 @@ export default function App() {
             </div>
             
             <div>
-              <h3 className="mb-4 font-semibold text-primary">Tours</h3>
+              <h4 className="mb-4 font-semibold text-primary">Tours</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><button onClick={() => handleViewTourDetails(1)} className="hover:text-primary transition-colors">Bibliotheca Alexandrina</button></li>
                 <li><button onClick={() => handleViewTourDetails(2)} className="hover:text-primary transition-colors">Roman Theatre</button></li>
@@ -536,7 +529,7 @@ export default function App() {
             </div>
             
             <div>
-              <h3 className="mb-4 font-semibold text-primary">Support</h3>
+              <h4 className="mb-4 font-semibold text-primary">Support</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#" className="hover:text-primary transition-colors">Help Center</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Contact Us</a></li>
@@ -546,7 +539,7 @@ export default function App() {
             </div>
             
             <div>
-              <h3 className="mb-4 font-semibold text-primary">Company</h3>
+              <h4 className="mb-4 font-semibold text-primary">Company</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#" className="hover:text-primary transition-colors">About Us</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Become a Guide</a></li>
@@ -562,5 +555,14 @@ export default function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// Main App component wrapped with CurrencyProvider
+export default function App() {
+  return (
+    <CurrencyProvider>
+      <AppContent />
+    </CurrencyProvider>
   );
 }
