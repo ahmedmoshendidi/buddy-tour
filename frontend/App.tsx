@@ -46,7 +46,6 @@ const heroImages = [
   },
 ];
 
-
 export default function App() {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [selectedTourId, setSelectedTourId] = useState<number | null>(null);
@@ -166,9 +165,10 @@ export default function App() {
               <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
                 <Compass className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
+              {/* شعار بدون heading للحفاظ على H1 واحد في الصفحة */}
+              <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
                 BuddyTour
-              </h1>
+              </p>
             </div>
             <nav className="hidden md:flex items-center space-x-6">
               <button onClick={handleBackToHome} className="hover:text-primary transition-colors font-medium">
@@ -196,9 +196,9 @@ export default function App() {
               <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
                 <Compass className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
+              <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
                 BuddyTour
-              </h1>
+              </p>
             </div>
           </div>
         </header>
@@ -221,9 +221,9 @@ export default function App() {
               <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
                 <Compass className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
+              <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
                 BuddyTour
-              </h1>
+              </p>
             </div>
           </div>
         </header>
@@ -243,9 +243,10 @@ export default function App() {
             <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
               <Compass className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
+            {/* شعار بدون heading للحفاظ على H1 واحد */}
+            <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
               BuddyTour
-            </h1>
+            </p>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
             <a href="#tours" className="hover:text-primary transition-colors font-medium">Tours</a>
@@ -261,10 +262,11 @@ export default function App() {
         <div className="absolute inset-0 transition-all duration-1000">
           <ImageWithFallback
             src={currentImage.src}
-            alt={currentImage.title}
+            alt={`${currentImage.title} - hero image`}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-transparent" />
+          {/* أوفرلاي أقوى لتحسين التباين */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent" />
           {/* Arabic-inspired decorative element */}
           <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
             <div className="w-full h-full bg-gradient-to-br from-amber-400 to-coral-500 rounded-full blur-3xl"></div>
@@ -277,9 +279,10 @@ export default function App() {
               <Globe className="h-6 w-6 mr-2 text-amber-400" />
               <span className="text-amber-400 font-medium">Discover Alexandria</span>
             </div>
-            <h2 className="text-4xl md:text-5xl mb-4 text-white">
+            {/* H1 الوحيد في الصفحة */}
+            <h1 className="text-4xl md:text-5xl mb-4 text-white" aria-live="polite">
               Explore {currentImage.title} with Local Experts
-            </h2>
+            </h1>
             <p className="text-xl mb-2 text-white/90 font-medium">
               {currentImage.subtitle}
             </p>
@@ -301,16 +304,24 @@ export default function App() {
         </div>
 
         {/* Hero Image Indicators with Arabic-inspired styling */}
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-          {heroImages.map((_, index) => (
+        <div
+          className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2"
+          role="tablist"
+          aria-label="Hero slides"
+        >
+          {heroImages.map((img, index) => (
             <button
               key={index}
+              role="tab"
+              aria-label={`Show slide ${index + 1}: ${img.title}`}
+              aria-pressed={index === currentImageIndex}
               className={`w-3 h-3 rounded-full transition-all border-2 ${
                 index === currentImageIndex 
                   ? 'bg-amber-400 border-amber-400 shadow-lg' 
                   : 'bg-white/30 border-white/50 hover:bg-white/50'
               }`}
               onClick={() => setCurrentImageIndex(index)}
+              type="button"
             />
           ))}
         </div>
@@ -335,7 +346,8 @@ export default function App() {
               <Compass className="h-5 w-5 mr-2 text-primary" />
               <span className="text-primary font-medium">Featured Experiences</span>
             </div>
-            <h3 className="text-3xl mb-4">Alexandria's Finest Walking Tours</h3>
+            {/* H2 للقسم */}
+            <h2 className="text-3xl mb-4">Alexandria's Finest Walking Tours</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Discover Alexandria's most iconic landmarks with experienced local guides who bring history to life 
               through authentic Arabic storytelling and cultural insights.
@@ -359,15 +371,23 @@ export default function App() {
                   key={tour.id} 
                   className="overflow-hidden hover:shadow-xl transition-all duration-300 group border border-border hover:border-primary/20 bg-gradient-to-b from-white to-teal-50/30 cursor-pointer"
                   onClick={() => handleViewTourDetails(tour.id)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View details for ${tour.title}`}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleViewTourDetails(tour.id);
+                    }
+                  }}
                 >
                   <div className="relative">
                     <ImageWithFallback
                       src={tour.image_urls?.[0] || 'https://images.unsplash.com/photo-1539650116574-75c0c6d2d167?w=400&h=250&fit=crop'}
-                      alt={tour.title}
+                      alt={`${tour.title} tour preview`}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
                   </div>
                   
                   <CardContent className="p-4">
@@ -418,7 +438,8 @@ export default function App() {
               <Globe className="h-5 w-5 mr-2 text-amber-600" />
               <span className="text-primary font-medium">Simple Process</span>
             </div>
-            <h3 className="text-3xl mb-4">How BuddyTour Works</h3>
+            {/* H2 للقسم */}
+            <h2 className="text-3xl mb-4">How BuddyTour Works</h2>
             <p className="text-lg text-muted-foreground">
               Connect with local Arabic culture in four simple steps
             </p>
@@ -497,9 +518,9 @@ export default function App() {
                 <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary to-teal-600 rounded-lg shadow-md">
                   <Compass className="h-5 w-5 text-white" />
                 </div>
-                <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
+                <p className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent" aria-label="BuddyTour brand">
                   BuddyTour
-                </h1>
+                </p>
               </div>
               <p className="text-muted-foreground">
                 Connecting travelers with local guides for authentic Alexandria experiences rooted in Arabic culture and Mediterranean heritage.
