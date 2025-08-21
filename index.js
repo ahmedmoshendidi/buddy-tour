@@ -80,6 +80,67 @@ app.use("/api", paymentRoutes);
 // ======================
 app.use('/api', bookingRoutes);
 
+
+
+// ==== Exchange rates proxy (/api/rates) ====
+// Node 18+ عنده fetch جاهز. تحت ذلك هنجيب node-fetch ديناميكياً.
+const fetchAny = global.fetch
+  ? (...args) => global.fetch(...args)
+  : (...args) => import('node-fetch').then(({ default: f }) => f(...args));
+
+const RATES_URL =
+  "https://api.exchangerate.host/latest?base=USD&symbols=USD,EUR,GBP,CAD,EGP";
+
+// كاش بسيط في الذاكرة لمدة ساعة
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1h
+let ratesCache = { ts: 0, data: null };
+
+app.get(['/api/rates', '/api/rates/'], async (req, res) => {
+  try {
+    // رجّع من الكاش لو لسه صالح
+    if (ratesCache.data && Date.now() - ratesCache.ts < CACHE_TTL_MS) {
+      res.set('Cache-Control', 'public, max-age=3600');
+      return res.json(ratesCache.data);
+    }
+
+    const r = await fetchAny(RATES_URL, {
+      headers: { 'user-agent': 'BuddyTour/1.0' },
+    });
+    if (!r.ok) throw new Error(`Rates HTTP ${r.status}`);
+    const data = await r.json();
+
+    const rates = {
+      USD: 1,
+      EUR: data?.rates?.EUR ?? 0.92,
+      GBP: data?.rates?.GBP ?? 0.78,
+      CAD: data?.rates?.CAD ?? 1.37,
+      EGP: data?.rates?.EGP ?? 48.5,
+    };
+
+    const payload = {
+      base: 'USD',
+      provider: 'exchangerate.host',
+      updated_at: new Date().toISOString(),
+      rates,
+    };
+
+    ratesCache = { ts: Date.now(), data: payload };
+    res.set('Cache-Control', 'public, max-age=3600');
+    return res.json(payload);
+  } catch (err) {
+    // Fallback محترم لو الـ API وقع
+    const payload = {
+      base: 'USD',
+      provider: 'fallback',
+      updated_at: new Date().toISOString(),
+      rates: { USD: 1, EUR: 0.92, GBP: 0.78, CAD: 1.37, EGP: 48.5 },
+    };
+    res.set('Cache-Control', 'no-store');
+    return res.json(payload);
+  }
+});
+
+
 // ======================
 // Static Files & Frontend Routes
 // ======================
