@@ -115,7 +115,6 @@ const countries = [
   { value: 'IE', label: 'Ireland 🇮🇪' },
   { value: 'IS', label: 'Iceland 🇮🇸' },
   { value: 'TR', label: 'Turkey 🇹🇷' },
-  { value: 'IL', label: 'Israel 🇮🇱' },
   { value: 'JO', label: 'Jordan 🇯🇴' },
   { value: 'LB', label: 'Lebanon 🇱🇧' },
   { value: 'SY', label: 'Syria 🇸🇾' },
