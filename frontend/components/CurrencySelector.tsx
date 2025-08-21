@@ -12,8 +12,9 @@ const CURRENCIES = [
 ];
 
 const Flag = ({ cc, className = '' }: { cc: string; className?: string }) => (
-  <span className={`fi fi-${cc} flag-emoji ${className}`} aria-hidden />
+  <span className={`fi fi-${cc} ${className}`} aria-hidden />
 );
+
 
 export default function CurrencySelector() {
   const { currency, setCurrency, loading } = useCurrency();
