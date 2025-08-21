@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './components/ui/button';
 import { Card, CardContent } from './components/ui/card';
+import 'flag-icons/css/flag-icons.min.css';
 
 import { ImageWithFallback } from './components/figma/ImageWithFallback';
 import TourDetails from './components/TourDetails';
