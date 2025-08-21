@@ -1,3 +1,32 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* === Flag look (emoji-like, no animation) === */
+@layer components {
+  .flag-emoji {
+    @apply inline-block align-middle;
+    position: relative;
+    width: 1.15rem;
+    height: 0.85rem;
+    border-radius: 0.22rem;
+    box-shadow:
+      inset 0 0 0 1px rgba(0,0,0,.06),
+      0 1px 2px rgba(0,0,0,.10);
+    overflow: hidden;
+    filter: saturate(1.05) contrast(1.03);
+  }
+  .flag-emoji::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(255,255,255,.18) 0%,
+      rgba(255,255,255,0) 45%,
+      rgba(0,0,0,.06) 55%,
+      rgba(0,0,0,.08) 100%
+    );
+    pointer-events: none;
+  }
+}

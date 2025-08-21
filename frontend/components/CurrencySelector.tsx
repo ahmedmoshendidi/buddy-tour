@@ -13,17 +13,15 @@ const CURRENCIES = [
   { code: 'EGP', name: 'Egyptian Pound',  symbol: 'E£', flag: 'eg' },
 ];
 
+ const Flag = ({ cc, className = '' }: { cc: string; className?: string }) => (
+    <span className={`fi fi-${cc} flag-emoji ${className}`} aria-hidden />
+  );
+
 export default function CurrencySelector() {
   const { currency, setCurrency, loading } = useCurrency();
   const selectedCurrency = CURRENCIES.find(c => c.code === currency)!;
 
-  const Flag = ({ cc }: { cc: string }) => (
-    <span
-      className={`fi fi-${cc} rounded`}
-      style={{ fontSize: 16, lineHeight: '16px' }} // يتحكم في حجم الأيقونة
-      aria-hidden
-    />
-  );
+  
 
   return (
     <div className="flex items-center space-x-2">
