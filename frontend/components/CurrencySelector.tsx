@@ -1,9 +1,7 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useCurrency } from './CurrencyContext';
-import { DollarSign, Loader2 } from 'lucide-react';
-
-
+import { Loader2 } from 'lucide-react'; // ← شلنا DollarSign
 
 const CURRENCIES = [
   { code: 'USD', name: 'US Dollar', symbol: '$',  flag: 'us' },
@@ -13,19 +11,16 @@ const CURRENCIES = [
   { code: 'EGP', name: 'Egyptian Pound',  symbol: 'E£', flag: 'eg' },
 ];
 
- const Flag = ({ cc, className = '' }: { cc: string; className?: string }) => (
-    <span className={`fi fi-${cc} flag-emoji ${className}`} aria-hidden />
-  );
+const Flag = ({ cc, className = '' }: { cc: string; className?: string }) => (
+  <span className={`fi fi-${cc} flag-emoji ${className}`} aria-hidden />
+);
 
 export default function CurrencySelector() {
   const { currency, setCurrency, loading } = useCurrency();
   const selectedCurrency = CURRENCIES.find(c => c.code === currency)!;
 
-  
-
   return (
-    <div className="flex items-center space-x-2">
-      <DollarSign className="h-4 w-4 text-muted-foreground" />
+    <div className="flex items-center">{/* شلنا space-x-2 لأنه بقى عنصر واحد */}
       <Select value={currency} onValueChange={setCurrency}>
         <SelectTrigger className="w-[132px] border-0 bg-transparent hover:bg-muted/50 focus:ring-0 focus:ring-offset-0">
           <SelectValue>
