@@ -1,0 +1,9 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+
+  // خلي الإضافة تعرف مكان ملف إعدادات Tailwind داخل frontend
+  "tailwindCSS.experimental.configFile": "frontend/tailwind.config.js",
+  "tailwindCSS.emmetCompletions": true
+}
