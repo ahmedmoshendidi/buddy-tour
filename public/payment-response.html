@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Payment Response | BuddyTour</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#0f172a;color:#fff}
+    .wrap{max-width:720px;margin:0 auto;padding:48px 20px;text-align:center}
+    .card{background:#0b1220;border:1px solid #1f2a44;border-radius:16px;padding:32px}
+    .muted{color:#9ca3af}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Processing payment…</h1>
+      <p class="muted">Please wait, you will be redirected shortly.</p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const q = new URLSearchParams(window.location.search);
+      const success = (q.get('success') || '').toLowerCase() === 'true';
+      const target = success ? '/success.html' : '/fail.html';
+
+      // مرّر بعض المعلومات اختيارياً للصفحة التالية
+      const next = new URL(target, window.location.origin);
+      ['amount_cents','currency','data.message','message','order','id'].forEach(k=>{
+        if(q.has(k)) next.searchParams.set(k, q.get(k));
+      });
+
+      // redirect
+      window.location.replace(next.toString());
+    })();
+  </script>
+</body>
+</html>
