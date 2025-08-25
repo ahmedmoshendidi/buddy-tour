@@ -3,14 +3,81 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Base SEO -->
+    <title>BuddyTour — Alexandria Walking Tours with Local Guides</title>
     <meta name="description" content="Book Alexandria walking tours with trusted local guides. Small groups, fair prices, instant booking for Bibliotheca, Citadel, Montazah & more." />
     <meta name="keywords" content="Alexandria walking tours, local guides, small group tours, fair prices, instant booking, Bibliotheca, Citadel, Montazah" />
-    <meta property="og:description" content="Book Alexandria walking tours with trusted local guides. Small groups, fair prices, instant booking." />
-    <meta name="twitter:description" content="Book Alexandria walking tours with trusted local guides. Small groups, fair prices, instant booking." />
     <meta name="author" content="BuddyTour Team" />
     <link rel="canonical" href="https://buddytourguide.com/" />
-    <title>BuddyTour</title>
+
+    <!-- Internationalization -->
+    <link rel="alternate" href="https://buddytourguide.com/" hreflang="x-default" />
+    <link rel="alternate" href="https://buddytourguide.com/" hreflang="en-eg" />
+    <!-- لما تضيف عربي مستقبلاً -->
+    <!-- <link rel="alternate" href="https://buddytourguide.com/ar/" hreflang="ar-eg" /> -->
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BuddyTour" />
+    <meta property="og:title" content="BuddyTour — Alexandria Walking Tours with Local Guides" />
+    <meta property="og:description" content="Book authentic Alexandria experiences with verified local guides. Small groups, fair prices, instant booking." />
+    <meta property="og:url" content="https://buddytourguide.com/" />
+    <meta property="og:image" content="https://buddytourguide.com/images/bibliotheca-alexandrina.webp" />
+    <meta property="og:image:alt" content="Alexandria tours with BuddyTour" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BuddyTour — Alexandria Walking Tours with Local Guides" />
+    <meta name="twitter:description" content="Book authentic Alexandria experiences with verified local guides." />
+    <meta name="twitter:image" content="https://buddytourguide.com/images/bibliotheca-alexandrina.webp" />
+
+
+    <!-- Organization schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "BuddyTour",
+      "url": "https://buddytourguide.com",
+      "logo": "https://buddytourguide.com/favicon.ico",
+      "description": "BuddyTour is a tourism marketplace connecting travelers with local guides in Alexandria, Egypt and worldwide.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Alexandria",
+        "addressCountry": "EG"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+20-XXX-XXX-XXXX",
+        "contactType": "customer service",
+        "availableLanguage": ["en","ar"]
+      },
+      "sameAs": [
+        "https://www.facebook.com/yourpage",
+        "https://www.instagram.com/yourpage",
+        "https://www.linkedin.com/company/yourpage"
+      ]
+    }
+    </script>
+
+    <!-- WebSite schema + SearchAction -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "BuddyTour",
+      "url": "https://buddytourguide.com/",
+      "inLanguage": "en",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://buddytourguide.com/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/main.tsx"></script>
