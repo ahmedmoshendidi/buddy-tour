@@ -6,7 +6,7 @@ import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useFavorites } from './FavoritesContext';
 import { useCurrency } from './CurrencyContext';
-import { Heart, Star, Clock, Users, Trash2, ShoppingCart, Calendar } from 'lucide-react';
+import { Star, Clock, Users, Trash2, ShoppingCart, Calendar } from 'lucide-react';
 
 interface FavoritesCartProps {
   onViewTourDetails: (tourId: number) => void;
@@ -31,31 +31,27 @@ export default function FavoritesCart({ onViewTourDetails, onBookNow }: Favorite
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative p-2 hover:bg-muted/50">
-          {/* Shopping cart with small heart inside */}
-          <div className="relative">
-            <ShoppingCart className="h-5 w-5 text-muted-foreground hover:text-coral-500 transition-colors" />
-            <Heart className="h-2.5 w-2.5 text-coral-500 absolute top-1 left-1" />
-          </div>
-          {favorites.length > 0 && (
-            <Badge 
-              className="absolute -top-2 -right-2 h-5 w-5 p-0 bg-coral-500 hover:bg-coral-600 text-white text-xs flex items-center justify-center min-w-[20px]"
-            >
-              {favorites.length}
-            </Badge>
-          )}
-        </Button>
-      </SheetTrigger>
+  <Button
+    variant="ghost"
+    size="sm"
+    className="relative p-2 hover:bg-muted/50 [&_svg]:!h-6 [&_svg]:!w-6"
+  >
+    <ShoppingCart className="text-muted-foreground hover:text-coral-500 transition-colors" />
+    {favorites.length > 0 && (
+      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 bg-coral-500 hover:bg-coral-600 text-white text-xs flex items-center justify-center min-w-[20px]">
+        {favorites.length}
+      </Badge>
+    )}
+  </Button>
+</SheetTrigger>
+
       
       <SheetContent className="w-[400px] sm:w-[540px] bg-white">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2 text-primary">
-            <div className="relative">
-              <ShoppingCart className="h-5 w-5 text-primary" />
-              <Heart className="h-2.5 w-2.5 text-coral-500 absolute top-1 left-1" />
-            </div>
-            Favorite Tours
-          </SheetTitle>
+            <ShoppingCart className="h-5 w-5 text-primary" />
+                Saved Tours
+            </SheetTitle>
           <SheetDescription>
             Your saved tours - book them when you're ready!
           </SheetDescription>
@@ -64,9 +60,8 @@ export default function FavoritesCart({ onViewTourDetails, onBookNow }: Favorite
         <div className="mt-6">
           {favorites.length === 0 ? (
             <div className="text-center py-12">
-              <div className="relative mx-auto mb-4 w-12 h-12 flex items-center justify-center">
+              <div className="mx-auto mb-4 w-12 h-12 flex items-center justify-center">
                 <ShoppingCart className="h-12 w-12 text-muted-foreground" />
-                <Heart className="h-6 w-6 text-coral-500 absolute top-2 left-2" />
               </div>
               <h3 className="text-lg font-medium text-muted-foreground mb-2">No favorite tours yet</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -169,10 +164,7 @@ export default function FavoritesCart({ onViewTourDetails, onBookNow }: Favorite
                   onClick={() => setIsOpen(false)} 
                   className="w-full bg-gradient-to-r from-amber-500 to-coral-500 hover:from-amber-600 hover:to-coral-600"
                 >
-                  <div className="relative mr-2">
-                    <ShoppingCart className="h-4 w-4" />
-                    <Heart className="h-2 w-2 absolute top-1 left-1" />
-                  </div>
+                 <ShoppingCart className="h-4 w-4 mr-2" />
                   Continue Browsing
                 </Button>
               </div>
