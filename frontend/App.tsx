@@ -7,8 +7,11 @@ import TourDetails from './components/TourDetails';
 import TicketsQuantity from './components/TicketsQuantity';
 import CheckoutProcess from './components/CheckoutProcess';
 import { CurrencyProvider, useCurrency } from './components/CurrencyContext';
+import { FavoritesProvider, useFavorites } from './components/FavoritesContext';
 import CurrencySelector from './components/CurrencySelector';
-import { Clock, Users, MapPin, Star, Calendar, Shield, Compass, Globe } from 'lucide-react';
+import FavoritesCart from './components/FavoritesCart';
+import FavoriteNotification from './components/FavoriteNotification';
+import { Clock, Users, MapPin, Star, Calendar, Shield, Compass, Globe, Heart } from 'lucide-react';
 import { API_PREFIX } from './config';
 
 type AppView = 'home' | 'tour-details' | 'tickets' | 'checkout';
@@ -48,7 +51,7 @@ const heroImages = [
   }
 ];
 
-// Inner App component that uses currency context
+// Inner App component that uses currency and favorites context
 function AppContent() {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [selectedTourId, setSelectedTourId] = useState<number | null>(null);
@@ -57,6 +60,7 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const { formatPrice } = useCurrency();
+  const { addToFavorites, removeFromFavorites, isFavorite, notificationTour, showNotification, hideNotification } = useFavorites();
 
   // Load tours from real API only
   useEffect(() => {
@@ -144,6 +148,24 @@ function AppContent() {
     setCurrentView('tickets');
   };
 
+  // Favorites handlers
+  const handleToggleFavorite = (e: React.MouseEvent, tour: Tour) => {
+    e.stopPropagation(); // Prevent card click
+    
+    const tourForFavorites = {
+      ...tour,
+      price_per_person: typeof tour.price_per_person === 'string' 
+        ? parseFloat(tour.price_per_person.replace('$', '')) 
+        : tour.price_per_person
+    };
+    
+    if (isFavorite(tour.id)) {
+      removeFromFavorites(tour.id);
+    } else {
+      addToFavorites(tourForFavorites);
+    }
+  };
+
   // Scroll to tours section - used by hero button
   const handleExploreTours = () => {
     const toursSection = document.getElementById('tours');
@@ -171,7 +193,8 @@ function AppContent() {
                 BuddyTour
               </h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <FavoritesCart onViewTourDetails={handleViewTourDetails} onBookNow={handleBookNow} />
               <CurrencySelector />
               <nav className="hidden md:flex items-center space-x-6">
                 <button onClick={handleBackToHome} className="hover:text-primary transition-colors font-medium">
@@ -186,6 +209,13 @@ function AppContent() {
           tourId={selectedTourId}
           onBack={handleBackToHome}
           onBookNow={handleBookNow}
+        />
+
+        {/* Notification */}
+        <FavoriteNotification 
+          tour={notificationTour}
+          isVisible={showNotification}
+          onClose={hideNotification}
         />
       </div>
     );
@@ -204,7 +234,10 @@ function AppContent() {
                 BuddyTour
               </h1>
             </div>
-            <CurrencySelector />
+            <div className="flex items-center space-x-2">
+              <FavoritesCart onViewTourDetails={handleViewTourDetails} onBookNow={handleBookNow} />
+              <CurrencySelector />
+            </div>
           </div>
         </header>
         
@@ -212,6 +245,13 @@ function AppContent() {
           tourId={selectedTourId}
           onBack={handleBackToTourDetails}
           onCheckout={handleProceedToCheckout}
+        />
+
+        {/* Notification */}
+        <FavoriteNotification 
+          tour={notificationTour}
+          isVisible={showNotification}
+          onClose={hideNotification}
         />
       </div>
     );
@@ -230,11 +270,21 @@ function AppContent() {
                 BuddyTour
               </h1>
             </div>
-            <CurrencySelector />
+            <div className="flex items-center space-x-2">
+              <FavoritesCart onViewTourDetails={handleViewTourDetails} onBookNow={handleBookNow} />
+              <CurrencySelector />
+            </div>
           </div>
         </header>
         
         <CheckoutProcess onBack={handleBackToTickets} />
+
+        {/* Notification */}
+        <FavoriteNotification 
+          tour={notificationTour}
+          isVisible={showNotification}
+          onClose={hideNotification}
+        />
       </div>
     );
   }
@@ -253,7 +303,8 @@ function AppContent() {
               BuddyTour
             </h1>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <FavoritesCart onViewTourDetails={handleViewTourDetails} onBookNow={handleBookNow} />
             <CurrencySelector />
             <nav className="hidden md:flex items-center space-x-6">
               <a href="#how-it-works" className="hover:text-primary transition-colors font-medium">How it Works</a>
@@ -375,6 +426,19 @@ function AppContent() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
+                    {/* Heart icon for favorites - positioned in top right */}
+                    <button
+                      onClick={(e) => handleToggleFavorite(e, tour)}
+                      className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 ${
+                        isFavorite(tour.id)
+                          ? 'bg-coral-500 text-white shadow-lg'
+                          : 'bg-white/80 backdrop-blur-sm text-coral-500 hover:bg-coral-500 hover:text-white'
+                      }`}
+                    >
+                      <Heart className={`h-4 w-4 transition-all duration-200 ${
+                        isFavorite(tour.id) ? 'fill-current' : ''
+                      }`} />
+                    </button>
                   </div>
                   
                   <CardContent className="p-4">
@@ -554,15 +618,24 @@ function AppContent() {
           </div>
         </div>
       </footer>
+
+      {/* Notification - positioned outside main content */}
+      <FavoriteNotification 
+        tour={notificationTour}
+        isVisible={showNotification}
+        onClose={hideNotification}
+      />
     </div>
   );
 }
 
-// Main App component wrapped with CurrencyProvider
+// Main App component wrapped with both providers
 export default function App() {
   return (
     <CurrencyProvider>
-      <AppContent />
+      <FavoritesProvider>
+        <AppContent />
+      </FavoritesProvider>
     </CurrencyProvider>
   );
 }
