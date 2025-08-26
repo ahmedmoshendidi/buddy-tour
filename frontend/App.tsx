@@ -6,6 +6,8 @@ import { ImageWithFallback } from './components/figma/ImageWithFallback';
 import TourDetails from './components/TourDetails';
 import TicketsQuantity from './components/TicketsQuantity';
 import CheckoutProcess from './components/CheckoutProcess';
+import PaymentSuccess from './components/PaymentSuccess';
+import PaymentFailure from './components/PaymentFailure';
 import { CurrencyProvider, useCurrency } from './components/CurrencyContext';
 import { FavoritesProvider, useFavorites } from './components/FavoritesContext';
 import CurrencySelector from './components/CurrencySelector';
@@ -14,7 +16,7 @@ import FavoriteNotification from './components/FavoriteNotification';
 import { Clock, Users, MapPin, Star, Calendar, Shield, Compass, Globe, Heart } from 'lucide-react';
 import { API_PREFIX } from './config';
 
-type AppView = 'home' | 'tour-details' | 'tickets' | 'checkout';
+type AppView = 'home' | 'tour-details' | 'tickets' | 'checkout' | 'payment-success' | 'payment-failure';
 
 interface Tour {
   id: number;
@@ -22,7 +24,7 @@ interface Tour {
   description: string;
   duration: string;
   max_group_size: number;
-  price_per_person: string;
+  price_per_person: number | string;
   image_urls: string[];
   rating?: number;
   reviews_count?: number;
@@ -61,6 +63,34 @@ function AppContent() {
   const [error, setError] = useState<string>('');
   const { formatPrice } = useCurrency();
   const { addToFavorites, removeFromFavorites, isFavorite, notificationTour, showNotification, hideNotification } = useFavorites();
+
+// Check for payment result in URL on app load
+useEffect(() => {
+  const q = new URLSearchParams(window.location.search);
+
+  const status  = q.get('payment_status') || q.get('status'); // success | failed | completed | error
+  const success = q.get('success');                            // "true" | "false"
+  const error   = q.get('error_occured');                      // "true" | "false"
+  const code    = q.get('txn_response_code');                  // "APPROVED" ...
+  const pending = q.get('pending');                            // "true" | "false"
+
+  const isSuccess =
+    success === 'true' ||
+    status === 'success' ||
+    status === 'completed' ||
+    (error === 'false' && code === 'APPROVED');
+
+  const isFailure =
+    success === 'false' ||
+    status === 'failed' ||
+    status === 'error' ||
+    error === 'true' ||
+    pending === 'true';
+
+  if (isSuccess) setCurrentView('payment-success');
+  else if (isFailure) setCurrentView('payment-failure');
+}, []);
+
 
   // Load tours from real API only
   useEffect(() => {
@@ -138,6 +168,8 @@ function AppContent() {
   const handleBackToHome = () => {
     setCurrentView('home');
     setSelectedTourId(null);
+    // Clear URL parameters when going back to home
+    window.history.pushState({}, document.title, window.location.pathname);
   };
 
   const handleBackToTourDetails = () => {
@@ -146,6 +178,10 @@ function AppContent() {
 
   const handleBackToTickets = () => {
     setCurrentView('tickets');
+  };
+
+  const handleRetryPayment = () => {
+    setCurrentView('checkout');
   };
 
   // Favorites handlers
@@ -178,6 +214,75 @@ function AppContent() {
   };
 
   const currentImage = heroImages[currentImageIndex];
+
+  // Render Payment Success page
+  if (currentView === 'payment-success') {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4">
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
+                <Compass className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
+                BuddyTour
+              </h1>
+            </div>
+            <div className="flex items-center space-x-2">
+              <FavoritesCart onViewTourDetails={handleViewTourDetails} onBookNow={handleBookNow} />
+              <CurrencySelector />
+            </div>
+          </div>
+        </header>
+        
+        <PaymentSuccess onBackToHome={handleBackToHome} />
+
+        {/* Notification */}
+        <FavoriteNotification 
+          tour={notificationTour}
+          isVisible={showNotification}
+          onClose={hideNotification}
+        />
+      </div>
+    );
+  }
+
+  // Render Payment Failure page
+  if (currentView === 'payment-failure') {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4">
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-md">
+                <Compass className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-teal-600 bg-clip-text text-transparent">
+                BuddyTour
+              </h1>
+            </div>
+            <div className="flex items-center space-x-2">
+              <FavoritesCart onViewTourDetails={handleViewTourDetails} onBookNow={handleBookNow} />
+              <CurrencySelector />
+            </div>
+          </div>
+        </header>
+        
+        <PaymentFailure 
+          onBackToHome={handleBackToHome}
+          onRetryPayment={handleRetryPayment}
+        />
+
+        {/* Notification */}
+        <FavoriteNotification 
+          tour={notificationTour}
+          isVisible={showNotification}
+          onClose={hideNotification}
+        />
+      </div>
+    );
+  }
 
   // Render different views based on currentView
   if (currentView === 'tour-details' && selectedTourId) {

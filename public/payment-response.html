@@ -21,20 +21,31 @@
   </div>
 
   <script>
-    (function () {
-      const q = new URLSearchParams(window.location.search);
-      const success = (q.get('success') || '').toLowerCase() === 'true';
-      const target = success ? '/success.html' : '/fail.html';
+  (function () {
+    const q = new URLSearchParams(location.search);
+    const pick = k => (q.get(k) || '').toLowerCase();
 
-      // مرّر بعض المعلومات اختيارياً للصفحة التالية
-      const next = new URL(target, window.location.origin);
-      ['amount_cents','currency','data.message','message','order','id'].forEach(k=>{
-        if(q.has(k)) next.searchParams.set(k, q.get(k));
-      });
+    // حدد النجاح بشكل أوسع
+    const success =
+      pick('success') === 'true' ||
+      pick('payment_status') === 'success' ||
+      pick('status') === 'completed' ||
+      (q.get('txn_response_code') || '').toUpperCase().startsWith('APPROVED') && pick('error_occured') !== 'true';
 
-      // redirect
-      window.location.replace(next.toString());
-    })();
-  </script>
+    // هنحوّل للـ SPA root
+    const next = new URL('/', location.origin);
+
+    // انسخ كل البراميترات الأصلية
+    q.forEach((v, k) => next.searchParams.set(k, v));
+
+    // طبّع علامات موحّدة عشان App.tsx يلقطها بسهولة
+    next.searchParams.set('status', success ? 'success' : 'failed');
+    next.searchParams.set('success', success ? 'true' : 'false');
+
+    // لو مش مهم تحتفظ بالـ query في الهيستوري، استعمل replace
+    location.replace(next.toString());
+  })();
+</script>
+
 </body>
 </html>
