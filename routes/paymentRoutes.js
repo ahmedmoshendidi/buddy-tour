@@ -85,7 +85,7 @@ router.post("/pay", async (req, res) => {
       street: "NA",
       building: "NA",
       city: "Cairo",
-      country: "EG",
+      country: nationality,
       state: "NA",
     };
 
