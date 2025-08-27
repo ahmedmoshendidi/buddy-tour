@@ -22,6 +22,34 @@ const PORT = process.env.PORT || 5000;
 // ======================
 app.set("trust proxy", true); // Essential for Railway/Heroku deployment
 
+
+// ======================
+// Redirect Middleware 301
+// ======================
+
+
+app.use((req, res, next) => {
+  const host = req.hostname;
+
+  // Railway → الدومين الرسمي
+  if (host === "buddy-tour-production.up.railway.app") {
+    return res.redirect(301, "https://buddytourguide.com" + req.originalUrl);
+  }
+
+  // اختياري: www → apex
+  if (host === "www.buddytourguide.com") {
+    return res.redirect(301, "https://buddytourguide.com" + req.originalUrl);
+  }
+
+  // إجبار HTTPS
+  if (req.protocol === "http") {
+    return res.redirect(301, "https://" + host + req.originalUrl);
+  }
+
+  next();
+});
+
+
 // ======================
 // Middleware Stack
 // ======================
@@ -52,12 +80,20 @@ app.use(
   })
 );
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    credentials: true,
-  })
-);
+const allowed = [
+  "https://buddytourguide.com",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000"
+];
+
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowed.includes(origin)) return cb(null, true);
+    cb(new Error("Not allowed by CORS"));
+  },
+  credentials: true
+}));
+
 
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
