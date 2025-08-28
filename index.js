@@ -6,6 +6,7 @@ const cors = require("cors");
 const path = require("path");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const sitemapRoute = require('./routes/sitemapRoute');
 const fs = require("fs");
 require("dotenv").config();
 
@@ -175,6 +176,13 @@ app.get(['/api/rates', '/api/rates/'], async (req, res) => {
     return res.json(payload);
   }
 });
+
+// ======================
+// dynamic Sitemap Route
+// ======================
+
+app.use(sitemapRoute);
+
 
 
 // ======================
