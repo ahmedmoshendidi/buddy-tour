@@ -1,0 +1,56 @@
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const cors = require("cors");
+
+// CORS configuration
+const corsOptions = {
+  origin: (origin, cb) => {
+    const allowed = [
+      "https://buddytourguide.com",
+      "http://localhost:3000", 
+      "http://127.0.0.1:3000"
+    ];
+    if (!origin || allowed.includes(origin)) return cb(null, true);
+    cb(new Error("Not allowed by CORS"));
+  },
+  credentials: true
+};
+
+// Helmet security configuration
+const helmetOptions = {
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "default-src": ["'self'"],
+      "script-src": [
+        "'self'",
+        "https://cdn.jsdelivr.net",
+        "'unsafe-inline'"
+      ],
+      "style-src": [
+        "'self'",
+        "https://cdn.jsdelivr.net",
+        "'unsafe-inline'"
+      ],
+      "img-src": [
+        "'self'",
+        "data:",
+        "https://cdn.jsdelivr.net"
+      ],
+      "connect-src": ["'self'", "https://accept.paymob.com"]
+    }
+  }
+};
+
+// Rate limiter configuration (100 requests/15min)
+const rateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many requests, please try again later",
+});
+
+module.exports = {
+  corsOptions,
+  helmetOptions,
+  rateLimiter
+};

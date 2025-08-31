@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:integration": "RUN_REAL_DB_TESTS=true jest tests/integration-real-db",
+    "test:unit": "jest tests/unit",
+    "test:mock": "jest tests/integration",
     "start": "node index.js",
     "postinstall": "npm --prefix frontend ci && npm --prefix frontend run build"
   },
@@ -19,5 +23,9 @@
     "express-rate-limit": "^8.0.1",
     "helmet": "^8.1.0",
     "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "jest": "^30.1.1",
+    "supertest": "^7.1.4"
   }
 }

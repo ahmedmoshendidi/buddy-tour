@@ -7,10 +7,11 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useFavorites } from './FavoritesContext';
 import { useCurrency } from './CurrencyContext';
 import { Star, Clock, Users, Trash2, ShoppingCart, Calendar } from 'lucide-react';
+import type { Tour } from '../hooks/useTourDetails';
 
 interface FavoritesCartProps {
-  onViewTourDetails: (tourId: number) => void;
-  onBookNow: (tourId: number) => void;
+  onViewTourDetails: (tour : Tour) => void;
+  onBookNow: (tour: Tour) => void;
 }
 
 export default function FavoritesCart({ onViewTourDetails, onBookNow }: FavoritesCartProps) {
@@ -18,32 +19,32 @@ export default function FavoritesCart({ onViewTourDetails, onBookNow }: Favorite
   const { formatPrice } = useCurrency();
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleViewTour = (tourId: number) => {
+  const handleViewTour = (tour: Tour) => {
     setIsOpen(false);
-    onViewTourDetails(tourId);
+    onViewTourDetails(tour);
   };
 
-  const handleBookTour = (tourId: number) => {
+  const handleBookTour = (tour : Tour) => {
     setIsOpen(false);
-    onBookNow(tourId);
+    onBookNow(tour);
   };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-  <Button
-    variant="ghost"
-    size="sm"
-    className="relative p-2 hover:bg-muted/50 [&_svg]:!h-6 [&_svg]:!w-6"
-  >
-    <ShoppingCart className="text-muted-foreground hover:text-coral-500 transition-colors" />
-    {favorites.length > 0 && (
-      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 bg-coral-500 hover:bg-coral-600 text-white text-xs flex items-center justify-center min-w-[20px]">
-        {favorites.length}
-      </Badge>
-    )}
-  </Button>
-</SheetTrigger>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="relative p-2 hover:bg-muted/50 [&_svg]:!h-6 [&_svg]:!w-6"
+        >
+          <ShoppingCart className="text-muted-foreground hover:text-coral-500 transition-colors" />
+          {favorites.length > 0 && (
+            <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 bg-coral-500 hover:bg-coral-600 text-white text-xs flex items-center justify-center min-w-[20px]">
+              {favorites.length}
+            </Badge>
+          )}
+        </Button>
+      </SheetTrigger>
 
       
       <SheetContent className="w-[400px] sm:w-[540px] bg-white">
@@ -137,14 +138,14 @@ export default function FavoritesCart({ onViewTourDetails, onBookNow }: Favorite
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleViewTour(tour.id)}
+                              onClick={() => handleViewTour(tour)}
                               className="h-7 px-2 text-xs"
                             >
                               View
                             </Button>
                             <Button
                               size="sm"
-                              onClick={() => handleBookTour(tour.id)}
+                              onClick={() => handleBookTour(tour)}
                               className="h-7 px-2 text-xs bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700"
                             >
                               <Calendar className="h-3 w-3 mr-1" />

@@ -1,98 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { API_PREFIX } from '../config';
+import React from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { useCurrency } from './CurrencyContext';
+import { useTourDetails, Tour } from '../hooks/useTourDetails';
+import { useSEO } from '../hooks/useSEO';
 
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ArrowLeft, MapPin, Clock, Users, Star, CheckCircle, Compass } from 'lucide-react';
 
-interface Tour {
-  id: number;
-  title: string;
-  description: string;
-  duration?: string;
-  max_group_size?: number;
-  price_per_person: string | number;
-  image_urls: string[];
-  rating?: number;
-  reviews_count?: number;
-}
-
 interface TourDetailsProps {
-  tourId: number;
+  tourId: string; // slug
   onBack: () => void;
-  onBookNow: (tourId: number) => void;
+  onBookNow: (tour: Tour) => void;
 }
 
 export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsProps) {
-  const [tour, setTour] = useState<Tour | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const { tour, loading, error } = useTourDetails(tourId);
   const { formatPrice } = useCurrency();
 
-  useEffect(() => {
-    const loadTourData = async () => {
-      setLoading(true);
-      setError('');
-      
-      try {
-        const response = await fetch(`${API_PREFIX}/tours/${tourId}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        if (!data.tour) {
-          throw new Error('Tour not found in response');
-        }
-        
-        const foundTour = data.tour;
-        
-        // Process tour data to ensure consistent format
-        const processedTour = {
-          ...foundTour,
-          duration: foundTour.duration || '2 hours',
-          max_group_size: foundTour.max_group_size || 12,
-          rating: foundTour.rating || 4.8,
-          reviews_count: foundTour.reviews_count || 100,
-          image_urls: foundTour.image_urls || ['https://images.unsplash.com/photo-1539650116574-75c0c6d2d167?w=600&h=400&fit=crop']
-        };
-        
-        setTour(processedTour);
-        
-        // Update document metadata
-        document.title = `${foundTour.title} - BuddyTour`;
-        
-        // Update meta description
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) {
-          metaDesc.setAttribute('content', foundTour.description);
-        }
-        
-        // Update OG tags
-        const ogTitle = document.querySelector('meta[property="og:title"]');
-        const ogDesc = document.querySelector('meta[property="og:description"]');
-        const ogImage = document.querySelector('meta[property="og:image"]');
-        
-        if (ogTitle) ogTitle.setAttribute('content', `${foundTour.title} - BuddyTour`);
-        if (ogDesc) ogDesc.setAttribute('content', foundTour.description);
-        if (ogImage && foundTour.image_urls?.[0]) {
-          ogImage.setAttribute('content', foundTour.image_urls[0]);
-        }
-        
-      } catch (err: any) {
-        console.error('Error loading tour:', err);
-        setError(err.message || 'Failed to load tour details');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Update SEO metadata when tour data is available
+  useSEO({
+    title: tour ? `${tour.title} - BuddyTour` : undefined,
+    description: tour?.description,
+    image: tour?.image_urls?.[0],
+    url: typeof window !== 'undefined' ? window.location.href : undefined
+  });
 
-    loadTourData();
-  }, [tourId]);
 
   if (loading) {
     return (
@@ -241,7 +174,7 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
             <div className="text-center">
               <Button 
                 size="lg" 
-                onClick={() => onBookNow(tour.id)}
+                onClick={() => onBookNow(tour)}
                 className="bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg px-8 py-3 text-lg"
               >
                 Book This Tour Now

@@ -1,0 +1,72 @@
+import React from 'react';
+import Header from '../layout/Header';
+import HeroSection from '../layout/HeroSection';
+import ToursGrid from '../tours/ToursGrid';
+import HowItWorks from '../sections/HowItWorks';
+import TrustSection from '../sections/TrustSection';
+import Footer from '../layout/Footer';
+import FavoriteNotification from '../FavoriteNotification';
+import { useFavorites } from '../FavoritesContext';
+import type { Tour } from '../../hooks/useTourDetails';
+
+interface HomePageProps {
+  tours: Tour[];
+  loading: boolean;
+  error: string;
+  onViewTourDetails: (tour: Tour) => void;
+  onBookNow: (tour: Tour) => void;
+  onViewTourById: (tourId: number) => void;
+}
+
+export default function HomePage({
+  tours,
+  loading,
+  error,
+  onViewTourDetails,
+  onBookNow,
+  onViewTourById
+}: HomePageProps) {
+  const { notificationTour, showNotification, hideNotification } = useFavorites();
+
+  // Scroll to tours section - used by hero button
+  const handleExploreTours = () => {
+    const toursSection = document.getElementById('tours');
+    if (toursSection) {
+      toursSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header 
+        onViewTourDetails={onViewTourDetails} 
+        onBookNow={onBookNow}
+      />
+      
+      <HeroSection onExploreTours={handleExploreTours} />
+      
+      <ToursGrid 
+        tours={tours}
+        loading={loading}
+        error={error}
+        onViewTourDetails={onViewTourDetails}
+      />
+      
+      <HowItWorks />
+      
+      <TrustSection />
+      
+      <Footer onViewTourById={onViewTourById} />
+
+      {/* Notification */}
+      <FavoriteNotification 
+        tour={notificationTour}
+        isVisible={showNotification}
+        onClose={hideNotification}
+      />
+    </div>
+  );
+}
