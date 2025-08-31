@@ -47,6 +47,19 @@ export function useSEO(data: SEOData) {
     if (data.image) updateOGTag('og:image', data.image);
     if (data.url) updateOGTag('og:url', data.url);
 
+    // Update canonical tag with correct domain
+    if (data.url) {
+      let canonicalTag = document.querySelector('link[rel="canonical"]');
+      if (canonicalTag) {
+        canonicalTag.setAttribute('href', data.url);
+      } else {
+        canonicalTag = document.createElement('link');
+        canonicalTag.setAttribute('rel', 'canonical');
+        canonicalTag.setAttribute('href', data.url);
+        document.head.appendChild(canonicalTag);
+      }
+    }
+
     // Cleanup function to restore original title
     return () => {
       document.title = 'BuddyTour - Authentic Alexandria Walking Tours';
