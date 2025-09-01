@@ -17,31 +17,28 @@ export function usePaymentProcess() {
     setPaymentResult(null);
 
     try {
-      // Prepare booking data
-      const bookingData = {
+      // Prepare payment data to match /api/pay endpoint
+      const paymentData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        nationality: formData.nationality,
         tour_id: formData.tour_id,
         date: formData.date,
         time: formData.time,
         adults: formData.adults || 0,
-        children: formData.children || 0,
-        total_amount: formData.total_amount,
-        price_per_person: formData.price_per_person,
-        customer_name: `${formData.firstName} ${formData.lastName}`.trim(),
-        customer_email: formData.email,
-        customer_phone: formData.phone,
-        customer_nationality: formData.nationality,
-        payment_method: formData.paymentMethod,
-        special_requests: formData.special_requests || ''
+        children: formData.children || 0
       };
 
-      console.log('Processing booking with data:', bookingData);
+      console.log('Processing payment with data:', paymentData);
 
-      const response = await fetch(`${API_PREFIX}/bookings`, {
+      const response = await fetch(`${API_PREFIX}/pay`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(bookingData),
+        body: JSON.stringify(paymentData),
       });
 
       const data = await response.json();
@@ -50,22 +47,13 @@ export function usePaymentProcess() {
         throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Handle different response types based on payment method
-      if (formData.paymentMethod === 'card' && data.payment_url) {
-        // Redirect to payment gateway
-        window.location.href = data.payment_url;
-        return { success: true, bookingId: data.booking_id };
-      } else if (formData.paymentMethod === 'wallet' && data.payment_url) {
-        // Redirect to wallet payment
-        window.location.href = data.payment_url;
-        return { success: true, bookingId: data.booking_id };
-      } else if (data.success) {
-        // Direct booking confirmation
-        const result = { success: true, bookingId: data.booking_id };
-        setPaymentResult(result);
-        return result;
+      // Handle payment response from /api/pay
+      if (data.iframe_url && data.order_id) {
+        // Redirect to Paymob payment iframe
+        window.location.href = data.iframe_url;
+        return { success: true, bookingId: data.order_id };
       } else {
-        throw new Error(data.message || 'Booking failed');
+        throw new Error(data.error || 'Payment initiation failed');
       }
 
     } catch (error: any) {
