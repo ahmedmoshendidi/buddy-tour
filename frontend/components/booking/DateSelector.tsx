@@ -128,24 +128,6 @@ export default function DateSelector({
         <div className="grid grid-cols-7 gap-1 text-center">
           {generateCalendar()}
         </div>
-        
-        {/* Legend */}
-        <div className="mt-4 flex justify-center space-x-4 text-xs text-muted-foreground">
-          <div className="flex items-center">
-            <div className="w-3 h-3 bg-primary rounded mr-2"></div>
-            <span>Selected</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-3 h-3 border-2 border-primary rounded mr-2"></div>
-            <span>Today</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-3 h-3 bg-muted/60 rounded mr-2 relative">
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
-            </div>
-            <span>Available</span>
-          </div>
-        </div>
       </div>
     </div>
   );
