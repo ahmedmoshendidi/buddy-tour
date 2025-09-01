@@ -93,7 +93,8 @@ export function useTicketBooking(tourId: string | number) {
           setSelectedDate(firstDate);
           setSelectedTime(firstDateSlots[0]?.time || '');
         } else {
-          setSelectedDate(todayStr);
+          // No time slots available - don't set any date/time
+          setSelectedDate('');
           setSelectedTime('');
         }
         
@@ -135,8 +136,14 @@ export function useTicketBooking(tourId: string | number) {
 
   const canProceedToCheckout = () => {
     // Must have tour, selected date/time, at least 1 adult, and valid time slots
-    return tour && selectedDate && selectedTime && adults > 0 && timeSlots.length > 0 &&
-           timeSlots.some(slot => slot.date === selectedDate && slot.time === selectedTime);
+    return !!(
+      tour && 
+      selectedDate && 
+      selectedTime && 
+      adults > 0 && 
+      timeSlots.length > 0 &&
+      timeSlots.some(slot => slot.date === selectedDate && slot.time === selectedTime)
+    );
   };
 
   const proceedToCheckout = () => {

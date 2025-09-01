@@ -64,6 +64,8 @@ export default function DateTimeSelector({
               const availableSlots = timeSlots.filter(slot => slot.date === dateStr);
               if (availableSlots.length > 0) {
                 onSelectTime(availableSlots[0].time);
+              } else {
+                onSelectTime(''); // Clear time if no slots available
               }
             }
           }}

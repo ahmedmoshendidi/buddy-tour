@@ -86,13 +86,22 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Date/Time Selection */}
           <div className="space-y-6">
-            <DateTimeSelector
-              timeSlots={timeSlots}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              onSelectDate={setSelectedDate}
-              onSelectTime={setSelectedTime}
-            />
+            {timeSlots.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-20">
+                  <p className="text-muted-foreground mb-4">⏰ No time slots available for this tour</p>
+                  <p className="text-sm text-muted-foreground">Please check back later or contact support</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <DateTimeSelector
+                timeSlots={timeSlots}
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
+                onSelectDate={setSelectedDate}
+                onSelectTime={setSelectedTime}
+              />
+            )}
           </div>
 
           {/* Right Column - Ticket Selection */}
@@ -108,12 +117,25 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
               selectedTime={selectedTime}
             />
 
+            {/* Validation Messages */}
+            {!canProceedToCheckout() && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-sm text-amber-800 font-medium mb-1">Complete your booking:</p>
+                <ul className="text-xs text-amber-700 space-y-1">
+                  {!selectedDate && <li>• Select a date</li>}
+                  {!selectedTime && <li>• Select a time</li>}
+                  {adults === 0 && <li>• Add at least 1 adult</li>}
+                  {timeSlots.length === 0 && <li>• No time slots available</li>}
+                </ul>
+              </div>
+            )}
+
             {/* Proceed Button */}
             <Button
               size="lg"
               onClick={handleCheckout}
               disabled={!canProceedToCheckout()}
-              className="w-full bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg"
+              className="w-full bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ShoppingCart className="h-5 w-5 mr-2" />
               Proceed to Checkout
