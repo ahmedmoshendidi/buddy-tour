@@ -71,7 +71,7 @@ export default function DateSelector({
               ? 'bg-primary text-primary-foreground shadow-md' 
               : 'text-foreground'
             }
-            ${isToday && !isSelected 
+            ${isToday && !isSelected && selectedDate === ''
               ? 'ring-2 ring-primary ring-offset-2' 
               : ''
             }

@@ -27,6 +27,11 @@ export default function PriceDisplay({
     return (adults * tour.price_per_person) + (children * childPrice);
   };
 
+  // Don't show if both counters are zero
+  if (adults === 0 && children === 0) {
+    return null;
+  }
+
   return (
     <div className="bg-gradient-to-r from-primary/5 to-teal-50 p-6 rounded-lg border border-primary/20">
       <div className="flex justify-between items-center">
