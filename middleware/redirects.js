@@ -12,8 +12,9 @@ const redirectMiddleware = (req, res, next) => {
     return res.redirect(301, "https://buddytourguide.com" + req.originalUrl);
   }
 
-  // Force HTTPS
-  if (req.protocol === "http") {
+  // Force HTTPS (skip for local development)
+  const isLocal = host.includes("localhost") || host.includes("127.0.0.1") || host.startsWith("192.168.") || host.startsWith("10.") || host.startsWith("172.");
+  if (req.protocol === "http" && !isLocal) {
     return res.redirect(301, "https://" + host + req.originalUrl);
   }
 

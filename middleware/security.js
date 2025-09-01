@@ -8,7 +8,9 @@ const corsOptions = {
     const allowed = [
       "https://buddytourguide.com",
       "http://localhost:3000", 
-      "http://127.0.0.1:3000"
+      "http://127.0.0.1:3000",
+      "http://localhost:5000",
+      "http://127.0.0.1:5000"
     ];
     if (!origin || allowed.includes(origin)) return cb(null, true);
     cb(new Error("Not allowed by CORS"));
@@ -35,7 +37,11 @@ const helmetOptions = {
       "img-src": [
         "'self'",
         "data:",
-        "https://cdn.jsdelivr.net"
+        "https://cdn.jsdelivr.net",
+        "https://images.unsplash.com",
+        "https://*.unsplash.com",
+        "https://*.cloudinary.com",
+        "https://*.amazonaws.com"
       ],
       "connect-src": ["'self'", "https://accept.paymob.com"]
     }

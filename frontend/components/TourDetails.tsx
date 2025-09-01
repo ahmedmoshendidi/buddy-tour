@@ -78,7 +78,7 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
           {/* Hero Image */}
           <div className="relative h-96 overflow-hidden">
             <ImageWithFallback
-              src={tour.image_urls[0]}
+              src={tour.image_urls?.[0] || 'https://images.unsplash.com/photo-1539650116574-75c0c6d2d167?w=800&h=400&fit=crop'}
               alt={`${tour.title} by BuddyTour`}
               className="w-full h-full object-cover"
             />

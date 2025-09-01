@@ -53,9 +53,9 @@ export function useTourDetails(tourId: string) {
           max_group_size: foundTour.max_group_size || 12,
           rating: foundTour.rating || 4.8,
           reviews_count: foundTour.reviews_count || 100,
-          image_urls: foundTour.image_urls || [
-            'https://images.unsplash.com/photo-1539650116574-75c0c6d2d167?w=600&h=400&fit=crop'
-          ]
+          image_urls: (Array.isArray(foundTour.image_urls) && foundTour.image_urls.length > 0) 
+            ? foundTour.image_urls 
+            : ['https://images.unsplash.com/photo-1539650116574-75c0c6d2d167?w=800&h=400&fit=crop']
         };
         
         setTour(processedTour);
