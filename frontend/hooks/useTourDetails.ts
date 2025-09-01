@@ -54,7 +54,12 @@ export function useTourDetails(tourId: string) {
           rating: foundTour.rating || 4.8,
           reviews_count: foundTour.reviews_count || 100,
           image_urls: (Array.isArray(foundTour.image_urls) && foundTour.image_urls.length > 0) 
-            ? foundTour.image_urls 
+            ? foundTour.image_urls.map((url: string) => {
+                // Convert relative URLs to absolute URLs
+                if (url.startsWith('http')) return url; // Already absolute
+                if (url.startsWith('/')) return `https://buddytourguide.com${url}`; // Root relative
+                return `https://buddytourguide.com/${url}`; // Relative
+              })
             : ['https://images.unsplash.com/photo-1539650116574-75c0c6d2d167?w=800&h=400&fit=crop']
         };
         
