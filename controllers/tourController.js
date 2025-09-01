@@ -6,7 +6,7 @@ const getTourById = async (req, res) => {
 
   try {
     const tourRes = await pool.query(
-      `SELECT id, title, description, duration, max_group_size, price_per_person, image_urls FROM tours WHERE id = $1`,
+      `SELECT id, title, description, duration, max_group_size, price_per_person, image_urls, slug FROM tours WHERE id = $1`,
       [id]
     );
 
@@ -36,7 +36,7 @@ const getTourBySlug = async (req, res) => {
   
   try {
     const tourRes = await pool.query(
-      `SELECT id, title, description, duration, max_group_size, price_per_person, image_urls
+      `SELECT id, title, description, duration, max_group_size, price_per_person, image_urls, slug
        FROM tours
        WHERE slug = $1
        LIMIT 1`,
@@ -71,7 +71,7 @@ const getTourBySlug = async (req, res) => {
 const getAllTours = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, title, description, duration, price_per_person, max_group_size, image_urls FROM tours`
+      `SELECT id, title, description, duration, price_per_person, max_group_size, image_urls, slug FROM tours`
     );
     res.json({ tours: result.rows });
   } catch (err) {

@@ -6,10 +6,11 @@ export function useAppNavigation() {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [selectedTourSlug, setSelectedTourSlug] = useState<string | null>(null);
 
-  // Handle URL routing and payment result on app load
+  // Handle URL routing and payment result on app load and browser navigation
   useEffect(() => {
-    const path = window.location.pathname;
-    const q = new URLSearchParams(window.location.search);
+    const handleRouteChange = () => {
+      const path = window.location.pathname;
+      const q = new URLSearchParams(window.location.search);
 
     // Check for payment results first
     const status = q.get('payment_status') || q.get('status');
@@ -60,6 +61,17 @@ export function useAppNavigation() {
     } else if (path === '/checkout') {
       setCurrentView('checkout');
     }
+    };
+
+    // Initial route handling
+    handleRouteChange();
+
+    // Listen for browser back/forward navigation
+    window.addEventListener('popstate', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+    };
   }, []);
 
   const navigateToHome = () => {
