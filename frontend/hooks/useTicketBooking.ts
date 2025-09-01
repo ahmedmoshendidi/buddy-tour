@@ -13,7 +13,7 @@ interface TimeSlot {
   date: string;
 }
 
-export function useTicketBooking(tourId: number) {
+export function useTicketBooking(tourId: string | number) {
   const [loading, setLoading] = useState(true);
   const [tour, setTour] = useState<Tour | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -38,7 +38,12 @@ export function useTicketBooking(tourId: number) {
       setError('');
       
       try {
-        const response = await fetch(`${API_PREFIX}/tours/${tourId}`);
+        const isNumericId = /^\d+$/.test(String(tourId));
+        const endpoint = isNumericId
+          ? `${API_PREFIX}/tours/${tourId}`
+          : `${API_PREFIX}/tours/by-slug/${encodeURIComponent(String(tourId))}`;
+        
+        const response = await fetch(endpoint);
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: Failed to load tour`);

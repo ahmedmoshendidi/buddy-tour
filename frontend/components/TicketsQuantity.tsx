@@ -7,7 +7,7 @@ import DateTimeSelector from './booking/DateTimeSelector';
 import TicketCounter from './booking/TicketCounter';
 
 interface TicketsQuantityProps {
-  tourId: number;
+  tourId: string | number;
   onBack: () => void;
   onCheckout: () => void;
 }

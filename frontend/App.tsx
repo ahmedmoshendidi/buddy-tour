@@ -98,7 +98,7 @@ function AppContent() {
         />
         
         <TicketsQuantity 
-          tourId={parseInt(selectedTourSlug || '0')}
+          tourId={selectedTourSlug || '0'}
           onBack={() => navigateToTourDetails(selectedTourSlug)}
           onCheckout={navigateToCheckout}
         />
