@@ -44,21 +44,6 @@ export default function PaymentMethodStep({
               </div>
             </Label>
           </div>
-
-          <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-accent/50">
-            <RadioGroupItem value="wallet" id="wallet" />
-            <Label htmlFor="wallet" className="flex-1 cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 rounded"></div>
-                <div>
-                  <div className="font-medium">Mobile Wallet</div>
-                  <div className="text-sm text-muted-foreground">
-                    Pay with Vodafone Cash, Orange Money, etc.
-                  </div>
-                </div>
-              </div>
-            </Label>
-          </div>
         </RadioGroup>
 
         {errors.paymentMethod && (
