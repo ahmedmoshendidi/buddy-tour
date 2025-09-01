@@ -38,7 +38,7 @@ export default function TicketCounter({
           <div>
             <div className="font-medium">Adults</div>
             <div className="text-sm text-muted-foreground">
-              Ages 13+ • {formatPrice(pricePerPerson)}
+              Ages 15+ • {formatPrice(pricePerPerson)}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -46,7 +46,7 @@ export default function TicketCounter({
               variant="outline"
               size="sm"
               onClick={() => onUpdateTicketCount('adults', 'subtract')}
-              disabled={adults <= 0}
+              disabled={adults <= 1}
               className="h-8 w-8 p-0"
             >
               <Minus className="h-4 w-4" />
@@ -69,7 +69,7 @@ export default function TicketCounter({
           <div>
             <div className="font-medium">Children</div>
             <div className="text-sm text-muted-foreground">
-              Ages 0-12 • {formatPrice(pricePerPerson * 0.8)} (20% off)
+              Ages 0-14 • {formatPrice(pricePerPerson * 0.8)} (20% off)
             </div>
           </div>
           <div className="flex items-center gap-3">

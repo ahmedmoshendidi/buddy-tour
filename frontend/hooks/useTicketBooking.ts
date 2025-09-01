@@ -19,7 +19,7 @@ export function useTicketBooking(tourId: string | number) {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [adults, setAdults] = useState<number>(0);
+  const [adults, setAdults] = useState<number>(1);
   const [children, setChildren] = useState<number>(0);
   const [error, setError] = useState<string>('');
 
@@ -110,7 +110,7 @@ export function useTicketBooking(tourId: string | number) {
   const updateTicketCount = (type: 'adults' | 'children', operation: 'add' | 'subtract') => {
     if (type === 'adults') {
       setAdults(prev => {
-        const newCount = operation === 'add' ? prev + 1 : Math.max(0, prev - 1);
+        const newCount = operation === 'add' ? prev + 1 : Math.max(1, prev - 1);
         return Math.min(newCount, tour?.max_group_size || 12);
       });
     } else {
@@ -126,7 +126,9 @@ export function useTicketBooking(tourId: string | number) {
   const totalPrice = tour ? (adults * tour.price_per_person) + (children * tour.price_per_person * 0.8) : 0;
 
   const canProceedToCheckout = () => {
-    return tour && selectedDate && selectedTime && totalPeople > 0;
+    // Must have tour, selected date/time, at least 1 adult, and valid time slots
+    return tour && selectedDate && selectedTime && adults > 0 && timeSlots.length > 0 &&
+           timeSlots.some(slot => slot.date === selectedDate && slot.time === selectedTime);
   };
 
   const proceedToCheckout = () => {

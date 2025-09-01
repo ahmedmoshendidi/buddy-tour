@@ -144,7 +144,7 @@ export default function DateTimeSelector({
       </Card>
 
       {/* Time Selection */}
-      {selectedDate && (
+      {selectedDate && availableTimesForSelectedDate.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
