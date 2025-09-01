@@ -109,9 +109,13 @@ export default function ContactInformationStep({
             <SelectTrigger className={errors.nationality ? 'border-red-500' : ''}>
               <SelectValue placeholder="Select your nationality" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg max-h-[200px] overflow-y-auto z-50">
               {COUNTRIES.map((country) => (
-                <SelectItem key={country.value} value={country.value}>
+                <SelectItem 
+                  key={country.value} 
+                  value={country.value}
+                  className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer px-3 py-2"
+                >
                   {country.label}
                 </SelectItem>
               ))}
