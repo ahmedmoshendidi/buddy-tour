@@ -37,6 +37,12 @@ export function useTicketBooking(tourId: string | number) {
     const loadTourData = async () => {
       setLoading(true);
       setError('');
+      // Clear all states when loading new tour
+      setTimeSlots([]);
+      setSelectedDate('');
+      setSelectedTime('');
+      setAdults(0);
+      setChildren(0);
       
       try {
         const isNumericId = /^\d+$/.test(String(tourId));
@@ -77,6 +83,9 @@ export function useTicketBooking(tourId: string | number) {
           date: extractDateFromISO(slot.date)
         }));
         
+        console.log('API Response time_slots:', data.time_slots);
+        console.log('Processed slots:', slots);
+        
         setTimeSlots(slots);
         
         // Auto-select today if available, otherwise select first available date
@@ -94,6 +103,7 @@ export function useTicketBooking(tourId: string | number) {
           setSelectedTime(firstDateSlots[0]?.time || '');
         } else {
           // No time slots available - don't set any date/time
+          console.log('No time slots available - clearing date/time');
           setSelectedDate('');
           setSelectedTime('');
         }

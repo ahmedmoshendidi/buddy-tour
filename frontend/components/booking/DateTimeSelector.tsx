@@ -90,10 +90,16 @@ export default function DateTimeSelector({
 
   const prevMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+    // Clear selection when changing months to prevent stale data
+    onSelectDate('');
+    onSelectTime('');
   };
 
   const nextMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+    // Clear selection when changing months to prevent stale data
+    onSelectDate('');
+    onSelectTime('');
   };
 
   const availableTimesForSelectedDate = timeSlots.filter(slot => slot.date === selectedDate);
