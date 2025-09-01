@@ -10,6 +10,9 @@ interface TicketCounterProps {
   maxGroupSize: number;
   pricePerPerson: number;
   onUpdateTicketCount: (type: 'adults' | 'children', operation: 'add' | 'subtract') => void;
+  availableSpots: number;
+  selectedDate: string;
+  selectedTime: string;
 }
 
 export default function TicketCounter({
@@ -17,7 +20,10 @@ export default function TicketCounter({
   children,
   maxGroupSize,
   pricePerPerson,
-  onUpdateTicketCount
+  onUpdateTicketCount,
+  availableSpots,
+  selectedDate,
+  selectedTime
 }: TicketCounterProps) {
   const { formatPrice } = useCurrency();
   
@@ -46,7 +52,7 @@ export default function TicketCounter({
               variant="outline"
               size="sm"
               onClick={() => onUpdateTicketCount('adults', 'subtract')}
-              disabled={adults <= 1}
+              disabled={adults <= 0}
               className="h-8 w-8 p-0"
             >
               <Minus className="h-4 w-4" />
@@ -56,7 +62,7 @@ export default function TicketCounter({
               variant="outline"
               size="sm"
               onClick={() => onUpdateTicketCount('adults', 'add')}
-              disabled={totalPeople >= maxGroupSize}
+              disabled={totalPeople >= availableSpots}
               className="h-8 w-8 p-0"
             >
               <Plus className="h-4 w-4" />
@@ -87,7 +93,7 @@ export default function TicketCounter({
               variant="outline"
               size="sm"
               onClick={() => onUpdateTicketCount('children', 'add')}
-              disabled={totalPeople >= maxGroupSize}
+              disabled={totalPeople >= availableSpots}
               className="h-8 w-8 p-0"
             >
               <Plus className="h-4 w-4" />
@@ -95,11 +101,18 @@ export default function TicketCounter({
           </div>
         </div>
 
+        {/* Available Spots Info */}
+        {selectedDate && selectedTime && (
+          <div className="text-sm text-muted-foreground px-1">
+            {availableSpots - totalPeople} of {availableSpots} spots available for this time slot
+          </div>
+        )}
+
         {/* Group Size Warning */}
         {totalPeople > 0 && (
           <div className="bg-muted/50 p-3 rounded-lg">
             <p className="text-sm text-muted-foreground">
-              {totalPeople} of {maxGroupSize} maximum group size
+              {totalPeople} of {availableSpots} spots selected for this time slot
             </p>
           </div>
         )}

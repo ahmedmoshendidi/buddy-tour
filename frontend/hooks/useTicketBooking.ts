@@ -11,6 +11,7 @@ interface Tour {
 interface TimeSlot {
   time: string;
   date: string;
+  available_spots?: number;
 }
 
 export function useTicketBooking(tourId: string | number) {
@@ -19,7 +20,7 @@ export function useTicketBooking(tourId: string | number) {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [adults, setAdults] = useState<number>(1);
+  const [adults, setAdults] = useState<number>(0);
   const [children, setChildren] = useState<number>(0);
   const [error, setError] = useState<string>('');
 
@@ -107,16 +108,23 @@ export function useTicketBooking(tourId: string | number) {
     loadTourData();
   }, [tourId]);
 
+  const getAvailableSpotsForSelectedTimeSlot = () => {
+    const selectedSlot = timeSlots.find(slot => slot.date === selectedDate && slot.time === selectedTime);
+    return selectedSlot?.available_spots || (tour?.max_group_size || 12);
+  };
+
   const updateTicketCount = (type: 'adults' | 'children', operation: 'add' | 'subtract') => {
+    const availableSpots = getAvailableSpotsForSelectedTimeSlot();
+    
     if (type === 'adults') {
       setAdults(prev => {
-        const newCount = operation === 'add' ? prev + 1 : Math.max(1, prev - 1);
-        return Math.min(newCount, tour?.max_group_size || 12);
+        const newCount = operation === 'add' ? prev + 1 : Math.max(0, prev - 1);
+        return Math.min(newCount, availableSpots - children);
       });
     } else {
       setChildren(prev => {
         const newCount = operation === 'add' ? prev + 1 : Math.max(0, prev - 1);
-        const maxChildren = Math.max(0, (tour?.max_group_size || 12) - adults);
+        const maxChildren = Math.max(0, availableSpots - adults);
         return Math.min(newCount, maxChildren);
       });
     }
@@ -165,6 +173,7 @@ export function useTicketBooking(tourId: string | number) {
     setSelectedTime,
     updateTicketCount,
     canProceedToCheckout,
-    proceedToCheckout
+    proceedToCheckout,
+    getAvailableSpotsForSelectedTimeSlot
   };
 }

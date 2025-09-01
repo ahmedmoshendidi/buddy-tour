@@ -27,7 +27,8 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
     setSelectedTime,
     updateTicketCount,
     canProceedToCheckout,
-    proceedToCheckout
+    proceedToCheckout,
+    getAvailableSpotsForSelectedTimeSlot
   } = useTicketBooking(tourId);
 
   const handleCheckout = () => {
@@ -102,6 +103,9 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
               maxGroupSize={tour.max_group_size || 12}
               pricePerPerson={tour.price_per_person}
               onUpdateTicketCount={updateTicketCount}
+              availableSpots={getAvailableSpotsForSelectedTimeSlot()}
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
             />
 
             {/* Proceed Button */}
