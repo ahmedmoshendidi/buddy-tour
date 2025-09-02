@@ -394,11 +394,67 @@ const cleanupExpiredHolds = async (req, res) => {
   }
 };
 
+// Check for existing active holds by session_id
+const getActiveHold = async (req, res) => {
+  try {
+    const { session_id } = req.query;
+    
+    if (!session_id) {
+      return res.status(400).json({ error: 'Missing session_id parameter' });
+    }
+
+    // Find active hold for this session
+    const holdRes = await pool.query(
+      `SELECT sh.id, sh.seats, sh.expires_at, sh.created_at,
+              ts.tour_id, ts.date, ts.time, t.title as tour_title
+       FROM seat_holds sh
+       JOIN time_slots ts ON sh.time_slot_id = ts.id
+       JOIN tours t ON ts.tour_id = t.id
+       WHERE sh.session_id = $1 AND sh.status = 'active'`,
+      [session_id]
+    );
+
+    if (holdRes.rows.length === 0) {
+      return res.json({ has_hold: false });
+    }
+
+    const hold = holdRes.rows[0];
+    
+    // Check if hold has expired
+    if (new Date() > new Date(hold.expires_at)) {
+      return res.json({ 
+        has_hold: false, 
+        expired: true,
+        message: 'Your previous reservation has expired' 
+      });
+    }
+
+    res.json({
+      has_hold: true,
+      hold: {
+        id: hold.id,
+        tour_id: hold.tour_id,
+        tour_title: hold.tour_title,
+        date: hold.date,
+        time: hold.time,
+        seats: hold.seats,
+        expires_at: hold.expires_at,
+        created_at: hold.created_at
+      }
+    });
+
+  } catch (err) {
+    console.error('Get active hold error:', err);
+    res.status(500).json({ error: 'Failed to check for existing holds' });
+  }
+};
+
 module.exports = {
   bookTour,
   checkAvailability,
   createSeatHold,
   confirmSeatHold,
   releaseSeatHold,
-  cleanupExpiredHolds
+  cleanupExpiredHolds,
+  getActiveHold
 };

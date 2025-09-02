@@ -9,6 +9,7 @@ import DateSelector from './booking/DateSelector';
 import TimeSelector from './booking/TimeSelector';
 import TicketCounter from './booking/TicketCounter';
 import PriceDisplay from './booking/PriceDisplay';
+import CountdownTimer from './ui/CountdownTimer';
 
 interface Tour {
   id: number;
@@ -45,12 +46,25 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
   const [availabilityLoading, setAvailabilityLoading] = useState<boolean>(false);
   const [holdLoading, setHoldLoading] = useState<boolean>(false);
   const [holdExpiration, setHoldExpiration] = useState<Date | null>(null);
+  const [existingHold, setExistingHold] = useState<any>(null);
+  const [showRecovery, setShowRecovery] = useState<boolean>(false);
   const { formatPrice } = useCurrency();
 
-  // Generate session ID for this booking session
-  const [sessionId] = useState<string>(() => 
-    `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  );
+  // Generate or retrieve session ID for this booking session
+  const [sessionId] = useState<string>(() => {
+    // First try to get existing session from localStorage
+    const storageKey = `buddy_tour_session_${tourId}`;
+    const existingSession = localStorage.getItem(storageKey);
+    
+    if (existingSession) {
+      return existingSession;
+    }
+    
+    // Generate new session ID
+    const newSession = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem(storageKey, newSession);
+    return newSession;
+  });
 
   // Helper function to extract date from ISO string
   const extractDateFromISO = (isoString: string): string => {
@@ -146,10 +160,86 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
     loadTourData();
   }, [tourId]);
 
+  // Check for existing holds when component loads
+  useEffect(() => {
+    checkForExistingHold();
+  }, [sessionId]);
+
   // Check availability when selection changes
   useEffect(() => {
     checkSeatAvailability();
   }, [selectedDate, selectedTime, adults, children]);
+
+  // Check for existing active holds
+  const checkForExistingHold = async () => {
+    try {
+      const response = await fetch(`${API_PREFIX}/get-active-hold?session_id=${sessionId}`);
+      if (!response.ok) return;
+
+      const data = await response.json();
+      
+      if (data.has_hold) {
+        const hold = data.hold;
+        setExistingHold(hold);
+        setShowRecovery(true);
+        console.log('🔄 Found existing hold:', hold);
+      } else if (data.expired) {
+        console.log('⏰ Previous hold expired');
+        // Clean up localStorage for expired sessions
+        localStorage.removeItem(`buddy_tour_session_${tourId}`);
+      }
+    } catch (error) {
+      console.error('Error checking for existing holds:', error);
+    }
+  };
+
+  // Recover existing hold
+  const recoverExistingHold = () => {
+    if (!existingHold) return;
+
+    // Set the component state to match the existing hold
+    setSelectedDate(existingHold.date);
+    setSelectedTime(existingHold.time);
+    
+    // Calculate adults/children from total seats (simplified approach)
+    const totalSeats = existingHold.seats;
+    setAdults(totalSeats); // For now, assume all adults - could be enhanced later
+    setChildren(0);
+    
+    setHoldExpiration(new Date(existingHold.expires_at));
+    setShowRecovery(false);
+    setAvailabilityError('');
+    
+    console.log('✅ Recovered existing hold');
+  };
+
+  // Dismiss recovery and create new hold
+  const dismissRecovery = async () => {
+    if (existingHold) {
+      // Release the existing hold
+      try {
+        await fetch(`${API_PREFIX}/release-hold`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId })
+        });
+      } catch (error) {
+        console.error('Error releasing existing hold:', error);
+      }
+    }
+    
+    // Generate new session
+    const newSession = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem(`buddy_tour_session_${tourId}`, newSession);
+    
+    setExistingHold(null);
+    setShowRecovery(false);
+    setHoldExpiration(null);
+    
+    console.log('🗑️ Dismissed existing hold, created new session');
+    // Force a page reload to get new session
+    window.location.reload();
+  };
 
   // Create soft hold for seats (30 minutes)
   const createSeatHold = async (): Promise<boolean> => {
@@ -348,101 +438,180 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
           </CardHeader>
 
           <CardContent className="p-6 space-y-8">
-            {/* Price Display */}
-            <div className="text-center">
-              <Badge className="bg-gradient-to-r from-primary to-teal-600 text-white px-4 py-2 text-lg">
-                Price from: {formatPrice(tour.price_per_person)} per adult
-              </Badge>
-            </div>
-
-            {/* Date Selection */}
-            <DateSelector
-              timeSlots={timeSlots}
-              selectedDate={selectedDate}
-              currentMonth={currentMonth}
-              setCurrentMonth={setCurrentMonth}
-              onDateSelect={handleDateSelect}
-            />
-
-            {/* Time Selection */}
-            <TimeSelector
-              availableTimes={availableTimes}
-              selectedTime={selectedTime}
-              selectedDate={selectedDate}
-              onTimeSelect={(time) => {
-                setSelectedTime(time);
-                setAvailabilityError(''); // Clear any previous availability errors
-              }}
-            />
-
-            {/* Availability Display */}
-            {selectedDate && selectedTime && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-blue-900">Seat Availability</span>
-                  {availabilityLoading && (
-                    <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                  )}
+            {/* Hold Recovery Option */}
+            {showRecovery && existingHold && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                    <ShoppingCart className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-900">
+                      You have reserved seats!
+                    </h3>
+                    <p className="text-sm text-blue-700">
+                      We found your previous booking in progress
+                    </p>
+                  </div>
                 </div>
-                {(() => {
-                  const slot = timeSlots.find(s => s.date === selectedDate && s.time === selectedTime);
-                  return slot && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Available seats:</span>
-                      <span className={`font-medium ${slot.available_spots && slot.available_spots > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {slot.available_spots || 0} / {slot.capacity || 0}
-                      </span>
+                
+                <div className="bg-white rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Tour:</span>
+                      <p className="font-medium">{existingHold.tour_title}</p>
                     </div>
-                  );
-                })()}
-                {availabilityError && (
-                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
-                    ⚠️ {availabilityError}
+                    <div>
+                      <span className="text-gray-500">Seats:</span>
+                      <p className="font-medium">{existingHold.seats} people</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Date:</span>
+                      <p className="font-medium">{new Date(existingHold.date).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Time:</span>
+                      <p className="font-medium">{existingHold.time}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 pt-3 border-t">
+                    <CountdownTimer
+                      expirationTime={existingHold.expires_at}
+                      onExpire={() => {
+                        setShowRecovery(false);
+                        setExistingHold(null);
+                      }}
+                      className="!p-3 !bg-blue-100 !border-blue-300"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={recoverExistingHold}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Continue with These Seats
+                  </Button>
+                  <Button
+                    onClick={dismissRecovery}
+                    variant="outline"
+                    className="flex-1 border-blue-300 text-blue-600 hover:bg-blue-50"
+                  >
+                    Start Fresh
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Price Display */}
+            {!showRecovery && (
+              <div className="text-center">
+                <Badge className="bg-gradient-to-r from-primary to-teal-600 text-white px-4 py-2 text-lg">
+                  Price from: {formatPrice(tour.price_per_person)} per adult
+                </Badge>
+              </div>
+            )}
+
+            {/* Date & Time Selection - Only show when not in recovery mode */}
+            {!showRecovery && (
+              <>
+                {/* Date Selection */}
+                <DateSelector
+                  timeSlots={timeSlots}
+                  selectedDate={selectedDate}
+                  currentMonth={currentMonth}
+                  setCurrentMonth={setCurrentMonth}
+                  onDateSelect={handleDateSelect}
+                />
+
+                {/* Time Selection */}
+                <TimeSelector
+                  availableTimes={availableTimes}
+                  selectedTime={selectedTime}
+                  selectedDate={selectedDate}
+                  onTimeSelect={(time) => {
+                    setSelectedTime(time);
+                    setAvailabilityError(''); // Clear any previous availability errors
+                  }}
+                />
+              </>
+            )}
+
+            {/* Main Booking Form - Only show when not in recovery mode */}
+            {!showRecovery && (
+              <>
+                {/* Availability Display */}
+                {selectedDate && selectedTime && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-blue-900">Seat Availability</span>
+                      {availabilityLoading && (
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      )}
+                    </div>
+                    {(() => {
+                      const slot = timeSlots.find(s => s.date === selectedDate && s.time === selectedTime);
+                      return slot && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Available seats:</span>
+                          <span className={`font-medium ${slot.available_spots && slot.available_spots > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {slot.available_spots || 0} / {slot.capacity || 0}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                    {availabilityError && (
+                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+                        ⚠️ {availabilityError}
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
+
+                {/* Ticket Selection */}
+                <TicketCounter
+                  tour={tour}
+                  adults={adults}
+                  children={children}
+                  onChangeCount={changeCount}
+                />
+
+                {/* Total Price */}
+                <PriceDisplay
+                  tour={tour}
+                  adults={adults}
+                  children={children}
+                />
+
+                {/* Live Hold Countdown Timer */}
+                {holdExpiration && (
+                  <CountdownTimer
+                    expirationTime={holdExpiration}
+                    onExpire={() => {
+                      setHoldExpiration(null);
+                      setAvailabilityError('Your seat reservation has expired. Please select your seats again.');
+                    }}
+                  />
+                )}
+
+                {/* Checkout Button */}
+                <Button
+                  size="lg"
+                  onClick={handleCheckout}
+                  disabled={!selectedDate || !selectedTime || adults === 0 || !!availabilityError || availabilityLoading || holdLoading}
+                  className="w-full bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg text-lg py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  {holdLoading ? 'Reserving Seats...' :
+                   availabilityLoading ? 'Checking Availability...' : 
+                   availabilityError ? 'Insufficient Seats' : 
+                   'Proceed to Checkout'}
+                </Button>
+              </>
             )}
-
-            {/* Ticket Selection */}
-            <TicketCounter
-              tour={tour}
-              adults={adults}
-              children={children}
-              onChangeCount={changeCount}
-            />
-
-            {/* Total Price */}
-            <PriceDisplay
-              tour={tour}
-              adults={adults}
-              children={children}
-            />
-
-            {/* Hold Expiration Timer */}
-            {holdExpiration && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
-                <div className="text-amber-700 font-medium">
-                  🔒 Your seats are reserved for 30 minutes
-                </div>
-                <div className="text-sm text-amber-600 mt-1">
-                  Hold expires: {holdExpiration.toLocaleTimeString()}
-                </div>
-              </div>
-            )}
-
-            {/* Checkout Button */}
-            <Button
-              size="lg"
-              onClick={handleCheckout}
-              disabled={!selectedDate || !selectedTime || adults === 0 || !!availabilityError || availabilityLoading || holdLoading}
-              className="w-full bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg text-lg py-6 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ShoppingCart className="h-5 w-5 mr-2" />
-              {holdLoading ? 'Reserving Seats...' :
-               availabilityLoading ? 'Checking Availability...' : 
-               availabilityError ? 'Insufficient Seats' : 
-               'Proceed to Checkout'}
-            </Button>
           </CardContent>
         </Card>
       </div>

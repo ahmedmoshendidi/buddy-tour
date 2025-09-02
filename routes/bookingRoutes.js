@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { bookTour, checkAvailability, createSeatHold, confirmSeatHold, releaseSeatHold, cleanupExpiredHolds } = require('../controllers/bookingController');
+const { bookTour, checkAvailability, createSeatHold, confirmSeatHold, releaseSeatHold, cleanupExpiredHolds, getActiveHold } = require('../controllers/bookingController');
 const { getTourById, getTourBySlug, getAllTours } = require('../controllers/tourController');
 
 // POST /api/book-tour
@@ -30,5 +30,8 @@ router.post('/release-hold', releaseSeatHold);
 
 // GET /api/cleanup-expired-holds (manual cleanup for testing)
 router.get('/cleanup-expired-holds', cleanupExpiredHolds);
+
+// GET /api/get-active-hold
+router.get('/get-active-hold', getActiveHold);
 
 module.exports = router;
