@@ -15,7 +15,7 @@ const getTourById = async (req, res) => {
     }
 
     const timeSlotsRes = await pool.query(
-      `SELECT date, time FROM time_slots WHERE tour_id = $1 ORDER BY date, time`,
+      `SELECT date, time, capacity, booked_seats, available_spots FROM time_slots WHERE tour_id = $1 ORDER BY date, time`,
       [id]
     );
 
@@ -50,7 +50,7 @@ const getTourBySlug = async (req, res) => {
     const tourId = tourRes.rows[0].id;
 
     const timeSlotsRes = await pool.query(
-      `SELECT date, time
+      `SELECT date, time, capacity, booked_seats, available_spots
        FROM time_slots
        WHERE tour_id = $1
        ORDER BY date, time`,

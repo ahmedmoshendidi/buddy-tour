@@ -163,10 +163,34 @@ router.post("/payment-callback", async (req, res) => {
           peopleCount,
         } = existing;
 
+        const totalPeople = peopleCount.adults + peopleCount.children;
+
+        // Atomic seat reservation with capacity check
+        const reserve = await client.query(
+          `UPDATE time_slots
+           SET booked_seats = booked_seats + $1
+           WHERE tour_id = $2
+             AND "date" = $3::date
+             AND "time" = $4::time
+             AND booked_seats + $1 <= capacity
+           RETURNING id, tour_id, "date", "time", capacity, booked_seats,
+                     (capacity - booked_seats) AS available_spots`,
+          [totalPeople, tourId, selectedDate, timeSlot]
+        );
+
+        if (reserve.rows.length === 0) {
+          console.log(`❌ Booking failed - no available seats for ${totalPeople} people`);
+          client.release();
+          return; // Exit without creating booking
+        }
+
+        console.log(`✅ Reserved ${totalPeople} seats. Available: ${reserve.rows[0].available_spots}`);
+
+        // Create booking record after successful seat reservation
         await client.query(
           `INSERT INTO bookings (tour_id, guide_id, full_name, email, phone, nationality, selected_date, time_slot, people_count)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-          [tourId, guideId, fullName, email, phone, nationality, selectedDate, timeSlot, peopleCount.adults + peopleCount.children]
+          [tourId, guideId, fullName, email, phone, nationality, selectedDate, timeSlot, totalPeople]
         );
 
         await client.query(
