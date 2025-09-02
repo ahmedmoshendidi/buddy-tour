@@ -13,6 +13,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const bookingRoutes = require('./routes/bookingRoutes');
 const sitemapRoute = require('./routes/sitemapRoute');
 const exchangeRatesRoute = require('./routes/exchangeRatesRoute');
+const { cleanupExpiredHolds } = require('./controllers/bookingController');
 
 // Import middleware
 const redirectMiddleware = require('./middleware/redirects');
@@ -111,4 +112,22 @@ app.listen(PORT, () => {
   🌐 Frontend: ${process.env.FRONTEND_URL}
   🔒 HMAC Enabled: ${!!process.env.PAYMOB_HMAC_SECRET}
   `);
+
+  // ======================
+  // Background Cleanup Job
+  // ======================
+  // Clean up expired seat holds every 5 minutes
+  const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
+  setInterval(async () => {
+    try {
+      const cleanedCount = await cleanupExpiredHolds();
+      if (cleanedCount > 0) {
+        console.log(`🧹 Background cleanup: Released ${cleanedCount} expired holds`);
+      }
+    } catch (error) {
+      console.error('❌ Background cleanup error:', error);
+    }
+  }, CLEANUP_INTERVAL);
+
+  console.log('🕐 Background hold cleanup job started (every 5 minutes)');
 });

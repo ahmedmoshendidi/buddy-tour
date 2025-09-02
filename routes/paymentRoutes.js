@@ -73,6 +73,7 @@ router.post("/pay", async (req, res) => {
       time,
       adults,
       children,
+      session_id, // Include session_id for hold management
     } = req.body;
 
     const billingData = {
@@ -111,6 +112,7 @@ router.post("/pay", async (req, res) => {
       selectedDate: date,
       timeSlot: time,
       peopleCount: { adults, children },
+      sessionId: session_id, // Store session_id for hold confirmation
       createdAt: new Date(),
     });
 
@@ -147,9 +149,12 @@ router.post("/payment-callback", async (req, res) => {
     });
 
     if (isSuccess) {
+      const client = await pool.connect();
       try {
-        const client = await pool.connect();
-        const fullName = `${billingData.first_name} ${billingData.last_name}`;
+        // ✅ Start transaction
+        await client.query('BEGIN');
+
+        const fullName = `${billingData.first_name} ${billingData.last_name || ''}`.trim();
         const email = billingData.email;
         const phone = billingData.phone_number;
         const nationality = billingData.country || "NA";
@@ -161,63 +166,122 @@ router.post("/payment-callback", async (req, res) => {
           selectedDate,
           timeSlot,
           peopleCount,
-        } = existing;
+          sessionId,
+        } = existing || {};
 
-        const totalPeople = peopleCount.adults + peopleCount.children;
-
-        // Atomic seat reservation with capacity check
-        const reserve = await client.query(
-          `UPDATE time_slots
-           SET booked_seats = booked_seats + $1
-           WHERE tour_id = $2
-             AND "date" = $3::date
-             AND "time" = $4::time
-             AND booked_seats + $1 <= capacity
-           RETURNING id, tour_id, "date", "time", capacity, booked_seats,
-                     (capacity - booked_seats) AS available_spots`,
-          [totalPeople, tourId, selectedDate, timeSlot]
-        );
-
-        if (reserve.rows.length === 0) {
-          console.log(`❌ Booking failed - no available seats for ${totalPeople} people`);
-          client.release();
-          return; // Exit without creating booking
+        // Guard: If server was restarted and no existing context, exit safely
+        if (!tourId || !selectedDate || !timeSlot || !peopleCount) {
+          await client.query('ROLLBACK');
+          console.warn('⚠️ Missing booking context for this transaction (server restart before callback?)');
+          return;
         }
 
-        console.log(`✅ Reserved ${totalPeople} seats. Available: ${reserve.rows[0].available_spots}`);
+        const totalPeople = Number(peopleCount.adults || 0) + Number(peopleCount.children || 0);
+        if (!Number.isInteger(totalPeople) || totalPeople <= 0) {
+          await client.query('ROLLBACK');
+          console.warn('⚠️ Invalid totalPeople computed from callback context');
+          return;
+        }
 
-        // Create booking record after successful seat reservation
+        // ✅ Idempotency: If this payment was already processed, don't do anything
+        const alreadyProcessed = await client.query(
+          `SELECT 1 FROM payments WHERE transaction_id = $1`,
+          [transactionId]
+        );
+        if (alreadyProcessed.rowCount > 0) {
+          await client.query('COMMIT');
+          console.log(`🔄 Transaction ${transactionId} already processed - idempotent`);
+          return;
+        }
+
+        // 1) Confirm seat hold (converts held_seats to booked_seats)
+        if (!sessionId) {
+          // Fallback: If no sessionId (legacy flow), record payment as no-hold
+          await client.query(
+            `INSERT INTO payments (order_id, transaction_id, email, full_name, amount_cents, status)
+             VALUES ($1,$2,$3,$4,$5,$6)`,
+            [orderId, transactionId, email, fullName, transaction.amount_cents, 'captured_no_hold']
+          );
+          await client.query('COMMIT');
+          console.warn(`⚠️ Payment captured but no hold found (legacy flow) for transaction ${transactionId}`);
+          return;
+        }
+
+        // Confirm the hold - this converts held_seats to booked_seats atomically
+        const holdConfirm = await client.query(
+          `UPDATE seat_holds 
+           SET status = 'confirmed', order_id = $1 
+           WHERE session_id = $2 AND status = 'active'
+           RETURNING id, time_slot_id, seats`,
+          [orderId, sessionId]
+        );
+
+        if (holdConfirm.rowCount === 0) {
+          // No active hold found - possibly expired
+          await client.query(
+            `INSERT INTO payments (order_id, transaction_id, email, full_name, amount_cents, status)
+             VALUES ($1,$2,$3,$4,$5,$6)`,
+            [orderId, transactionId, email, fullName, transaction.amount_cents, 'captured_expired_hold']
+          );
+          await client.query('COMMIT');
+          console.error(`❌ Payment captured but hold expired/missing for session ${sessionId}`);
+          return;
+        }
+
+        const hold = holdConfirm.rows[0];
+
+        // Convert held_seats to booked_seats
         await client.query(
-          `INSERT INTO bookings (tour_id, guide_id, full_name, email, phone, nationality, selected_date, time_slot, people_count)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+          `UPDATE time_slots 
+           SET booked_seats = booked_seats + $1, held_seats = held_seats - $1
+           WHERE id = $2`,
+          [hold.seats, hold.time_slot_id]
+        );
+
+        console.log(`✅ Confirmed hold for ${hold.seats} seats. Hold ID: ${hold.id}`);
+
+        // 2) Create booking record
+        const bookingInsert = await client.query(
+          `INSERT INTO bookings
+           (tour_id, guide_id, full_name, email, phone, nationality, selected_date, time_slot, people_count)
+           VALUES ($1,$2,$3,$4,$5,$6,$7::date,$8,$9)
+           RETURNING id`,
           [tourId, guideId, fullName, email, phone, nationality, selectedDate, timeSlot, totalPeople]
         );
 
+        // 3) Record payment (protected by UNIQUE constraint on transaction_id)
         await client.query(
           `INSERT INTO payments (order_id, transaction_id, email, full_name, amount_cents, status)
            VALUES ($1,$2,$3,$4,$5,$6)`,
-          [orderId, transactionId, email, fullName, transaction.amount_cents, "captured"]
+          [orderId, transactionId, email, fullName, transaction.amount_cents, 'captured']
         );
 
-        
+        // ✅ If everything passed, commit the transaction
+        await client.query('COMMIT');
+        console.log(`✅ Transaction ${transactionId} completed successfully. Booking ID: ${bookingInsert.rows[0].id}`);
 
-      await sendConfirmationEmail(email, "Booking Confirmation", {
-        firstName: billingData.first_name,
-        lastName: billingData.last_name || "-",
-        tourTitle,
-        date: selectedDate,
-        time: timeSlot,
-        adults: peopleCount.adults,
-        children: peopleCount.children,
-        amount: transaction.amount_cents / 100,
-      });
+        // Send email AFTER commit only
+        try {
+          await sendConfirmationEmail(email, "Booking Confirmation", {
+            firstName: billingData.first_name,
+            lastName: billingData.last_name || "-",
+            tourTitle,
+            date: selectedDate,
+            time: timeSlot,
+            adults: peopleCount.adults,
+            children: peopleCount.children,
+            amount: transaction.amount_cents / 100,
+          });
+          console.log("📨 Confirmation email sent.");
+        } catch (mailErr) {
+          console.warn("✉️ Email send failed (after commit):", mailErr.message);
+        }
 
-
-
-        console.log("📨 Confirmation email sent.");
-        client.release();
       } catch (err) {
-        console.error("❌ Error saving to DB or sending email:", err);
+        await client.query('ROLLBACK');
+        console.error("❌ DB error in payment callback:", err);
+      } finally {
+        client.release();
       }
     } else {
       console.log(`❌ Payment failed: Transaction ${transactionId}`);

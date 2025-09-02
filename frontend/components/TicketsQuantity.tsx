@@ -20,6 +20,9 @@ interface Tour {
 interface TimeSlot {
   time: string;
   date: string;
+  capacity?: number;
+  booked_seats?: number;
+  available_spots?: number;
 }
 
 interface TicketsQuantityProps {
@@ -38,7 +41,16 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
   const [children, setChildren] = useState<number>(0);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [error, setError] = useState<string>('');
+  const [availabilityError, setAvailabilityError] = useState<string>('');
+  const [availabilityLoading, setAvailabilityLoading] = useState<boolean>(false);
+  const [holdLoading, setHoldLoading] = useState<boolean>(false);
+  const [holdExpiration, setHoldExpiration] = useState<Date | null>(null);
   const { formatPrice } = useCurrency();
+
+  // Generate session ID for this booking session
+  const [sessionId] = useState<string>(() => 
+    `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  );
 
   // Helper function to extract date from ISO string
   const extractDateFromISO = (isoString: string): string => {
@@ -134,12 +146,90 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
     loadTourData();
   }, [tourId]);
 
+  // Check availability when selection changes
+  useEffect(() => {
+    checkSeatAvailability();
+  }, [selectedDate, selectedTime, adults, children]);
+
+  // Create soft hold for seats (30 minutes)
+  const createSeatHold = async (): Promise<boolean> => {
+    if (!tour || !selectedDate || !selectedTime) return false;
+
+    setHoldLoading(true);
+    try {
+      const response = await fetch(`${API_PREFIX}/create-hold`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tour_id: tour.id,
+          date: selectedDate,
+          time: selectedTime,
+          seats: adults + children,
+          session_id: sessionId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reserve seats');
+      }
+
+      const data = await response.json();
+      setHoldExpiration(new Date(data.expires_at));
+      console.log('✅ Seat hold created:', data);
+      return true;
+
+    } catch (error) {
+      console.error('❌ Failed to create seat hold:', error);
+      alert(`Failed to reserve seats: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    } finally {
+      setHoldLoading(false);
+    }
+  };
+
   const getAvailableTimesForDate = (date: string) => {
     return timeSlots.filter(slot => slot.date === date);
   };
 
+  // Check seat availability for current selection
+  const checkSeatAvailability = async () => {
+    if (!tour || !selectedDate || !selectedTime || (adults + children) === 0) {
+      setAvailabilityError('');
+      return;
+    }
+
+    setAvailabilityLoading(true);
+    setAvailabilityError('');
+
+    try {
+      const requestedPeople = adults + children;
+      const response = await fetch(
+        `${API_PREFIX}/check-availability?tour_id=${tour.id}&date=${selectedDate}&time=${selectedTime}&requested_people=${requestedPeople}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to check availability');
+      }
+
+      const data = await response.json();
+
+      if (!data.can_book) {
+        setAvailabilityError(data.message || 'Insufficient seats available');
+      }
+    } catch (error) {
+      console.error('Error checking availability:', error);
+      setAvailabilityError('Unable to check seat availability');
+    } finally {
+      setAvailabilityLoading(false);
+    }
+  };
+
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
+    setAvailabilityError(''); // Clear any previous availability errors
     
     // Clear selected time when changing dates
     setSelectedTime('');
@@ -159,7 +249,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
     }
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!selectedDate || !selectedTime) {
       alert('Please select a date and time slot first.');
       return;
@@ -170,6 +260,17 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       return;
     }
 
+    if (availabilityError) {
+      alert('Cannot proceed: ' + availabilityError);
+      return;
+    }
+
+    // Create soft hold before proceeding to payment
+    const holdCreated = await createSeatHold();
+    if (!holdCreated) {
+      return; // Hold creation failed, don't proceed
+    }
+
     const bookingInfo = {
       tour_id: tour?.id || tourId,
       date: selectedDate,
@@ -177,7 +278,9 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       adults,
       children,
       total_amount: calculateTotal(),
-      price_per_person: tour?.price_per_person || 0
+      price_per_person: tour?.price_per_person || 0,
+      session_id: sessionId, // Include session_id for hold management
+      hold_expires_at: holdExpiration?.toISOString()
     };
 
     // Store in localStorage for checkout process
@@ -266,8 +369,39 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
               availableTimes={availableTimes}
               selectedTime={selectedTime}
               selectedDate={selectedDate}
-              onTimeSelect={setSelectedTime}
+              onTimeSelect={(time) => {
+                setSelectedTime(time);
+                setAvailabilityError(''); // Clear any previous availability errors
+              }}
             />
+
+            {/* Availability Display */}
+            {selectedDate && selectedTime && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-blue-900">Seat Availability</span>
+                  {availabilityLoading && (
+                    <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                  )}
+                </div>
+                {(() => {
+                  const slot = timeSlots.find(s => s.date === selectedDate && s.time === selectedTime);
+                  return slot && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Available seats:</span>
+                      <span className={`font-medium ${slot.available_spots && slot.available_spots > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {slot.available_spots || 0} / {slot.capacity || 0}
+                      </span>
+                    </div>
+                  );
+                })()}
+                {availabilityError && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+                    ⚠️ {availabilityError}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Ticket Selection */}
             <TicketCounter
@@ -284,15 +418,30 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
               children={children}
             />
 
+            {/* Hold Expiration Timer */}
+            {holdExpiration && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                <div className="text-amber-700 font-medium">
+                  🔒 Your seats are reserved for 30 minutes
+                </div>
+                <div className="text-sm text-amber-600 mt-1">
+                  Hold expires: {holdExpiration.toLocaleTimeString()}
+                </div>
+              </div>
+            )}
+
             {/* Checkout Button */}
             <Button
               size="lg"
               onClick={handleCheckout}
-              disabled={!selectedDate || !selectedTime || adults === 0}
-              className="w-full bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg text-lg py-6"
+              disabled={!selectedDate || !selectedTime || adults === 0 || !!availabilityError || availabilityLoading || holdLoading}
+              className="w-full bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg text-lg py-6 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ShoppingCart className="h-5 w-5 mr-2" />
-              Proceed to Checkout
+              {holdLoading ? 'Reserving Seats...' :
+               availabilityLoading ? 'Checking Availability...' : 
+               availabilityError ? 'Insufficient Seats' : 
+               'Proceed to Checkout'}
             </Button>
           </CardContent>
         </Card>
