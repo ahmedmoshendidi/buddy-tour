@@ -341,29 +341,35 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
     }
   };
 
-  const handleCheckout = async () => {
+  // Common validation function
+  const validateSelection = () => {
     if (!selectedDate || !selectedTime) {
       alert('Please select a date and time slot first.');
-      return;
+      return false;
     }
 
     if (adults === 0) {
       alert('Please add at least 1 adult.');
-      return;
+      return false;
     }
 
     if (availabilityError) {
       alert('Cannot proceed: ' + availabilityError);
-      return;
+      return false;
     }
 
-    // Create soft hold before adding to cart
+    return true;
+  };
+
+  // Book Now: Create hold + Add to cart + Go to checkout
+  const handleBookNow = async () => {
+    if (!validateSelection()) return;
+
+    // Create soft hold
     const holdCreated = await createSeatHold();
-    if (!holdCreated) {
-      return; // Hold creation failed, don't proceed
-    }
+    if (!holdCreated) return;
 
-    // Add to cart AND proceed to checkout
+    // Add to cart
     addBookedTour({
       tourId: tour?.id || Number(tourId),
       tourTitle: tour?.title || 'Tour',
@@ -377,7 +383,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       holdExpiresAt: holdExpiration?.toISOString() || new Date(Date.now() + 30 * 60 * 1000).toISOString()
     });
 
-    // Store booking data for checkout page
+    // Store booking data for checkout
     const bookingInfo = {
       tour_id: tour?.id || tourId,
       date: selectedDate,
@@ -392,8 +398,36 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
 
     localStorage.setItem('bookingData', JSON.stringify(bookingInfo));
 
-    // Proceed to checkout (normal flow)
+    // Go to checkout
     onCheckout();
+  };
+
+  // Add to Cart: Create hold + Add to cart + Stay on page
+  const handleAddToCart = async () => {
+    if (!validateSelection()) return;
+
+    // Create soft hold
+    const holdCreated = await createSeatHold();
+    if (!holdCreated) return;
+
+    // Add to cart
+    addBookedTour({
+      tourId: tour?.id || Number(tourId),
+      tourTitle: tour?.title || 'Tour',
+      date: selectedDate,
+      time: selectedTime,
+      adults,
+      children,
+      totalAmount: calculateTotal(),
+      pricePerPerson: tour?.price_per_person || 0,
+      sessionId: sessionId,
+      holdExpiresAt: holdExpiration?.toISOString() || new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    });
+
+    // Show success message
+    alert(`✅ Tour added to cart! Your seats are reserved for 30 minutes.`);
+
+    // Stay on current page - user can continue browsing or go to cart
   };
 
   const calculateTotal = (): number => {
@@ -600,19 +634,37 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
                 />
 
 
-                {/* Checkout Button */}
-                <Button
-                  size="lg"
-                  onClick={handleCheckout}
-                  disabled={!selectedDate || !selectedTime || adults === 0 || !!availabilityError || availabilityLoading || holdLoading}
-                  className="w-full bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg text-lg py-6 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  {holdLoading ? 'Reserving Seats...' :
-                   availabilityLoading ? 'Checking Availability...' : 
-                   availabilityError ? 'Insufficient Seats' : 
-                   'Proceed to Checkout'}
-                </Button>
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  {/* Book Now Button */}
+                  <Button
+                    size="lg"
+                    onClick={handleBookNow}
+                    disabled={!selectedDate || !selectedTime || adults === 0 || !!availabilityError || availabilityLoading || holdLoading}
+                    className="w-full bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg text-lg py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                    {holdLoading ? 'Reserving Seats...' :
+                     availabilityLoading ? 'Checking Availability...' : 
+                     availabilityError ? 'Insufficient Seats' : 
+                     'Book Now'}
+                  </Button>
+
+                  {/* Add to Cart Button */}
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleAddToCart}
+                    disabled={!selectedDate || !selectedTime || adults === 0 || !!availabilityError || availabilityLoading || holdLoading}
+                    className="w-full border-2 border-primary text-primary hover:bg-primary hover:text-white shadow-md text-lg py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                    {holdLoading ? 'Reserving Seats...' :
+                     availabilityLoading ? 'Checking Availability...' : 
+                     availabilityError ? 'Insufficient Seats' : 
+                     'Add to Cart'}
+                  </Button>
+                </div>
               </>
             )}
           </CardContent>

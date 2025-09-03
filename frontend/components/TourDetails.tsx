@@ -177,7 +177,7 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
                 onClick={() => onBookNow(tour)}
                 className="bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg px-8 py-3 text-lg"
               >
-                Book This Tour Now
+                Check Availability
                 <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
               </Button>
               <p className="text-sm text-muted-foreground mt-2">
