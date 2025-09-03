@@ -271,6 +271,7 @@ export default function FavoritesCart({ onViewTourDetails, onBookNow, onPayNow }
                 </Button>
               </div>
             </div>
+          )
           )}
         </div>
       </SheetContent>
@@ -278,9 +279,25 @@ export default function FavoritesCart({ onViewTourDetails, onBookNow, onPayNow }
   );
 }
 
+// BookedTour interface (matching FavoritesContext)
+interface BookedTour {
+  id: string;
+  tourId: number;
+  tourTitle: string;
+  date: string;
+  time: string;
+  adults: number;
+  children: number;
+  totalAmount: number;
+  pricePerPerson: number;
+  sessionId: string;
+  holdExpiresAt: string;
+  createdAt: string;
+}
+
 // BookedTourCard component
 interface BookedTourCardProps {
-  bookedTour: any; // Using BookedTour type from FavoritesContext
+  bookedTour: BookedTour;
   onRemove: () => void;
   onPayNow: () => void;
   formatPrice: (amount: number) => string;
