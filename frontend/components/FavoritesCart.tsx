@@ -6,18 +6,28 @@ import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useFavorites } from './FavoritesContext';
 import { useCurrency } from './CurrencyContext';
-import { Star, Clock, Users, Trash2, ShoppingCart, Calendar } from 'lucide-react';
+import { Star, Clock, Users, Trash2, ShoppingCart, Calendar, CreditCard } from 'lucide-react';
+import CountdownTimer from './ui/CountdownTimer';
 import type { Tour } from '../hooks/useTourDetails';
 
 interface FavoritesCartProps {
   onViewTourDetails: (tour : Tour) => void;
   onBookNow: (tour: Tour) => void;
+  onPayNow?: () => void; // For navigating to checkout
 }
 
-export default function FavoritesCart({ onViewTourDetails, onBookNow }: FavoritesCartProps) {
-  const { favorites, removeFromFavorites, clearFavorites } = useFavorites();
+export default function FavoritesCart({ onViewTourDetails, onBookNow, onPayNow }: FavoritesCartProps) {
+  const { 
+    favorites, 
+    removeFromFavorites, 
+    clearFavorites,
+    bookedTours,
+    removeBookedTour,
+    clearBookedTours
+  } = useFavorites();
   const { formatPrice } = useCurrency();
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'booked' | 'favorites'>('booked');
 
   const handleViewTour = (tour: Tour) => {
     setIsOpen(false);
@@ -38,9 +48,9 @@ export default function FavoritesCart({ onViewTourDetails, onBookNow }: Favorite
           className="relative p-2 hover:bg-muted/50 [&_svg]:!h-6 [&_svg]:!w-6"
         >
           <ShoppingCart className="text-muted-foreground hover:text-coral-500 transition-colors" />
-          {favorites.length > 0 && (
+          {(bookedTours.length + favorites.length) > 0 && (
             <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 bg-coral-500 hover:bg-coral-600 text-white text-xs flex items-center justify-center min-w-[20px]">
-              {favorites.length}
+              {bookedTours.length + favorites.length}
             </Badge>
           )}
         </Button>
@@ -59,7 +69,98 @@ export default function FavoritesCart({ onViewTourDetails, onBookNow }: Favorite
         </SheetHeader>
 
         <div className="mt-6">
-          {favorites.length === 0 ? (
+          {/* Tab Navigation */}
+          <div className="flex border-b border-gray-200 mb-4">
+            <button
+              onClick={() => setActiveTab('booked')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'booked' 
+                  ? 'border-coral-500 text-coral-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Cart ({bookedTours.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('favorites')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'favorites'
+                  ? 'border-coral-500 text-coral-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Favorites ({favorites.length})
+            </button>
+          </div>
+
+          {/* Booked Tours Tab */}
+          {activeTab === 'booked' && (
+            bookedTours.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mx-auto mb-4 w-12 h-12 flex items-center justify-center">
+                  <ShoppingCart className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium text-muted-foreground mb-2">No tours in cart</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Book tours and they'll appear here with your reservation timer!
+                </p>
+                <Button onClick={() => setIsOpen(false)} variant="outline">
+                  Browse Tours
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Header with clear all */}
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {bookedTours.length} tour{bookedTours.length !== 1 ? 's' : ''} in cart
+                  </p>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearBookedTours}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Clear all
+                  </Button>
+                </div>
+
+                {/* Booked Tours List */}
+                <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+                  {bookedTours.map((bookedTour) => (
+                    <BookedTourCard 
+                      key={bookedTour.id}
+                      bookedTour={bookedTour}
+                      onRemove={() => removeBookedTour(bookedTour.id)}
+                      onPayNow={() => {
+                        // Set booking data and navigate to checkout
+                        const bookingData = {
+                          tour_id: bookedTour.tourId,
+                          date: bookedTour.date,
+                          time: bookedTour.time,
+                          adults: bookedTour.adults,
+                          children: bookedTour.children,
+                          total_amount: bookedTour.totalAmount,
+                          price_per_person: bookedTour.pricePerPerson,
+                          session_id: bookedTour.sessionId,
+                          hold_expires_at: bookedTour.holdExpiresAt
+                        };
+                        localStorage.setItem('bookingData', JSON.stringify(bookingData));
+                        setIsOpen(false);
+                        onPayNow?.();
+                      }}
+                      formatPrice={formatPrice}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          )}
+
+          {/* Favorites Tab */}
+          {activeTab === 'favorites' && (
+            favorites.length === 0 ? (
             <div className="text-center py-12">
               <div className="mx-auto mb-4 w-12 h-12 flex items-center justify-center">
                 <ShoppingCart className="h-12 w-12 text-muted-foreground" />
@@ -174,5 +275,94 @@ export default function FavoritesCart({ onViewTourDetails, onBookNow }: Favorite
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+// BookedTourCard component
+interface BookedTourCardProps {
+  bookedTour: any; // Using BookedTour type from FavoritesContext
+  onRemove: () => void;
+  onPayNow: () => void;
+  formatPrice: (amount: number) => string;
+}
+
+function BookedTourCard({ bookedTour, onRemove, onPayNow, formatPrice }: BookedTourCardProps) {
+  const isExpired = new Date(bookedTour.holdExpiresAt) <= new Date();
+
+  return (
+    <Card className={`overflow-hidden border ${isExpired ? 'border-red-200 bg-red-50' : 'border-border hover:shadow-md'} transition-shadow`}>
+      <div className="p-4">
+        {/* Tour Title and Remove Button */}
+        <div className="flex items-start justify-between mb-3">
+          <h4 className="font-medium text-sm leading-tight">{bookedTour.tourTitle}</h4>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRemove}
+            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
+
+        {/* Tour Details */}
+        <div className="space-y-2 text-xs text-gray-600 mb-3">
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            <span>{new Date(bookedTour.date).toLocaleDateString()}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>{bookedTour.time}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            <span>
+              {bookedTour.adults} adult{bookedTour.adults !== 1 ? 's' : ''}
+              {bookedTour.children > 0 && `, ${bookedTour.children} child${bookedTour.children !== 1 ? 'ren' : ''}`}
+            </span>
+          </div>
+        </div>
+
+        {/* Price */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="font-semibold text-primary">
+            {formatPrice(bookedTour.totalAmount)}
+          </span>
+        </div>
+
+        {/* Countdown Timer */}
+        {!isExpired && (
+          <div className="mb-3">
+            <CountdownTimer
+              expirationTime={bookedTour.holdExpiresAt}
+              className="!p-2 !text-xs"
+              onExpire={() => {
+                // Timer will show expired state
+              }}
+            />
+          </div>
+        )}
+
+        {/* Action Button */}
+        {isExpired ? (
+          <Button 
+            variant="outline"
+            className="w-full text-red-600 border-red-200 hover:bg-red-50"
+            disabled
+          >
+            Hold Expired
+          </Button>
+        ) : (
+          <Button 
+            onClick={onPayNow}
+            className="w-full bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 text-sm py-2"
+          >
+            <CreditCard className="h-3 w-3 mr-2" />
+            Pay Now
+          </Button>
+        )}
+      </div>
+    </Card>
   );
 }

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { useCheckoutForm } from '../hooks/useCheckoutForm';
 import { usePaymentProcess } from '../hooks/usePaymentProcess';
+import CountdownTimer from './ui/CountdownTimer';
 
 // Step Components
 import CheckoutSteps from './checkout/CheckoutSteps';
@@ -44,6 +45,22 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
   } = useCheckoutForm();
 
   const { isProcessing, paymentResult, processPayment } = usePaymentProcess();
+  const [holdExpiration, setHoldExpiration] = useState<Date | null>(null);
+
+  // Get hold expiration from booking data
+  useEffect(() => {
+    const bookingData = localStorage.getItem('bookingData');
+    if (bookingData) {
+      try {
+        const data = JSON.parse(bookingData);
+        if (data.hold_expires_at) {
+          setHoldExpiration(new Date(data.hold_expires_at));
+        }
+      } catch (error) {
+        console.error('Error parsing booking data:', error);
+      }
+    }
+  }, []);
 
   const handleNext = async () => {
     if (currentStep === 2) {
@@ -169,7 +186,20 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
           </div>
 
           {/* Booking Summary Sidebar */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
+            {/* Countdown Timer - Above Booking Summary */}
+            {holdExpiration && (
+              <CountdownTimer
+                expirationTime={holdExpiration}
+                onExpire={() => {
+                  setHoldExpiration(null);
+                  // Redirect back to tour selection or show expired message
+                  alert('Your seat reservation has expired. Please select your seats again.');
+                  onBack();
+                }}
+              />
+            )}
+            
             <BookingSummary 
               formData={formData}
               tourTitle="Alexandria Walking Tour"

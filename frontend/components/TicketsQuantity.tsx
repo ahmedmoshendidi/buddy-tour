@@ -10,6 +10,7 @@ import TimeSelector from './booking/TimeSelector';
 import TicketCounter from './booking/TicketCounter';
 import PriceDisplay from './booking/PriceDisplay';
 import CountdownTimer from './ui/CountdownTimer';
+import { useFavorites } from './FavoritesContext';
 
 interface Tour {
   id: number;
@@ -49,6 +50,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
   const [existingHold, setExistingHold] = useState<any>(null);
   const [showRecovery, setShowRecovery] = useState<boolean>(false);
   const { formatPrice } = useCurrency();
+  const { addBookedTour } = useFavorites();
 
   // Generate or retrieve session ID for this booking session
   const [sessionId] = useState<string>(() => {
@@ -355,28 +357,31 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       return;
     }
 
-    // Create soft hold before proceeding to payment
+    // Create soft hold before adding to cart
     const holdCreated = await createSeatHold();
     if (!holdCreated) {
       return; // Hold creation failed, don't proceed
     }
 
-    const bookingInfo = {
-      tour_id: tour?.id || tourId,
+    // Add to cart instead of directly checking out
+    addBookedTour({
+      tourId: tour?.id || Number(tourId),
+      tourTitle: tour?.title || 'Tour',
       date: selectedDate,
       time: selectedTime,
       adults,
       children,
-      total_amount: calculateTotal(),
-      price_per_person: tour?.price_per_person || 0,
-      session_id: sessionId, // Include session_id for hold management
-      hold_expires_at: holdExpiration?.toISOString()
-    };
+      totalAmount: calculateTotal(),
+      pricePerPerson: tour?.price_per_person || 0,
+      sessionId: sessionId,
+      holdExpiresAt: holdExpiration?.toISOString() || new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    });
 
-    // Store in localStorage for checkout process
-    localStorage.setItem('bookingData', JSON.stringify(bookingInfo));
+    // Show success message
+    alert(`✅ Tour added to cart! Your seats are reserved for 30 minutes.`);
 
-    onCheckout();
+    // Optionally go back to tour selection or stay on current page
+    onBack();
   };
 
   const calculateTotal = (): number => {
@@ -586,16 +591,6 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
                   children={children}
                 />
 
-                {/* Live Hold Countdown Timer */}
-                {holdExpiration && (
-                  <CountdownTimer
-                    expirationTime={holdExpiration}
-                    onExpire={() => {
-                      setHoldExpiration(null);
-                      setAvailabilityError('Your seat reservation has expired. Please select your seats again.');
-                    }}
-                  />
-                )}
 
                 {/* Checkout Button */}
                 <Button
@@ -608,7 +603,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
                   {holdLoading ? 'Reserving Seats...' :
                    availabilityLoading ? 'Checking Availability...' : 
                    availabilityError ? 'Insufficient Seats' : 
-                   'Proceed to Checkout'}
+                   'Add to Cart'}
                 </Button>
               </>
             )}
