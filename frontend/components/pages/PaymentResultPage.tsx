@@ -2,8 +2,8 @@ import React from 'react';
 import Header from '../layout/Header';
 import PaymentSuccess from '../PaymentSuccess';
 import PaymentFailure from '../PaymentFailure';
-import FavoriteNotification from '../FavoriteNotification';
-import { useFavorites } from '../FavoritesContext';
+import WishlistNotification from '../WishlistNotification';
+import { useWishlist } from '../WishlistContext';
 import type { Tour } from '../../hooks/useTourDetails';
 
 interface PaymentResultPageProps {
@@ -21,7 +21,7 @@ export default function PaymentResultPage({
   onViewTourDetails,
   onBookNow
 }: PaymentResultPageProps) {
-  const { notificationTour, showNotification, hideNotification } = useFavorites();
+  const { notificationTour, showNotification, hideNotification } = useWishlist();
 
   return (
     <div className="min-h-screen bg-background">
@@ -40,7 +40,7 @@ export default function PaymentResultPage({
       )}
 
       {/* Notification */}
-      <FavoriteNotification 
+      <WishlistNotification 
         tour={notificationTour}
         isVisible={showNotification}
         onClose={hideNotification}

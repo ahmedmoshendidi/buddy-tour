@@ -9,13 +9,13 @@ interface Tour {
   image_urls?: string[];
 }
 
-interface FavoriteNotificationProps {
+interface WishlistNotificationProps {
   tour: Tour | null;
   isVisible: boolean;
   onClose: () => void;
 }
 
-export default function FavoriteNotification({ tour, isVisible, onClose }: FavoriteNotificationProps) {
+export default function WishlistNotification({ tour, isVisible, onClose }: WishlistNotificationProps) {
   const { formatPrice } = useCurrency();
   const [shouldRender, setShouldRender] = useState(false);
 
@@ -60,7 +60,7 @@ export default function FavoriteNotification({ tour, isVisible, onClose }: Favor
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-foreground">Added to favorites!</p>
+                <p className="text-sm font-medium text-foreground">Added to wishlist!</p>
                 <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
                   {tour.title}
                 </p>

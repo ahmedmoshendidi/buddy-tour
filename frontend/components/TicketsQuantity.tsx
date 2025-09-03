@@ -10,7 +10,7 @@ import TimeSelector from './booking/TimeSelector';
 import TicketCounter from './booking/TicketCounter';
 import PriceDisplay from './booking/PriceDisplay';
 import CountdownTimer from './ui/CountdownTimer';
-import { useFavorites } from './FavoritesContext';
+import { useCart } from './CartContext';
 
 interface Tour {
   id: number;
@@ -50,7 +50,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
   const [existingHold, setExistingHold] = useState<any>(null);
   const [showRecovery, setShowRecovery] = useState<boolean>(false);
   const { formatPrice } = useCurrency();
-  const { addBookedTour } = useFavorites();
+  const { addBookedTour } = useCart();
 
   // Generate or retrieve session ID for this booking session
   const [sessionId] = useState<string>(() => {

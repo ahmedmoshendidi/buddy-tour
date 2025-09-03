@@ -5,8 +5,8 @@ import ToursGrid from '../tours/ToursGrid';
 import HowItWorks from '../sections/HowItWorks';
 import TrustSection from '../sections/TrustSection';
 import Footer from '../layout/Footer';
-import FavoriteNotification from '../FavoriteNotification';
-import { useFavorites } from '../FavoritesContext';
+import WishlistNotification from '../WishlistNotification';
+import { useWishlist } from '../WishlistContext';
 import type { Tour } from '../../hooks/useTourDetails';
 
 interface HomePageProps {
@@ -26,7 +26,7 @@ export default function HomePage({
   onBookNow,
   onViewTourById
 }: HomePageProps) {
-  const { notificationTour, showNotification, hideNotification } = useFavorites();
+  const { notificationTour, showNotification, hideNotification } = useWishlist();
 
   // Scroll to tours section - used by hero button
   const handleExploreTours = () => {
@@ -62,7 +62,7 @@ export default function HomePage({
       <Footer onViewTourById={onViewTourById} />
 
       {/* Notification */}
-      <FavoriteNotification 
+      <WishlistNotification 
         tour={notificationTour}
         isVisible={showNotification}
         onClose={hideNotification}

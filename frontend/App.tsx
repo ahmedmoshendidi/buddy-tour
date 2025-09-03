@@ -1,6 +1,7 @@
 import React from 'react';
 import { CurrencyProvider } from './components/CurrencyContext';
-import { FavoritesProvider, useFavorites } from './components/FavoritesContext';
+import { WishlistProvider, useWishlist } from './components/WishlistContext';
+import { CartProvider } from './components/CartContext';
 import { useAppNavigation } from './hooks/useAppNavigation';
 import { useTours } from './hooks/useTours';
 
@@ -13,7 +14,7 @@ import Header from './components/layout/Header';
 import TourDetails from './components/TourDetails';
 import TicketsQuantity from './components/TicketsQuantity';
 import CheckoutProcess from './components/CheckoutProcess';
-import FavoriteNotification from './components/FavoriteNotification';
+import WishlistNotification from './components/WishlistNotification';
 import type { Tour } from './hooks/useTourDetails';
 
 // Inner App component that uses currency and favorites context
@@ -28,7 +29,7 @@ function AppContent() {
   } = useAppNavigation();
 
   const { tours, loading, error } = useTours();
-  const { notificationTour, showNotification, hideNotification } = useFavorites();
+  const { notificationTour, showNotification, hideNotification } = useWishlist();
 
   // Navigation handlers
   const handleViewTourDetails = (tour: Tour) => {
@@ -80,7 +81,7 @@ function AppContent() {
           onBookNow={handleBookNow}
         />
 
-        <FavoriteNotification 
+        <WishlistNotification 
           tour={notificationTour}
           isVisible={showNotification}
           onClose={hideNotification}
@@ -105,7 +106,7 @@ function AppContent() {
           onCheckout={navigateToCheckout}
         />
 
-        <FavoriteNotification 
+        <WishlistNotification 
           tour={notificationTour}
           isVisible={showNotification}
           onClose={hideNotification}
@@ -128,7 +129,7 @@ function AppContent() {
           onBack={() => navigateToTickets(selectedTourSlug || '')} 
         />
 
-        <FavoriteNotification 
+        <WishlistNotification 
           tour={notificationTour}
           isVisible={showNotification}
           onClose={hideNotification}
@@ -154,9 +155,11 @@ function AppContent() {
 export default function App() {
   return (
     <CurrencyProvider>
-      <FavoritesProvider>
-        <AppContent />
-      </FavoritesProvider>
+      <WishlistProvider>
+        <CartProvider>
+          <AppContent />
+        </CartProvider>
+      </WishlistProvider>
     </CurrencyProvider>
   );
 }
