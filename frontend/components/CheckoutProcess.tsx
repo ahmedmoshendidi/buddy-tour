@@ -189,15 +189,24 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
           <div className="lg:col-span-1 space-y-6">
             {/* Countdown Timer - Above Booking Summary */}
             {holdExpiration && (
-              <CountdownTimer
-                expirationTime={holdExpiration}
-                onExpire={() => {
-                  setHoldExpiration(null);
-                  // Redirect back to tour selection or show expired message
-                  alert('Your seat reservation has expired. Please select your seats again.');
-                  onBack();
-                }}
-              />
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-center justify-center mb-2">
+                  <span className="text-amber-800 font-medium text-sm">🔒 We'll hold your spot for</span>
+                </div>
+                <CountdownTimer
+                  expirationTime={holdExpiration.toISOString()}
+                  className="!bg-amber-100 !border-amber-300 !text-amber-900"
+                  onExpire={() => {
+                    setHoldExpiration(null);
+                    // Redirect back to tour selection or show expired message
+                    alert('Your seat reservation has expired. Please select your seats again.');
+                    onBack();
+                  }}
+                />
+                <div className="text-center mt-2">
+                  <span className="text-amber-700 text-xs">Complete your booking before the timer expires</span>
+                </div>
+              </div>
             )}
             
             <BookingSummary 
