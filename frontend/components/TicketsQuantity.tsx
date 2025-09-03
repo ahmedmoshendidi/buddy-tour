@@ -410,7 +410,14 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
     const holdCreated = await createSeatHold();
     if (!holdCreated) return;
 
-    // Add to cart
+    // Add to cart with tour data for notification
+    const tourData = {
+      id: tour?.id || Number(tourId),
+      title: tour?.title || 'Tour',
+      price_per_person: tour?.price_per_person || 0,
+      image_urls: []
+    };
+
     addBookedTour({
       tourId: tour?.id || Number(tourId),
       tourTitle: tour?.title || 'Tour',
@@ -422,10 +429,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       pricePerPerson: tour?.price_per_person || 0,
       sessionId: sessionId,
       holdExpiresAt: holdExpiration?.toISOString() || new Date(Date.now() + 30 * 60 * 1000).toISOString()
-    });
-
-    // Show success message
-    alert(`✅ Tour added to cart! Your seats are reserved for 30 minutes.`);
+    }, tourData);
 
     // Stay on current page - user can continue browsing or go to cart
   };

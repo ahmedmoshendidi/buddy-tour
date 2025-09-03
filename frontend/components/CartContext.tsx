@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+interface Tour {
+  id: number;
+  title: string;
+  price_per_person: number;
+  image_urls?: string[];
+}
+
 interface BookedTour {
   id: string; // Unique cart item ID
   tourId: number;
@@ -17,10 +24,14 @@ interface BookedTour {
 
 interface CartContextType {
   bookedTours: BookedTour[];
-  addBookedTour: (tour: Omit<BookedTour, 'id' | 'createdAt'>) => void;
+  addBookedTour: (tour: Omit<BookedTour, 'id' | 'createdAt'>, tourData?: Tour) => void;
   removeBookedTour: (tourId: string) => void;
   clearBookedTours: () => void;
   getCartTotal: () => number;
+  // Notification states
+  notificationTour: Tour | null;
+  showNotification: boolean;
+  hideNotification: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -39,6 +50,8 @@ interface CartProviderProps {
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [bookedTours, setBookedTours] = useState<BookedTour[]>([]);
+  const [notificationTour, setNotificationTour] = useState<Tour | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
 
   // Load booked tours from localStorage on mount
   useEffect(() => {
@@ -71,7 +84,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     }
   }, [bookedTours]);
 
-  const addBookedTour = (tour: Omit<BookedTour, 'id' | 'createdAt'>) => {
+  const addBookedTour = (tour: Omit<BookedTour, 'id' | 'createdAt'>, tourData?: Tour) => {
     const newBookedTour: BookedTour = {
       ...tour,
       id: `booked_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -80,6 +93,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     
     setBookedTours(prev => [...prev, newBookedTour]);
     console.log('✅ Added to cart:', newBookedTour);
+    
+    // Show notification if tour data is provided
+    if (tourData) {
+      setNotificationTour(tourData);
+      setShowNotification(true);
+    }
   };
 
   const removeBookedTour = (tourId: string) => {
@@ -96,12 +115,23 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     return bookedTours.reduce((total, tour) => total + tour.totalAmount, 0);
   };
 
+  const hideNotification = () => {
+    setShowNotification(false);
+    // Clear the tour after animation completes
+    setTimeout(() => {
+      setNotificationTour(null);
+    }, 300);
+  };
+
   const value: CartContextType = {
     bookedTours,
     addBookedTour,
     removeBookedTour,
     clearBookedTours,
-    getCartTotal
+    getCartTotal,
+    notificationTour,
+    showNotification,
+    hideNotification
   };
 
   return (

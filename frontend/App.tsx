@@ -1,7 +1,7 @@
 import React from 'react';
 import { CurrencyProvider } from './components/CurrencyContext';
 import { WishlistProvider, useWishlist } from './components/WishlistContext';
-import { CartProvider } from './components/CartContext';
+import { CartProvider, useCart } from './components/CartContext';
 import { useAppNavigation } from './hooks/useAppNavigation';
 import { useTours } from './hooks/useTours';
 
@@ -15,6 +15,7 @@ import TourDetails from './components/TourDetails';
 import TicketsQuantity from './components/TicketsQuantity';
 import CheckoutProcess from './components/CheckoutProcess';
 import WishlistNotification from './components/WishlistNotification';
+import CartNotification from './components/CartNotification';
 import type { Tour } from './hooks/useTourDetails';
 
 // Inner App component that uses currency and favorites context
@@ -30,6 +31,7 @@ function AppContent() {
 
   const { tours, loading, error } = useTours();
   const { notificationTour, showNotification, hideNotification } = useWishlist();
+  const { notificationTour: cartNotificationTour, showNotification: showCartNotification, hideNotification: hideCartNotification } = useCart();
 
   // Navigation handlers
   const handleViewTourDetails = (tour: Tour) => {
@@ -86,6 +88,11 @@ function AppContent() {
           isVisible={showNotification}
           onClose={hideNotification}
         />
+        <CartNotification 
+          tour={cartNotificationTour}
+          isVisible={showCartNotification}
+          onClose={hideCartNotification}
+        />
       </div>
     );
   }
@@ -111,6 +118,11 @@ function AppContent() {
           isVisible={showNotification}
           onClose={hideNotification}
         />
+        <CartNotification 
+          tour={cartNotificationTour}
+          isVisible={showCartNotification}
+          onClose={hideCartNotification}
+        />
       </div>
     );
   }
@@ -133,6 +145,11 @@ function AppContent() {
           tour={notificationTour}
           isVisible={showNotification}
           onClose={hideNotification}
+        />
+        <CartNotification 
+          tour={cartNotificationTour}
+          isVisible={showCartNotification}
+          onClose={hideCartNotification}
         />
       </div>
     );
