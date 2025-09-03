@@ -69,6 +69,7 @@ function AppContent() {
         <Header 
           onViewTourDetails={handleViewTourDetails} 
           onBookNow={handleBookNow}
+          onPayNow={navigateToCheckout}
           onBackToHome={navigateToHome}
           showBackToHome={true}
         />
@@ -95,6 +96,7 @@ function AppContent() {
         <Header 
           onViewTourDetails={handleViewTourDetails} 
           onBookNow={handleBookNow}
+          onPayNow={navigateToCheckout}
         />
         
         <TicketsQuantity 
@@ -119,6 +121,7 @@ function AppContent() {
         <Header 
           onViewTourDetails={handleViewTourDetails} 
           onBookNow={handleBookNow}
+          onPayNow={navigateToCheckout}
         />
         
         <CheckoutProcess 

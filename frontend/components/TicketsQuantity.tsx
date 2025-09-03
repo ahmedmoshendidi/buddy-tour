@@ -363,7 +363,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       return; // Hold creation failed, don't proceed
     }
 
-    // Add to cart instead of directly checking out
+    // Add to cart AND proceed to checkout
     addBookedTour({
       tourId: tour?.id || Number(tourId),
       tourTitle: tour?.title || 'Tour',
@@ -377,11 +377,23 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       holdExpiresAt: holdExpiration?.toISOString() || new Date(Date.now() + 30 * 60 * 1000).toISOString()
     });
 
-    // Show success message
-    alert(`✅ Tour added to cart! Your seats are reserved for 30 minutes.`);
+    // Store booking data for checkout page
+    const bookingInfo = {
+      tour_id: tour?.id || tourId,
+      date: selectedDate,
+      time: selectedTime,
+      adults,
+      children,
+      total_amount: calculateTotal(),
+      price_per_person: tour?.price_per_person || 0,
+      session_id: sessionId,
+      hold_expires_at: holdExpiration?.toISOString()
+    };
 
-    // Optionally go back to tour selection or stay on current page
-    onBack();
+    localStorage.setItem('bookingData', JSON.stringify(bookingInfo));
+
+    // Proceed to checkout (normal flow)
+    onCheckout();
   };
 
   const calculateTotal = (): number => {
@@ -480,15 +492,11 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
                     </div>
                   </div>
                   
-                  <div className="mt-3 pt-3 border-t">
-                    <CountdownTimer
-                      expirationTime={existingHold.expires_at}
-                      onExpire={() => {
-                        setShowRecovery(false);
-                        setExistingHold(null);
-                      }}
-                      className="!p-3 !bg-blue-100 !border-blue-300"
-                    />
+                  <div className="mt-3 pt-3 border-t text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <span className="text-amber-600">⏰</span>
+                      <span>Expires: {new Date(existingHold.expires_at).toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -603,7 +611,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
                   {holdLoading ? 'Reserving Seats...' :
                    availabilityLoading ? 'Checking Availability...' : 
                    availabilityError ? 'Insufficient Seats' : 
-                   'Add to Cart'}
+                   'Proceed to Checkout'}
                 </Button>
               </>
             )}

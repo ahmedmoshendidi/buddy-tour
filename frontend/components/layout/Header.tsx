@@ -7,6 +7,7 @@ import type { Tour } from '../../hooks/useTourDetails';
 interface HeaderProps {
   onViewTourDetails: (tour: Tour) => void;
   onBookNow: (tour: Tour) => void;
+  onPayNow?: () => void;
   onBackToHome?: () => void;
   showBackToHome?: boolean;
 }
@@ -14,6 +15,7 @@ interface HeaderProps {
 export default function Header({ 
   onViewTourDetails, 
   onBookNow, 
+  onPayNow,
   onBackToHome,
   showBackToHome = false 
 }: HeaderProps) {
@@ -29,7 +31,7 @@ export default function Header({
           </h1>
         </div>
         <div className="flex items-center space-x-2">
-          <FavoritesCart onViewTourDetails={onViewTourDetails} onBookNow={onBookNow} />
+          <FavoritesCart onViewTourDetails={onViewTourDetails} onBookNow={onBookNow} onPayNow={onPayNow} />
           <CurrencySelector />
           {showBackToHome && onBackToHome && (
             <nav className="hidden md:flex items-center space-x-6">
