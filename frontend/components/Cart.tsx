@@ -53,6 +53,7 @@ export default function Cart({ onPayNow }: CartProps) {
     };
     
     localStorage.setItem('bookingData', JSON.stringify(bookingData));
+    console.log('📦 Cart: Booking data stored with hold expiration:', bookedTour.holdExpiresAt);
     setIsOpen(false);
     
     // Navigate to checkout

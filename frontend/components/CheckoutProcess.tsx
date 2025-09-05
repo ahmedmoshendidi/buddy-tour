@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { useCheckoutForm } from '../hooks/useCheckoutForm';
 import { usePaymentProcess } from '../hooks/usePaymentProcess';
 import CountdownTimer from './ui/CountdownTimer';
+import { useCart } from './CartContext';
 
 // Step Components
 import CheckoutSteps from './checkout/CheckoutSteps';
@@ -45,22 +46,65 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
   } = useCheckoutForm();
 
   const { isProcessing, paymentResult, processPayment } = usePaymentProcess();
+  const { bookedTours } = useCart();
   const [holdExpiration, setHoldExpiration] = useState<Date | null>(null);
 
-  // Get hold expiration from booking data
+  // Get hold expiration from booking data - check immediately and on storage events
   useEffect(() => {
-    const bookingData = localStorage.getItem('bookingData');
-    if (bookingData) {
-      try {
-        const data = JSON.parse(bookingData);
-        if (data.hold_expires_at) {
-          setHoldExpiration(new Date(data.hold_expires_at));
+    // Function to check for booking data
+    const checkBookingData = () => {
+      // First try localStorage
+      const bookingData = localStorage.getItem('bookingData');
+      if (bookingData) {
+        try {
+          const data = JSON.parse(bookingData);
+          if (data.hold_expires_at) {
+            setHoldExpiration(new Date(data.hold_expires_at));
+            console.log('✅ Hold expiration loaded from localStorage:', data.hold_expires_at);
+            return;
+          }
+        } catch (error) {
+          console.error('Error parsing booking data:', error);
         }
-      } catch (error) {
-        console.error('Error parsing booking data:', error);
       }
-    }
-  }, []);
+
+      // Fallback: Check cart for any booked tours with hold expiration
+      if (bookedTours.length > 0) {
+        const latestBooking = bookedTours[bookedTours.length - 1];
+        if (latestBooking.holdExpiresAt) {
+          setHoldExpiration(new Date(latestBooking.holdExpiresAt));
+          console.log('✅ Hold expiration loaded from cart:', latestBooking.holdExpiresAt);
+        }
+      }
+    };
+
+    // Check immediately
+    checkBookingData();
+
+    // Listen for storage events (in case data is set after component mounts)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'bookingData') {
+        checkBookingData();
+      }
+    };
+
+    // Also check periodically for the first 2 seconds (fallback for same-tab updates)
+    const intervalId = setInterval(() => {
+      if (!holdExpiration) {
+        checkBookingData();
+      }
+    }, 100);
+
+    // Clear interval after 2 seconds
+    setTimeout(() => clearInterval(intervalId), 2000);
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(intervalId);
+    };
+  }, [holdExpiration, bookedTours]);
 
   const handleNext = async () => {
     if (currentStep === 2) {

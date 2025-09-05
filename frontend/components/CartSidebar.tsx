@@ -57,6 +57,7 @@ export default function CartSidebar({
     };
     
     localStorage.setItem('bookingData', JSON.stringify(bookingData));
+    console.log('📦 CartSidebar: Booking data stored with hold expiration:', bookedTour.holdExpiresAt);
     onClose();
     
     // Navigate to checkout

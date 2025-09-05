@@ -369,6 +369,9 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
     const holdCreated = await createSeatHold();
     if (!holdCreated) return;
 
+    // Make sure we have the expiration time
+    const expirationTime = holdExpiration || new Date(Date.now() + 30 * 60 * 1000);
+
     // Add to cart with tour data for notification
     const tourData = {
       id: tour?.id || Number(tourId),
@@ -387,7 +390,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       totalAmount: calculateTotal(),
       pricePerPerson: tour?.price_per_person || 0,
       sessionId: sessionId,
-      holdExpiresAt: holdExpiration?.toISOString() || new Date(Date.now() + 30 * 60 * 1000).toISOString()
+      holdExpiresAt: expirationTime.toISOString()
     }, tourData);
 
     // Store booking data for checkout
@@ -400,10 +403,11 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       total_amount: calculateTotal(),
       price_per_person: tour?.price_per_person || 0,
       session_id: sessionId,
-      hold_expires_at: holdExpiration?.toISOString()
+      hold_expires_at: expirationTime.toISOString()
     };
 
     localStorage.setItem('bookingData', JSON.stringify(bookingInfo));
+    console.log('📦 Booking data stored with hold expiration:', expirationTime.toISOString());
 
     // Go to checkout
     onCheckout();
@@ -417,6 +421,9 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
     const holdCreated = await createSeatHold();
     if (!holdCreated) return;
 
+    // Make sure we have the expiration time
+    const expirationTime = holdExpiration || new Date(Date.now() + 30 * 60 * 1000);
+
     // Add to cart with tour data for notification
     const tourData = {
       id: tour?.id || Number(tourId),
@@ -435,8 +442,24 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       totalAmount: calculateTotal(),
       pricePerPerson: tour?.price_per_person || 0,
       sessionId: sessionId,
-      holdExpiresAt: holdExpiration?.toISOString() || new Date(Date.now() + 30 * 60 * 1000).toISOString()
+      holdExpiresAt: expirationTime.toISOString()
     }, tourData);
+
+    // Store booking data even for cart (in case user navigates to checkout later)
+    const bookingInfo = {
+      tour_id: tour?.id || tourId,
+      date: selectedDate,
+      time: selectedTime,
+      adults,
+      children,
+      total_amount: calculateTotal(),
+      price_per_person: tour?.price_per_person || 0,
+      session_id: sessionId,
+      hold_expires_at: expirationTime.toISOString()
+    };
+
+    localStorage.setItem('bookingData', JSON.stringify(bookingInfo));
+    console.log('📦 Booking data stored with hold expiration:', expirationTime.toISOString());
 
     // Stay on current page - user can continue browsing or go to cart
   };
