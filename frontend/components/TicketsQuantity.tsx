@@ -9,7 +9,6 @@ import DateSelector from './booking/DateSelector';
 import TimeSelector from './booking/TimeSelector';
 import TicketCounter from './booking/TicketCounter';
 import PriceDisplay from './booking/PriceDisplay';
-import CountdownTimer from './ui/CountdownTimer';
 import { useCart } from './CartContext';
 
 interface Tour {
