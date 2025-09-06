@@ -89,7 +89,7 @@ router.post("/pay", async (req, res) => {
       country: nationality,
       state: "NA",
     };
-
+    console.log('📥 Received session_id in /pay:', session_id);
     const client = await pool.connect();
     const tourRes = await client.query("SELECT price_per_person, title FROM tours WHERE id = $1", [tour_id]);
     if (tourRes.rows.length === 0) return res.status(400).json({ error: "Invalid tour ID" });
