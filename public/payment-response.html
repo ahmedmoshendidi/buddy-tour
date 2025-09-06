@@ -21,31 +21,45 @@
   </div>
 
   <script>
-  (function () {
-    const q = new URLSearchParams(location.search);
-    const pick = k => (q.get(k) || '').toLowerCase();
+(function () {
+  const q = new URLSearchParams(location.search);
+  const pick = k => (q.get(k) || '').toLowerCase();
 
-    // حدد النجاح بشكل أوسع
-    const success =
-      pick('success') === 'true' ||
-      pick('payment_status') === 'success' ||
-      pick('status') === 'completed' ||
-      (q.get('txn_response_code') || '').toUpperCase().startsWith('APPROVED') && pick('error_occured') !== 'true';
+  // تحديد النجاح
+  const success =
+    pick('success') === 'true' ||
+    pick('payment_status') === 'success' ||
+    pick('status') === 'completed' ||
+    ((q.get('txn_response_code') || '').toUpperCase().startsWith('APPROVED') &&
+     pick('error_occured') !== 'true');
 
-    // هنحوّل للـ SPA root
-    const next = new URL('/', location.origin);
+  // ✅ تنظيف بيانات الحجز عند النجاح فقط
+  if (success) {
+    try {
+      const raw = localStorage.getItem('bookingData');
+      const data = raw ? JSON.parse(raw) : null;
 
-    // انسخ كل البراميترات الأصلية
-    q.forEach((v, k) => next.searchParams.set(k, v));
+      // امسح بيانات الشيك آوت (ده اللي بيعتمد عليه العداد)
+      localStorage.removeItem('bookingData');
 
-    // طبّع علامات موحّدة عشان App.tsx يلقطها بسهولة
-    next.searchParams.set('status', success ? 'success' : 'failed');
-    next.searchParams.set('success', success ? 'true' : 'false');
+      // امسح سيشن الحجز الخاص بالتور (لو موجود)
+      if (data && data.tour_id) {
+        localStorage.removeItem(`buddy_tour_session_${data.tour_id}`);
+      }
+      // ملاحظة: ما بنلمسش الـ wishlist. هتفضل زي ما هي 👌
+    } catch (_) {}
+  }
 
-    // لو مش مهم تحتفظ بالـ query في الهيستوري، استعمل replace
-    location.replace(next.toString());
-  })();
+  // حوّل للـ SPA root مع نقل نفس البراميترات + توحيد فلاغات النجاح/الفشل
+  const next = new URL('/', location.origin);
+  q.forEach((v, k) => next.searchParams.set(k, v));
+  next.searchParams.set('status', success ? 'success' : 'failed');
+  next.searchParams.set('success', success ? 'true' : 'false');
+
+  location.replace(next.toString());
+})();
 </script>
+
 
 </body>
 </html>
