@@ -17,6 +17,7 @@ export interface FormData {
   time?: string;
   adults?: number;
   children?: number;
+  session_id?: string;
   total_amount?: number;
   price_per_person?: number;
   [key: string]: any;

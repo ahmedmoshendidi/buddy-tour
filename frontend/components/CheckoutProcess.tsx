@@ -49,6 +49,30 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
   const { bookedTours } = useCart();
   const [holdExpiration, setHoldExpiration] = useState<Date | null>(null);
 
+  // ✅ Merge bookingData (includes session_id) from localStorage into formData
+  useEffect(() => {
+    const raw = localStorage.getItem('bookingData');
+    if (!raw) return;
+
+    try {
+      const data = JSON.parse(raw);
+
+      // مرّر الحقول المطلوبة واحدة واحدة لأن updateFormData(field, value)
+      if (data.tour_id !== undefined) updateFormData('tour_id', data.tour_id);
+      if (data.date !== undefined) updateFormData('date', data.date);
+      if (data.time !== undefined) updateFormData('time', data.time);
+      if (data.adults !== undefined) updateFormData('adults', data.adults);
+      if (data.children !== undefined) updateFormData('children', data.children);
+      if (data.price_per_person !== undefined) updateFormData('price_per_person', data.price_per_person);
+      if (data.total_amount !== undefined) updateFormData('total_amount', data.total_amount);
+      if (data.session_id !== undefined) updateFormData('session_id', data.session_id); // ← أهم سطر
+
+      console.log('✅ bookingData merged into formData (includes session_id):', data);
+    } catch (e) {
+      console.error('Failed to parse bookingData from localStorage:', e);
+    }
+  }, []); // run once
+
   // Get hold expiration from booking data - check immediately and on storage events
   useEffect(() => {
     // Function to check for booking data

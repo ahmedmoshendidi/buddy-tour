@@ -29,7 +29,7 @@ interface TimeSlot {
 interface TicketsQuantityProps {
   tourId: string | number;
   onBack: () => void;
-  onCheckout: () => void;
+  onCheckout: (bookingInfo: any) => void;
 }
 
 export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQuantityProps) {
@@ -335,7 +335,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
     console.log('📦 Booking data stored with hold expiration:', expirationTime.toISOString());
 
     // Go to checkout
-    onCheckout();
+    onCheckout(bookingInfo);
   };
 
   // Add to Cart: Create hold + Add to cart + Stay on page
