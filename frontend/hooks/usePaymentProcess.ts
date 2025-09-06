@@ -28,7 +28,8 @@ export function usePaymentProcess() {
         date: formData.date,
         time: formData.time,
         adults: formData.adults || 0,
-        children: formData.children || 0
+        children: formData.children || 0,
+        session_id: formData.session_id,
       };
 
       console.log('Processing payment with data:', paymentData);
