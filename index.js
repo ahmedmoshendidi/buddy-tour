@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 5000;
 // ======================
 // Critical Security Setup
 // ======================
-app.set("trust proxy", true); // Essential for Railway/Heroku deployment
+app.set("trust proxy", 1); // Essential for Railway/Heroku deployment
 
 // ======================
 // Middleware Stack
