@@ -16,6 +16,7 @@ interface HomePageProps {
   onViewTourDetails: (tour: Tour) => void;
   onBookNow: (tour: Tour) => void;
   onViewTourById: (tourId: number) => void;
+  onPayNow: () => void; // ✅ 
 }
 
 export default function HomePage({
@@ -24,7 +25,8 @@ export default function HomePage({
   error,
   onViewTourDetails,
   onBookNow,
-  onViewTourById
+  onViewTourById,
+  onPayNow, // ✅ 
 }: HomePageProps) {
   const { notificationTour, showNotification, hideNotification } = useWishlist();
 
@@ -32,7 +34,7 @@ export default function HomePage({
   const handleExploreTours = () => {
     const toursSection = document.getElementById('tours');
     if (toursSection) {
-      toursSection.scrollIntoView({ 
+      toursSection.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
@@ -41,28 +43,27 @@ export default function HomePage({
 
   return (
     <div className="min-h-screen bg-background">
-      <Header 
-        onViewTourDetails={onViewTourDetails} 
+      <Header
+        onViewTourDetails={onViewTourDetails}
         onBookNow={onBookNow}
+        onPayNow={onPayNow}   // ✅ Header → CartSidebar
       />
-      
+
       <HeroSection onExploreTours={handleExploreTours} />
-      
-      <ToursGrid 
+
+      <ToursGrid
         tours={tours}
         loading={loading}
         error={error}
         onViewTourDetails={onViewTourDetails}
       />
-      
+
       <HowItWorks />
-      
       <TrustSection />
-      
       <Footer onViewTourById={onViewTourById} />
 
       {/* Notification */}
-      <WishlistNotification 
+      <WishlistNotification
         tour={notificationTour}
         isVisible={showNotification}
         onClose={hideNotification}

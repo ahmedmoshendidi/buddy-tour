@@ -61,13 +61,18 @@ export default function CartSidebar({
     onClose();
     
     // Navigate to checkout
-    if (onPayNow) {
+   if (onPayNow) {
       onPayNow();
+    } else {
+      window.location.href = '/?goto=checkout'; // fallback
     }
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+     <Sheet
+        open={isOpen}
+        onOpenChange={(open) => { if (!open) onClose(); }}
+      >
       <SheetContent className="w-[400px] sm:w-[540px] bg-white">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2 text-primary">

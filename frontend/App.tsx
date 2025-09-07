@@ -165,6 +165,7 @@ function AppContent() {
       onViewTourDetails={handleViewTourDetails}
       onBookNow={handleBookNow}
       onViewTourById={handleViewTourById}
+      onPayNow={navigateToCheckout} 
     />
   );
 }
