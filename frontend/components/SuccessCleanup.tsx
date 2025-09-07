@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useCart } from './CartContext';
 
 export default function SuccessCleanup() {
-  const { removeBookedTourBySession } = useCart();
+  const { removeBookedTourBySession, markTourAsPaid } = useCart();
   // لتفادي تشغيل الـ effect مرتين في React Strict Mode أثناء التطوير
   const ranRef = useRef(false);
 
@@ -24,9 +24,14 @@ export default function SuccessCleanup() {
       const sessionId: string | undefined = data?.session_id; // من bookingData (snake_case)
       const tourId: number | undefined = data?.tour_id;
 
-      // 1) امسح العنصر المدفوع فقط من السلة
+      // 1) اول حاجة ، اعمل mark للتور كـ paid عشان العداد يختفي فورا
       if (sessionId) {
-        removeBookedTourBySession(sessionId);
+        markTourAsPaid(sessionId);
+        
+        // 2) استناه شوية عشان اليوزر يشوف انه paid، بعدين امسحه من الكارت
+        setTimeout(() => {
+          removeBookedTourBySession(sessionId);
+        }, 3000); // 3 seconds to show paid status
       }
 
       // 2) امسح بيانات الشيك آوت
@@ -50,7 +55,7 @@ export default function SuccessCleanup() {
     } catch (err) {
       console.error('SuccessCleanup error:', err);
     }
-  }, [removeBookedTourBySession]);
+  }, [removeBookedTourBySession, markTourAsPaid]);
 
   return null;
 }

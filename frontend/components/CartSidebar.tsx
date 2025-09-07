@@ -4,7 +4,7 @@ import { useCurrency } from './CurrencyContext';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
-import { ShoppingCart, Clock, Users, Trash2, CreditCard, Calendar } from 'lucide-react';
+import { ShoppingCart, Clock, Users, Trash2, CreditCard, Calendar, CheckCircle } from 'lucide-react';
 import CountdownTimer from './ui/CountdownTimer';
 
 // BookedTour interface (matching CartContext)
@@ -21,6 +21,7 @@ interface BookedTour {
   sessionId: string;
   holdExpiresAt: string;
   createdAt: string;
+  isPaid?: boolean;
 }
 
 interface CartSidebarProps {
@@ -158,9 +159,10 @@ interface CartItemCardProps {
 
 function CartItemCard({ bookedTour, onRemove, onPayNow, formatPrice }: CartItemCardProps) {
   const isExpired = new Date(bookedTour.holdExpiresAt) <= new Date();
+  const isPaid = bookedTour.isPaid || false;
 
   return (
-    <Card className={`overflow-hidden border ${isExpired ? 'border-red-200 bg-red-50' : 'border-border hover:shadow-md'} transition-shadow`}>
+    <Card className={`overflow-hidden border ${isPaid ? 'border-green-200 bg-green-50' : isExpired ? 'border-red-200 bg-red-50' : 'border-border hover:shadow-md'} transition-shadow`}>
       <div className="p-4">
         {/* Tour Title and Remove Button */}
         <div className="flex items-start justify-between mb-3">
@@ -201,8 +203,8 @@ function CartItemCard({ bookedTour, onRemove, onPayNow, formatPrice }: CartItemC
           </span>
         </div>
 
-        {/* Countdown Timer */}
-        {!isExpired && (
+        {/* Countdown Timer - Only show if not paid and not expired */}
+        {!isPaid && !isExpired && (
           <div className="mb-3">
             <CountdownTimer
               expirationTime={bookedTour.holdExpiresAt}
@@ -214,8 +216,30 @@ function CartItemCard({ bookedTour, onRemove, onPayNow, formatPrice }: CartItemC
           </div>
         )}
 
+        {/* Paid Status Indicator */}
+        {isPaid && (
+          <div className="mb-3 p-2 bg-green-100 border border-green-200 rounded-lg text-center">
+            <div className="flex items-center justify-center gap-2 text-green-700 font-medium text-xs">
+              <CheckCircle className="h-4 w-4" />
+              <span>✅ Payment Confirmed</span>
+            </div>
+            <div className="text-xs text-green-600 mt-1">
+              This tour has been successfully paid for
+            </div>
+          </div>
+        )}
+
         {/* Action Button */}
-        {isExpired ? (
+        {isPaid ? (
+          <Button 
+            variant="outline"
+            className="w-full text-green-600 border-green-200 hover:bg-green-50"
+            disabled
+          >
+            <CheckCircle className="h-3 w-3 mr-2" />
+            Paid
+          </Button>
+        ) : isExpired ? (
           <Button 
             variant="outline"
             className="w-full text-red-600 border-red-200 hover:bg-red-50"
