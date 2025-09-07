@@ -91,7 +91,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           isPaid: paidBooking?.session_id === tour.sessionId
         }));
         
-        console.log('📦 CartContext: Loaded', validTours.length, 'tours,', validTours.filter(t => t.isPaid).length, 'paid');
+        console.log('📦 CartContext: Loaded', validTours.length, 'tours,', validTours.filter((t: BookedTour) => t.isPaid).length, 'paid');
         
         setBookedTours(validTours);
         
@@ -153,7 +153,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           ? { ...tour, isPaid: true }
           : tour
       );
-      const paidCount = updated.filter(t => t.isPaid).length;
+      const paidCount = updated.filter((t: BookedTour) => t.isPaid).length;
       console.log('💳 Marked as paid by sessionId:', sessionId, '- Total paid tours:', paidCount);
       return updated;
     });
