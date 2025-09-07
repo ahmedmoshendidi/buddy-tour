@@ -91,6 +91,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           isPaid: paidBooking?.session_id === tour.sessionId
         }));
         
+        console.log('📦 CartContext: Loaded', validTours.length, 'tours,', validTours.filter(t => t.isPaid).length, 'paid');
+        
         setBookedTours(validTours);
         
         // Update localStorage if we removed expired tours
@@ -135,17 +137,26 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   };
 
   const removeBookedTourBySession = (sessionId: string) => {
-    setBookedTours(prev => prev.filter(t => t.sessionId !== sessionId));
-    console.log('🗑️ Removed from cart by sessionId:', sessionId);
+    setBookedTours(prev => {
+      const before = prev.length;
+      const filtered = prev.filter(t => t.sessionId !== sessionId);
+      const after = filtered.length;
+      console.log('🗑️ Removed from cart by sessionId:', sessionId, `(${before} -> ${after} tours)`);
+      return filtered;
+    });
   };
 
   const markTourAsPaid = (sessionId: string) => {
-    setBookedTours(prev => prev.map(tour => 
-      tour.sessionId === sessionId 
-        ? { ...tour, isPaid: true }
-        : tour
-    ));
-    console.log('💳 Marked as paid by sessionId:', sessionId);
+    setBookedTours(prev => {
+      const updated = prev.map(tour => 
+        tour.sessionId === sessionId 
+          ? { ...tour, isPaid: true }
+          : tour
+      );
+      const paidCount = updated.filter(t => t.isPaid).length;
+      console.log('💳 Marked as paid by sessionId:', sessionId, '- Total paid tours:', paidCount);
+      return updated;
+    });
   };
 
 

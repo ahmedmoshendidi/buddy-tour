@@ -18,11 +18,18 @@ export default function SuccessCleanup() {
     if (!isSuccess) return;
 
     try {
-      const raw = localStorage.getItem('bookingData');
-      const data = raw ? JSON.parse(raw) : null;
+      // Try to get sessionId from paid_booking first (for post-payment cleanup)
+      const paidBookingRaw = localStorage.getItem('paid_booking');
+      const paidBooking = paidBookingRaw ? JSON.parse(paidBookingRaw) : null;
+      
+      // Fallback to bookingData if paid_booking doesn't exist (immediate after payment)
+      const bookingDataRaw = localStorage.getItem('bookingData');
+      const bookingData = bookingDataRaw ? JSON.parse(bookingDataRaw) : null;
+      
+      const sessionId: string | undefined = paidBooking?.session_id || bookingData?.session_id;
+      const tourId: number | undefined = bookingData?.tour_id;
 
-      const sessionId: string | undefined = data?.session_id; // من bookingData (snake_case)
-      const tourId: number | undefined = data?.tour_id;
+      console.log('🧹 SuccessCleanup: sessionId =', sessionId, 'from', paidBooking ? 'paid_booking' : 'bookingData');
 
       // 1) اول حاجة ، اعمل mark للتور كـ paid عشان العداد يختفي فورا
       if (sessionId) {
@@ -30,12 +37,18 @@ export default function SuccessCleanup() {
         
         // 2) استناه شوية عشان اليوزر يشوف انه paid، بعدين امسحه من الكارت
         setTimeout(() => {
+          console.log('🗑️ SuccessCleanup: Removing tour with sessionId:', sessionId);
           removeBookedTourBySession(sessionId);
+          
+          // Clean up paid_booking after removal
+          localStorage.removeItem('paid_booking');
         }, 3000); // 3 seconds to show paid status
       }
 
-      // 2) امسح بيانات الشيك آوت
-      localStorage.removeItem('bookingData');
+      // Clean up bookingData if it exists
+      if (bookingDataRaw) {
+        localStorage.removeItem('bookingData');
+      }
 
       // 3) امسح مفتاح السيشن الخاص بالتور لو بيطابق نفس السيشن
       if (tourId && sessionId) {
