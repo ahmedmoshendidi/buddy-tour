@@ -22,17 +22,34 @@ interface BookedTour {
   createdAt: string;
 }
 
+// interface CartContextType {
+//   bookedTours: BookedTour[];
+//   addBookedTour: (tour: Omit<BookedTour, 'id' | 'createdAt'>, tourData?: Tour) => void;
+//   removeBookedTour: (tourId: string) => void;
+//   clearBookedTours: () => void;
+//   getCartTotal: () => number;
+//   // Notification states
+//   notificationTour: Tour | null;
+//   showNotification: boolean;
+//   hideNotification: () => void;
+// }
+
 interface CartContextType {
   bookedTours: BookedTour[];
   addBookedTour: (tour: Omit<BookedTour, 'id' | 'createdAt'>, tourData?: Tour) => void;
   removeBookedTour: (tourId: string) => void;
   clearBookedTours: () => void;
   getCartTotal: () => number;
+
+  // ✅ جديدة:
+  removeBookedTourBySession: (sessionId: string) => void;
+
   // Notification states
   notificationTour: Tour | null;
   showNotification: boolean;
   hideNotification: () => void;
 }
+
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -106,6 +123,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     console.log('🗑️ Removed from cart:', tourId);
   };
 
+  // احطها جنب الدوال اللي عندك زي removeBookedTour / clearBookedTours
+  const removeBookedTourBySession = (sessionId: string) => {
+    setBookedTours(prev => prev.filter(t => t.sessionId !== sessionId));
+    console.log('🗑️ Removed from cart by sessionId:', sessionId);
+  };
+
+
   const clearBookedTours = () => {
     setBookedTours([]);
     console.log('🧹 Cart cleared');
@@ -129,6 +153,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     removeBookedTour,
     clearBookedTours,
     getCartTotal,
+    removeBookedTourBySession,
     notificationTour,
     showNotification,
     hideNotification

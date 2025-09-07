@@ -2,6 +2,7 @@ import React from 'react';
 import { CurrencyProvider } from './components/CurrencyContext';
 import { WishlistProvider, useWishlist } from './components/WishlistContext';
 import { CartProvider, useCart } from './components/CartContext';
+import SuccessCleanup from './components/SuccessCleanup';
 import { useAppNavigation } from './hooks/useAppNavigation';
 import { useTours } from './hooks/useTours';
 
@@ -174,6 +175,7 @@ export default function App() {
     <CurrencyProvider>
       <WishlistProvider>
         <CartProvider>
+          <SuccessCleanup />
           <AppContent />
         </CartProvider>
       </WishlistProvider>
