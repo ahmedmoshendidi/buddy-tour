@@ -20,30 +20,56 @@
     </div>
   </div>
 
-<script>
-(function () {
-  const q = new URLSearchParams(location.search);
-  const pick = k => (q.get(k) || '').toLowerCase();
+  <script>
+  (function () {
+    const q = new URLSearchParams(location.search);
+    const pick = k => (q.get(k) || '').toLowerCase();
 
-  // تحديد النجاح من باراميترات Paymob/الرد
-  const success =
-    pick('success') === 'true' ||
-    pick('payment_status') === 'success' ||
-    pick('status') === 'completed' ||
-    ((q.get('txn_response_code') || '').toUpperCase().startsWith('APPROVED') &&
-     pick('error_occured') !== 'true');
+    // تحديد النجاح من باراميترات Paymob/الرد
+    const success =
+      pick('success') === 'true' ||
+      pick('payment_status') === 'success' ||
+      pick('status') === 'completed' ||
+      ((q.get('txn_response_code') || '').toUpperCase().startsWith('APPROVED') &&
+       pick('error_occured') !== 'true');
 
-  // حوّل للـ SPA root مع نقل نفس البراميترات + توحيد فلاغات النجاح/الفشل
-  const next = new URL('/', location.origin);
-  q.forEach((v, k) => next.searchParams.set(k, v));
-  next.searchParams.set('status', success ? 'success' : 'failed');
-  next.searchParams.set('success', success ? 'true' : 'false');
+    // ✅ لو الدفع نجح: اكتب علامة الدفع ونضّف بيانات الحجز
+    if (success) {
+      try {
+        const raw = localStorage.getItem('bookingData');
+        const data = raw ? JSON.parse(raw) : null;
 
-  // استخدم replace عشان ما تزودش history entry
-  location.replace(next.toString());
-})();
-</script>
+        // اكتب علامة الدفع بالـ session_id عشان SuccessCleanup يشيل عنصر الكارت المقابل
+        if (data && data.session_id) {
+          localStorage.setItem('paid_booking', JSON.stringify({
+            session_id: data.session_id,
+            at: Date.now()
+          }));
+        }
 
+        // امسح بيانات الشيك آوت (ده اللي بيعتمد عليه العداد)
+        localStorage.removeItem('bookingData');
 
+        // امسح سيشن الحجز الخاص بالتور (لو موجود)
+        if (data && data.tour_id) {
+          localStorage.removeItem(`buddy_tour_session_${data.tour_id}`);
+        }
+
+        // ملاحظة: ما بنلمسش الـ wishlist — هتفضل زي ما هي 👌
+      } catch (e) {
+        // تجاهل أي أخطاء parsing بسيطة
+      }
+    }
+
+    // حوّل للـ SPA root مع نقل نفس البراميترات + توحيد فلاغات النجاح/الفشل
+    const next = new URL('/', location.origin);
+    q.forEach((v, k) => next.searchParams.set(k, v));
+    next.searchParams.set('status', success ? 'success' : 'failed');
+    next.searchParams.set('success', success ? 'true' : 'false');
+
+    // استخدم replace عشان ما تزودش history entry
+    location.replace(next.toString());
+  })();
+  </script>
 </body>
 </html>
