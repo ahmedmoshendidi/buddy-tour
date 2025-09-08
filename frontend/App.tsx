@@ -10,6 +10,7 @@ import { useTours } from './hooks/useTours';
 import HomePage from './components/pages/HomePage';
 import PaymentResultPage from './components/pages/PaymentResultPage';
 import TourGuideApplicationPage from './components/pages/TourGuideApplicationPage';
+import AdminDashboard from './components/pages/AdminDashboard';
 
 // Other Components
 import Header from './components/layout/Header';
@@ -162,6 +163,15 @@ function AppContent() {
   if (currentView === 'tour-guide-application') {
     return (
       <TourGuideApplicationPage 
+        onBackToHome={navigateToHome}
+      />
+    );
+  }
+
+  // Render Admin Dashboard (hidden route)
+  if (currentView === 'admin-dashboard') {
+    return (
+      <AdminDashboard 
         onBackToHome={navigateToHome}
       />
     );

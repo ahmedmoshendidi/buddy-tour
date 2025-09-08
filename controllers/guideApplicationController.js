@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const emailService = require('../utils/emailService');
 
 // Submit a tour guide application
 const submitGuideApplication = async (req, res) => {
@@ -92,6 +93,35 @@ const submitGuideApplication = async (req, res) => {
     const newApplication = result.rows[0];
 
     console.log(`✅ New guide application submitted: ${fullName} (${email}) - ID: ${newApplication.id}`);
+
+    // Send email notification to admin (non-blocking)
+    const applicationData = {
+      fullName,
+      email,
+      phone,
+      age,
+      currentCity,
+      educationLevel,
+      currentOccupation,
+      tourExperience,
+      languages,
+      preferredCities,
+      tourTypes,
+      motivation,
+      uniqueValue
+    };
+
+    emailService.sendNewApplicationNotification(applicationData)
+      .then(result => {
+        if (result.success) {
+          console.log('📧 Admin notification sent successfully');
+        } else {
+          console.log('📧 Admin notification failed:', result.message || result.error);
+        }
+      })
+      .catch(error => {
+        console.error('📧 Error sending admin notification:', error);
+      });
 
     res.status(201).json({
       success: true,
@@ -222,18 +252,40 @@ const updateApplicationStatus = async (req, res) => {
       return res.status(404).json({ error: 'Application not found' });
     }
 
+    await client.query('COMMIT');
+
+    const updatedApplication = result.rows[0];
+
+    // Send email notification to applicant for approved/rejected status (non-blocking)
+    if (status === 'approved' || status === 'rejected') {
+      const applicationData = {
+        fullName: updatedApplication.full_name,
+        email: updatedApplication.email
+      };
+
+      emailService.sendApplicationStatusUpdate(applicationData, status, adminNotes)
+        .then(emailResult => {
+          if (emailResult.success) {
+            console.log(`📧 Status update email sent to ${updatedApplication.email}`);
+          } else {
+            console.log(`📧 Failed to send status email: ${emailResult.message || emailResult.error}`);
+          }
+        })
+        .catch(error => {
+          console.error('📧 Error sending status update email:', error);
+        });
+    }
+
     // If approved, optionally create guide record
     if (status === 'approved') {
       // TODO: Implement guide creation from application
-      console.log(`✅ Guide application approved: ${result.rows[0].full_name} (ID: ${id})`);
+      console.log(`✅ Guide application approved: ${updatedApplication.full_name} (ID: ${id})`);
     }
-
-    await client.query('COMMIT');
 
     res.json({
       success: true,
       message: `Application ${status} successfully`,
-      application: result.rows[0]
+      application: updatedApplication
     });
 
   } catch (error) {

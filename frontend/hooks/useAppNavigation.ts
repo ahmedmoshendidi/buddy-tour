@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export type AppView = 'home' | 'tour-details' | 'tickets' | 'checkout' | 'payment-success' | 'payment-failure' | 'tour-guide-application';
+export type AppView = 'home' | 'tour-details' | 'tickets' | 'checkout' | 'payment-success' | 'payment-failure' | 'tour-guide-application' | 'admin-dashboard';
 
 export function useAppNavigation() {
   const [currentView, setCurrentView] = useState<AppView>('home');
@@ -62,6 +62,11 @@ export function useAppNavigation() {
       setCurrentView('checkout');
     } else if (path === '/become-tour-guide') {
       setCurrentView('tour-guide-application');
+    }
+    
+    // Handle hash-based admin dashboard (hidden from search engines)
+    if (window.location.hash === '#admin-dashboard') {
+      setCurrentView('admin-dashboard');
     }
     };
 

@@ -6,6 +6,7 @@ const {
   getApplicationById, 
   updateApplicationStatus 
 } = require('../controllers/guideApplicationController');
+const { adminAuthDev } = require('../middleware/adminAuth');
 
 // Public Routes
 
@@ -14,21 +15,21 @@ const {
 // @access  Public
 router.post('/', submitGuideApplication);
 
-// Admin Routes (TODO: Add authentication middleware)
+// Admin Routes (Protected with authentication)
 
 // @route   GET /api/tour-guide-applications
 // @desc    Get all guide applications (admin only)
 // @access  Private/Admin
-router.get('/', getAllApplications);
+router.get('/', adminAuthDev, getAllApplications);
 
 // @route   GET /api/tour-guide-applications/:id
 // @desc    Get single guide application by ID (admin only)  
 // @access  Private/Admin
-router.get('/:id', getApplicationById);
+router.get('/:id', adminAuthDev, getApplicationById);
 
 // @route   PUT /api/tour-guide-applications/:id/status
 // @desc    Update application status (admin only)
 // @access  Private/Admin
-router.put('/:id/status', updateApplicationStatus);
+router.put('/:id/status', adminAuthDev, updateApplicationStatus);
 
 module.exports = router;
