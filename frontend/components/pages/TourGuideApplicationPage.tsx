@@ -100,10 +100,63 @@ export default function TourGuideApplicationPage({ onBackToHome }: TourGuideAppl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Submit to backend API
-    console.log('Application submitted:', formData);
-    alert('Application submitted successfully! We will review it within 1 week and get back to you via email.');
-    onBackToHome();
+    
+    try {
+      // Prepare data for API submission
+      const applicationData = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        age: parseInt(formData.age),
+        currentCity: formData.currentCity,
+        educationLevel: formData.educationLevel,
+        currentOccupation: formData.currentOccupation,
+        tourExperience: formData.tourExperience,
+        languages: formData.languages,
+        licenses: formData.licenses,
+        preferredCities: formData.preferredCities,
+        availableDays: formData.availableDays,
+        tourTypes: formData.tourTypes,
+        groupSizePreference: formData.groupSizePreference,
+        knowledgeAreas: formData.knowledgeAreas,
+        specialSkills: formData.specialSkills,
+        motivation: formData.motivation,
+        uniqueValue: formData.uniqueValue,
+        portfolio: formData.portfolio,
+        references: formData.references
+      };
+
+      console.log('Submitting application:', applicationData);
+
+      const response = await fetch('/api/tour-guide-applications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(applicationData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`✅ Application submitted successfully! 
+
+Application ID: ${result.applicationId}
+
+We will review your application within 1 week and get back to you via email at ${formData.email}.
+
+Thank you for your interest in becoming a tour guide with BuddyTour!`);
+        onBackToHome();
+      } else {
+        throw new Error(result.error || 'Failed to submit application');
+      }
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`❌ Error submitting application: ${errorMessage}
+
+Please check your information and try again. If the problem persists, please contact support.`);
+    }
   };
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4));

@@ -13,6 +13,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const bookingRoutes = require('./routes/bookingRoutes');
 const sitemapRoute = require('./routes/sitemapRoute');
 const exchangeRatesRoute = require('./routes/exchangeRatesRoute');
+const guideApplicationRoutes = require('./routes/guideApplicationRoutes');
 const { cleanupExpiredHolds } = require('./controllers/bookingController');
 
 // Import middleware
@@ -43,6 +44,7 @@ app.use("/api", rateLimiter);
 app.use("/api", paymentRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', exchangeRatesRoute);
+app.use('/api/tour-guide-applications', guideApplicationRoutes);
 
 // ======================
 // Dynamic Sitemap Route
