@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export type AppView = 'home' | 'tour-details' | 'tickets' | 'checkout' | 'payment-success' | 'payment-failure';
+export type AppView = 'home' | 'tour-details' | 'tickets' | 'checkout' | 'payment-success' | 'payment-failure' | 'tour-guide-application';
 
 export function useAppNavigation() {
   const [currentView, setCurrentView] = useState<AppView>('home');
@@ -60,6 +60,8 @@ export function useAppNavigation() {
       }
     } else if (path === '/checkout') {
       setCurrentView('checkout');
+    } else if (path === '/become-tour-guide') {
+      setCurrentView('tour-guide-application');
     }
     };
 
@@ -109,6 +111,11 @@ export function useAppNavigation() {
     setCurrentView('payment-failure');
   };
 
+  const navigateToTourGuideApplication = () => {
+    setCurrentView('tour-guide-application');
+    window.history.pushState({}, document.title, '/become-tour-guide');
+  };
+
   return {
     currentView,
     selectedTourSlug,
@@ -117,6 +124,7 @@ export function useAppNavigation() {
     navigateToTickets,
     navigateToCheckout,
     navigateToPaymentSuccess,
-    navigateToPaymentFailure
+    navigateToPaymentFailure,
+    navigateToTourGuideApplication
   };
 }

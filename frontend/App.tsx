@@ -9,6 +9,7 @@ import { useTours } from './hooks/useTours';
 // Page Components
 import HomePage from './components/pages/HomePage';
 import PaymentResultPage from './components/pages/PaymentResultPage';
+import TourGuideApplicationPage from './components/pages/TourGuideApplicationPage';
 
 // Other Components
 import Header from './components/layout/Header';
@@ -27,7 +28,8 @@ function AppContent() {
     navigateToHome,
     navigateToTourDetails,
     navigateToTickets,
-    navigateToCheckout
+    navigateToCheckout,
+    navigateToTourGuideApplication
   } = useAppNavigation();
 
   const { tours, loading, error } = useTours();
@@ -156,6 +158,15 @@ function AppContent() {
     );
   }
 
+  // Render Tour Guide Application page
+  if (currentView === 'tour-guide-application') {
+    return (
+      <TourGuideApplicationPage 
+        onBackToHome={navigateToHome}
+      />
+    );
+  }
+
   // Render Homepage
   return (
     <HomePage
@@ -165,7 +176,8 @@ function AppContent() {
       onViewTourDetails={handleViewTourDetails}
       onBookNow={handleBookNow}
       onViewTourById={handleViewTourById}
-      onPayNow={navigateToCheckout} 
+      onPayNow={navigateToCheckout}
+      onApplyTourGuide={navigateToTourGuideApplication}
     />
   );
 }

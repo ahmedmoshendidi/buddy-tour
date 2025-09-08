@@ -16,7 +16,8 @@ interface HomePageProps {
   onViewTourDetails: (tour: Tour) => void;
   onBookNow: (tour: Tour) => void;
   onViewTourById: (tourId: number) => void;
-  onPayNow: () => void; // ✅ 
+  onPayNow: () => void;
+  onApplyTourGuide: () => void;
 }
 
 export default function HomePage({
@@ -26,7 +27,8 @@ export default function HomePage({
   onViewTourDetails,
   onBookNow,
   onViewTourById,
-  onPayNow, // ✅ 
+  onPayNow,
+  onApplyTourGuide,
 }: HomePageProps) {
   const { notificationTour, showNotification, hideNotification } = useWishlist();
 
@@ -58,7 +60,7 @@ export default function HomePage({
         onViewTourDetails={onViewTourDetails}
       />
 
-      <BecomeTourGuide />
+      <BecomeTourGuide onApplyClick={onApplyTourGuide} />
       <TrustSection />
       <Footer onViewTourById={onViewTourById} />
 

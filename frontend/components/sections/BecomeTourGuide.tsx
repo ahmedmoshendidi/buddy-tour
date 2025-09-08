@@ -3,7 +3,11 @@ import { Users, MapPin, Star, DollarSign, Clock, UserCheck } from 'lucide-react'
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 
-export default function BecomeTourGuide() {
+interface BecomeTourGuideProps {
+  onApplyClick: () => void;
+}
+
+export default function BecomeTourGuide({ onApplyClick }: BecomeTourGuideProps) {
   const benefits = [
     {
       title: 'Flexible Schedule',
@@ -77,6 +81,7 @@ export default function BecomeTourGuide() {
         <div className="text-center">
           <Button 
             size="lg"
+            onClick={onApplyClick}
             className="bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 text-white px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
           >
             Apply to Become a Guide
