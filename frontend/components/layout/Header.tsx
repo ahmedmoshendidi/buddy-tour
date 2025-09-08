@@ -88,7 +88,7 @@ export default function Header({
             )}
             {!showBackToHome && (
               <nav className="hidden md:flex items-center space-x-6">
-                <a href="#how-it-works" className="hover:text-primary transition-colors font-medium">How it Works</a>
+                <a href="#become-tour-guide" className="hover:text-primary transition-colors font-medium">Become a Tour Guide</a>
                 <a href="#about" className="hover:text-primary transition-colors font-medium">About</a>
               </nav>
             )}

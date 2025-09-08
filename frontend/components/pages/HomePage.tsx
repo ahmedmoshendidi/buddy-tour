@@ -2,7 +2,7 @@ import React from 'react';
 import Header from '../layout/Header';
 import HeroSection from '../layout/HeroSection';
 import ToursGrid from '../tours/ToursGrid';
-import HowItWorks from '../sections/HowItWorks';
+import BecomeTourGuide from '../sections/BecomeTourGuide';
 import TrustSection from '../sections/TrustSection';
 import Footer from '../layout/Footer';
 import WishlistNotification from '../WishlistNotification';
@@ -58,7 +58,7 @@ export default function HomePage({
         onViewTourDetails={onViewTourDetails}
       />
 
-      <HowItWorks />
+      <BecomeTourGuide />
       <TrustSection />
       <Footer onViewTourById={onViewTourById} />
 
