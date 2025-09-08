@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { ArrowLeft, Plus, Minus, MapPin, Users, Star } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, MapPin, Users, Star, CheckCircle, X } from 'lucide-react';
 
 interface Language {
   language: string;
@@ -47,6 +47,7 @@ interface TourGuideApplicationPageProps {
 
 export default function TourGuideApplicationPage({ onBackToHome }: TourGuideApplicationPageProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState<ApplicationData>({
     fullName: '',
     email: '',
@@ -139,14 +140,7 @@ export default function TourGuideApplicationPage({ onBackToHome }: TourGuideAppl
       const result = await response.json();
 
       if (response.ok) {
-        alert(`✅ Application submitted successfully! 
-
-Application ID: ${result.applicationId}
-
-We will review your application within 1 week and get back to you via email at ${formData.email}.
-
-Thank you for your interest in becoming a tour guide with BuddyTour!`);
-        onBackToHome();
+        setShowSuccessModal(true);
       } else {
         throw new Error(result.error || 'Failed to submit application');
       }
@@ -611,6 +605,54 @@ Please check your information and try again. If the problem persists, please con
           </Card>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative">
+            <button
+              onClick={() => {
+                setShowSuccessModal(false);
+                onBackToHome();
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={24} />
+            </button>
+            
+            <div className="p-8 text-center">
+              <div className="mb-6">
+                <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  Application Submitted Successfully!
+                </h3>
+              </div>
+              
+              <div className="text-gray-600 mb-6 space-y-3">
+                <p>
+                  Thank you for your interest in becoming a tour guide with BuddyTour!
+                </p>
+                <p>
+                  We will review your application within <strong>1 week</strong> and get back to you via email at <strong>{formData.email}</strong>.
+                </p>
+              </div>
+              
+              <Button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  onBackToHome();
+                }}
+                size="lg"
+                className="bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 w-full"
+              >
+                حسناً
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
