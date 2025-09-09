@@ -19,8 +19,11 @@ class EmailService {
     } else if (process.env.SMTP_HOST) {
       this.transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT || 587,
+        port: parseInt(process.env.SMTP_PORT) || 587,
         secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+        connectionTimeout: 60000, // 60 seconds
+        greetingTimeout: 30000, // 30 seconds
+        socketTimeout: 60000, // 60 seconds
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS
