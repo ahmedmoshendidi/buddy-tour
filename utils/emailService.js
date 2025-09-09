@@ -165,7 +165,7 @@ Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
       `;
 
       const mailOptions = {
-        from: `"BuddyTour Notifications" <${process.env.EMAIL_USER}>`,
+        from: `"BuddyTour Notifications" <${process.env.SMTP_USER}>`,
         to: adminEmail,
         subject: subject,
         text: textContent,
@@ -264,7 +264,7 @@ Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
       `;
 
       const mailOptions = {
-        from: `"BuddyTour Team" <${process.env.EMAIL_USER}>`,
+        from: `"BuddyTour Team" <${process.env.SMTP_USER}>`,
         to: application.email,
         subject: statusInfo.subject,
         html: htmlContent
