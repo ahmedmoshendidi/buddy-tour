@@ -1,3 +1,4 @@
+// emailservice.js
 const nodemailer = require('nodemailer');
 
 class EmailService {
@@ -7,34 +8,53 @@ class EmailService {
   }
 
   initializeTransporter() {
-    // Create transporter based on environment
-    if (process.env.EMAIL_SERVICE === 'gmail') {
+    if (this.transporter) return;
+
+    const useGmail = process.env.EMAIL_SERVICE === 'gmail';
+
+    if (useGmail) {
       this.transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
           user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_APP_PASSWORD // Use App Password for Gmail
-        }
+          pass: process.env.EMAIL_APP_PASSWORD
+        },
+        logger: true,
+        debug: true,
+        connectionTimeout: 30000,
+        socketTimeout: 30000
       });
     } else if (process.env.SMTP_HOST) {
+      const port = Number(process.env.SMTP_PORT) || 587;
+      const secure = port === 465 ? true : false; // 465->SSL, 587->STARTTLS
+
       this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT) || 587,
-        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-        connectionTimeout: 60000, // 60 seconds
-        greetingTimeout: 30000, // 30 seconds
-        socketTimeout: 60000, // 60 seconds
+        host: process.env.SMTP_HOST,            // smtp.hostinger.com
+        port,
+        secure,                                 // true for 465, false for 587
         auth: {
-          user: process.env.SMTP_USER,
+          user: process.env.SMTP_USER,          // info@buddytourguide.com
           pass: process.env.SMTP_PASS
         },
-        tls: {
-          rejectUnauthorized: false
-        }
+        logger: true,
+        debug: true,
+        connectionTimeout: 30000,
+        greetingTimeout: 30000,
+        socketTimeout: 30000,
+        // مهم ل-SNI مع بعض المزوّدين
+        tls: { servername: process.env.SMTP_HOST }
+        // لا تستخدم rejectUnauthorized:false علشان ما نخبيش أخطاء TLS
       });
     } else {
       console.warn('⚠️ Email service not configured. Set EMAIL_SERVICE or SMTP_* environment variables.');
     }
+  }
+
+  getFromAddress() {
+    if (process.env.MAIL_FROM) return process.env.MAIL_FROM;
+    if (process.env.EMAIL_SERVICE === 'gmail' && process.env.EMAIL_USER) return process.env.EMAIL_USER;
+    if (process.env.SMTP_USER) return process.env.SMTP_USER;
+    return 'no-reply@buddytourguide.com';
   }
 
   async sendNewApplicationNotification(application) {
@@ -44,9 +64,12 @@ class EmailService {
     }
 
     try {
+      // تأكد من الاتصال أولًا
+      await this.transporter.verify();
+
       const adminEmail = process.env.ADMIN_EMAIL || 'admin@buddytourguide.com';
       const subject = `New Tour Guide Application - ${application.fullName}`;
-      
+
       const htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -72,10 +95,8 @@ class EmailService {
               <h1>🎯 New Tour Guide Application</h1>
               <p>A new application has been submitted to BuddyTour</p>
             </div>
-            
             <div class="content">
               <h2>Application Details</h2>
-              
               <div class="info-grid">
                 <div class="info-item">
                   <div class="info-label">Applicant Name</div>
@@ -102,44 +123,35 @@ class EmailService {
                   <div class="info-value">${application.educationLevel}</div>
                 </div>
               </div>
-              
               <div class="info-item" style="grid-column: 1 / -1;">
                 <div class="info-label">Languages</div>
                 <div class="info-value">
                   ${application.languages.map(lang => `<span class="badge">${lang}</span>`).join('')}
                 </div>
               </div>
-              
               <div class="info-item" style="grid-column: 1 / -1;">
                 <div class="info-label">Preferred Cities</div>
                 <div class="info-value">
                   ${application.preferredCities.map(city => `<span class="badge">${city}</span>`).join('')}
                 </div>
               </div>
-              
               <div class="info-item" style="grid-column: 1 / -1;">
                 <div class="info-label">Tour Types</div>
                 <div class="info-value">
                   ${application.tourTypes.map(type => `<span class="badge">${type}</span>`).join('')}
                 </div>
               </div>
-              
               <div class="info-item" style="grid-column: 1 / -1;">
                 <div class="info-label">Motivation</div>
                 <div class="info-value">${application.motivation}</div>
               </div>
-              
               <div class="info-item" style="grid-column: 1 / -1;">
                 <div class="info-label">Unique Value</div>
                 <div class="info-value">${application.uniqueValue}</div>
               </div>
-              
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.FRONTEND_URL}/admin-dashboard" class="cta-button">
-                  Review Application in Dashboard
-                </a>
+                <a href="${process.env.FRONTEND_URL}/admin-dashboard" class="cta-button">Review Application in Dashboard</a>
               </div>
-              
               <div class="footer">
                 <p>This notification was sent automatically when a new tour guide application was submitted.</p>
                 <p><strong>BuddyTour</strong> - Your Local Tour Guide Platform</p>
@@ -170,19 +182,18 @@ Unique Value: ${application.uniqueValue}
 Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
       `;
 
+      const fromAddr = this.getFromAddress();
       const mailOptions = {
-        from: `"BuddyTour Notifications" <${process.env.SMTP_USER}>`,
-        to: adminEmail,
-        subject: subject,
+        from: `"BuddyTour Notifications" <${fromAddr}>`,
+        to: process.env.ADMIN_EMAIL || 'admin@buddytourguide.com',
+        subject,
         text: textContent,
         html: htmlContent
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      
       console.log('📧 New application notification sent:', info.messageId);
       return { success: true, messageId: info.messageId };
-      
     } catch (error) {
       console.error('📧 Failed to send email notification:', error);
       return { success: false, error: error.message };
@@ -196,6 +207,8 @@ Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
     }
 
     try {
+      await this.transporter.verify();
+
       const statusMessages = {
         approved: {
           subject: '🎉 Your Tour Guide Application Has Been Approved!',
@@ -212,9 +225,7 @@ Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
       };
 
       const statusInfo = statusMessages[newStatus];
-      if (!statusInfo) {
-        throw new Error(`Unknown status: ${newStatus}`);
-      }
+      if (!statusInfo) throw new Error(`Unknown status: ${newStatus}`);
 
       const htmlContent = `
         <!DOCTYPE html>
@@ -238,30 +249,22 @@ Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
               <h1>${statusInfo.title}</h1>
               <div class="status-badge">Status: ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}</div>
             </div>
-            
             <div class="content">
               <p>Dear ${application.fullName},</p>
-              
               <div class="message-box">
                 <p>${statusInfo.message}</p>
                 ${adminMessage ? `<p><strong>Additional Message:</strong> ${adminMessage}</p>` : ''}
               </div>
-              
               <p><strong>Next Steps:</strong></p>
               <p>${statusInfo.nextSteps}</p>
-              
               ${newStatus === 'approved' ? `
                 <div style="text-align: center;">
-                  <a href="${process.env.FRONTEND_URL}" class="cta-button">
-                    Visit BuddyTour
-                  </a>
-                </div>
-              ` : ''}
-              
+                  <a href="${process.env.FRONTEND_URL}" class="cta-button">Visit BuddyTour</a>
+                </div>` : ''
+              }
               <div class="footer">
                 <p>If you have any questions, please don't hesitate to contact us.</p>
-                <p><strong>BuddyTour Team</strong><br>
-                Your Local Tour Guide Platform</p>
+                <p><strong>BuddyTour Team</strong><br>Your Local Tour Guide Platform</p>
               </div>
             </div>
           </div>
@@ -269,18 +272,17 @@ Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
         </html>
       `;
 
+      const fromAddr = this.getFromAddress();
       const mailOptions = {
-        from: `"BuddyTour Team" <${process.env.SMTP_USER}>`,
+        from: `"BuddyTour Team" <${fromAddr}>`,
         to: application.email,
         subject: statusInfo.subject,
         html: htmlContent
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      
       console.log(`📧 Application ${newStatus} notification sent to ${application.email}:`, info.messageId);
       return { success: true, messageId: info.messageId };
-      
     } catch (error) {
       console.error('📧 Failed to send status update email:', error);
       return { success: false, error: error.message };
@@ -291,7 +293,6 @@ Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
     if (!this.transporter) {
       return { success: false, message: 'Email service not configured' };
     }
-
     try {
       await this.transporter.verify();
       return { success: true, message: 'Email service connected successfully' };

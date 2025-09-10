@@ -121,14 +121,18 @@ BuddyTour Team
 ${process.env.FRONTEND_URL || 'buddytourguide.com'}
     `;
 
-    // Use the same EmailService transporter
+    // Use the improved EmailService with connection verification
     if (!EmailService.transporter) {
       console.log('📧 Email service not configured - skipping confirmation email');
       return;
     }
 
+    // Verify connection before sending (like in your improved emailService)
+    await EmailService.transporter.verify();
+
+    const fromAddr = EmailService.getFromAddress();
     const mailOptions = {
-      from: `"BuddyTour" <${process.env.SMTP_USER}>`,
+      from: `"BuddyTour" <${fromAddr}>`,
       to: email,
       subject: subject,
       text: textContent,
