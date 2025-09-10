@@ -10,9 +10,12 @@ class EmailService {
   initializeTransporter() {
     if (this.transporter) return;
 
+    console.log('🔧 Initializing email transporter...');
+    
     const useGmail = process.env.EMAIL_SERVICE === 'gmail';
 
     if (useGmail) {
+      console.log('📧 Using Gmail SMTP service');
       this.transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -21,30 +24,44 @@ class EmailService {
         },
         logger: true,
         debug: true,
-        connectionTimeout: 30000,
-        socketTimeout: 30000
+        connectionTimeout: 60000,
+        socketTimeout: 60000
       });
     } else if (process.env.SMTP_HOST) {
-      const port = Number(process.env.SMTP_PORT) || 587;
-      const secure = port === 465 ? true : false; // 465->SSL, 587->STARTTLS
-
+      // Default to Hostinger's recommended SSL port 465
+      const port = Number(process.env.SMTP_PORT) || 465;
+      const secure = port === 465;
+      
+      console.log(`📧 Using Hostinger SMTP: ${process.env.SMTP_HOST}:${port} (SSL: ${secure})`);
+      
       this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,            // smtp.hostinger.com
+        host: process.env.SMTP_HOST,
         port,
-        secure,                                 // true for 465, false for 587
+        secure, // true for 465 (SSL), false for 587 (STARTTLS)
         auth: {
-          user: process.env.SMTP_USER,          // info@buddytourguide.com
+          user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS
         },
+        // Enhanced timeout settings for Hostinger
+        connectionTimeout: 60000, // 60 seconds
+        greetingTimeout: 30000,   // 30 seconds  
+        socketTimeout: 60000,     // 60 seconds
+        // Connection pool settings to prevent timeout
+        pool: false,
+        maxConnections: 1,
+        rateDelta: 20000,        // 20 seconds between connections
+        rateLimit: 5,            // max 5 emails per rateDelta
+        // Enhanced TLS settings for Hostinger SSL
+        tls: {
+          servername: process.env.SMTP_HOST,
+          rejectUnauthorized: false, // Important for Hostinger
+          minVersion: 'TLSv1.2'
+        },
         logger: true,
-        debug: true,
-        connectionTimeout: 30000,
-        greetingTimeout: 30000,
-        socketTimeout: 30000,
-        // مهم ل-SNI مع بعض المزوّدين
-        tls: { servername: process.env.SMTP_HOST }
-        // لا تستخدم rejectUnauthorized:false علشان ما نخبيش أخطاء TLS
+        debug: true
       });
+      
+      console.log('✅ SMTP transporter created successfully');
     } else {
       console.warn('⚠️ Email service not configured. Set EMAIL_SERVICE or SMTP_* environment variables.');
     }
@@ -192,10 +209,18 @@ Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('📧 New application notification sent:', info.messageId);
+      console.log('✅ New application notification sent successfully!');
+      console.log('Message ID:', info.messageId);
       return { success: true, messageId: info.messageId };
     } catch (error) {
-      console.error('📧 Failed to send email notification:', error);
+      console.error('📧 Failed to send email notification:');
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode
+      });
       return { success: false, error: error.message };
     }
   }
@@ -281,10 +306,18 @@ Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log(`📧 Application ${newStatus} notification sent to ${application.email}:`, info.messageId);
+      console.log(`✅ Application ${newStatus} notification sent to ${application.email}`);
+      console.log('Message ID:', info.messageId);
       return { success: true, messageId: info.messageId };
     } catch (error) {
-      console.error('📧 Failed to send status update email:', error);
+      console.error('📧 Failed to send status update email:');
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode
+      });
       return { success: false, error: error.message };
     }
   }
@@ -294,10 +327,66 @@ Review this application at: ${process.env.FRONTEND_URL}/admin-dashboard
       return { success: false, message: 'Email service not configured' };
     }
     try {
+      console.log('🔍 Testing SMTP connection...');
       await this.transporter.verify();
+      console.log('✅ SMTP connection successful');
       return { success: true, message: 'Email service connected successfully' };
     } catch (error) {
+      console.error('❌ SMTP connection failed:');
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode
+      });
       return { success: false, message: `Email connection failed: ${error.message}` };
+    }
+  }
+
+  async sendTestEmail(toEmail = 'test@example.com') {
+    if (!this.transporter) {
+      return { success: false, message: 'Email service not configured' };
+    }
+
+    try {
+      console.log(`📧 Sending test email to ${toEmail}...`);
+      
+      const fromAddr = this.getFromAddress();
+      const mailOptions = {
+        from: `"BuddyTour Test" <${fromAddr}>`,
+        to: toEmail,
+        subject: '🧪 SMTP Test Email - ' + new Date().toLocaleString(),
+        text: 'This is a test email to verify SMTP configuration.\n\nIf you receive this, your SMTP settings are working correctly!',
+        html: `
+          <h2>🧪 SMTP Test Email</h2>
+          <p>This is a test email to verify SMTP configuration.</p>
+          <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>SMTP Host:</strong> ${process.env.SMTP_HOST}</p>
+          <p><strong>SMTP Port:</strong> ${process.env.SMTP_PORT}</p>
+          <p>If you receive this, your SMTP settings are working correctly! ✅</p>
+        `
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('✅ Test email sent successfully!');
+      console.log('Message ID:', info.messageId);
+      
+      return { 
+        success: true, 
+        messageId: info.messageId,
+        message: 'Test email sent successfully'
+      };
+    } catch (error) {
+      console.error('❌ Failed to send test email:');
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode
+      });
+      return { success: false, error: error.message };
     }
   }
 }
