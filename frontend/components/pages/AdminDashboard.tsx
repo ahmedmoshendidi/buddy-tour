@@ -17,6 +17,12 @@ import {
   GraduationCap
 } from 'lucide-react';
 
+
+interface Language {
+  language: string;
+  proficiency: string;
+}
+
 interface GuideApplication {
   id: number;
   full_name: string;
@@ -27,7 +33,7 @@ interface GuideApplication {
   education_level: string;
   current_occupation: string;
   tour_experience: string;
-  languages: string[];
+  languages: Language[];
   licenses: string;
   preferred_cities: string[];
   available_days: string[];
@@ -248,9 +254,15 @@ export default function AdminDashboard({ onBackToHome }: AdminDashboardProps) {
                 <div>
                   <label className="text-sm font-medium text-gray-500">Languages</label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {selectedApplication.languages.map((lang, index) => (
+                    {/* {selectedApplication.languages.map((lang, index) => (
                       <Badge key={index} variant="outline">{lang}</Badge>
+                    ))} */}
+                    {selectedApplication.languages?.map((lang, index) => (
+                      <Badge key={index} variant="outline">
+                        {lang.language} ({lang.proficiency})
+                      </Badge>
                     ))}
+
                   </div>
                 </div>
                 {selectedApplication.licenses && (
