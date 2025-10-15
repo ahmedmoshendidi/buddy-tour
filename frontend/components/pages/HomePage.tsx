@@ -78,7 +78,12 @@ export default function HomePage({
 
       <BecomeTourGuide onApplyClick={onApplyTourGuide} />
       <TrustSection />
-      <Footer onViewTourById={onViewTourById} />
+      {/* <Footer onViewTourById={onViewTourById} /> */}
+      <Footer 
+        onViewTourById={onViewTourById} 
+        onNavigateToCancellationPolicy={() => { window.location.href = '/CancellationPolicy'; }}
+      />
+
 
       {/* Notification */}
       <WishlistNotification
