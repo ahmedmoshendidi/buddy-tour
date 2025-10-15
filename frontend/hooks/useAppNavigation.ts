@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 
-export type AppView = 'home' | 'tour-details' | 'tickets' | 'checkout' | 'payment-success' | 'payment-failure' | 'tour-guide-application' | 'admin-dashboard';
+// export type AppView = 'home' | 'tour-details' | 'tickets' | 'checkout' | 'payment-success' | 'payment-failure' | 'tour-guide-application' | 'admin-dashboard';
+
+export type AppView =
+  | 'home'
+  | 'tour-details'
+  | 'tickets'
+  | 'checkout'
+  | 'payment-success'
+  | 'payment-failure'
+  | 'tour-guide-application'
+  | 'admin-dashboard'
+  | 'cancellation-policy';
+
 
 export function useAppNavigation() {
   const [currentView, setCurrentView] = useState<AppView>('home');
@@ -63,6 +75,10 @@ export function useAppNavigation() {
     } else if (path === '/become-tour-guide') {
       setCurrentView('tour-guide-application');
     }
+    else if (path === '/CancellationPolicy') {
+     setCurrentView('cancellation-policy');
+    }   
+
     
     // Handle hash-based admin dashboard (hidden from search engines)
     if (window.location.hash === '#admin-dashboard') {
@@ -121,6 +137,12 @@ export function useAppNavigation() {
     window.history.pushState({}, document.title, '/become-tour-guide');
   };
 
+  const navigateToCancellationPolicy = () => {
+    setCurrentView('cancellation-policy');
+    window.history.pushState({}, document.title, '/CancellationPolicy');
+  };
+
+
   return {
     currentView,
     selectedTourSlug,
@@ -130,6 +152,7 @@ export function useAppNavigation() {
     navigateToCheckout,
     navigateToPaymentSuccess,
     navigateToPaymentFailure,
-    navigateToTourGuideApplication
+    navigateToTourGuideApplication,
+    navigateToCancellationPolicy,
   };
 }

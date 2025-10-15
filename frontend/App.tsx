@@ -11,6 +11,8 @@ import HomePage from './components/pages/HomePage';
 import PaymentResultPage from './components/pages/PaymentResultPage';
 import TourGuideApplicationPage from './components/pages/TourGuideApplicationPage';
 import AdminDashboard from './components/pages/AdminDashboard';
+import CancellationPolicy from './components/pages/CancellationPolicy';
+
 
 // Other Components
 import Header from './components/layout/Header';
@@ -19,6 +21,7 @@ import TicketsQuantity from './components/TicketsQuantity';
 import CheckoutProcess from './components/CheckoutProcess';
 import WishlistNotification from './components/WishlistNotification';
 import CartNotification from './components/CartNotification';
+import Footer from './components/layout/Footer';
 import type { Tour } from './hooks/useTourDetails';
 
 // Inner App component that uses currency and favorites context
@@ -30,7 +33,8 @@ function AppContent() {
     navigateToTourDetails,
     navigateToTickets,
     navigateToCheckout,
-    navigateToTourGuideApplication
+    navigateToTourGuideApplication,
+    navigateToCancellationPolicy,
   } = useAppNavigation();
 
   const { tours, loading, error } = useTours();
@@ -177,8 +181,20 @@ function AppContent() {
     );
   }
 
+  // Render Cancellation Policy page
+  if (currentView === 'cancellation-policy') {
+    return (
+      <div className="min-h-screen bg-background">
+        <CancellationPolicy />
+      </div>
+    );
+  }
+
+
+
   // Render Homepage
   return (
+    <>
     <HomePage
       tours={tours}
       loading={loading}
@@ -189,8 +205,17 @@ function AppContent() {
       onPayNow={navigateToCheckout}
       onApplyTourGuide={navigateToTourGuideApplication}
     />
+    <Footer
+      onViewTourById={handleViewTourById}
+      onNavigateToCancellationPolicy={navigateToCancellationPolicy}
+    />
+  </>
   );
 }
+
+
+
+
 
 // Main App component wrapped with both providers
 export default function App() {
