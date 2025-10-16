@@ -3,10 +3,15 @@ import { Compass } from 'lucide-react';
 
 interface FooterProps {
   onViewTourById: (tourId: number) => void;
-  onNavigateToCancellationPolicy: () => void; // ✅ أضفنا prop جديد
+  onNavigateToCancellationPolicy: () => void;
+  onNavigateToServiceDurationPolicy: () => void;
 }
 
-export default function Footer({ onViewTourById, onNavigateToCancellationPolicy }: FooterProps) {
+export default function Footer({
+  onViewTourById,
+  onNavigateToCancellationPolicy,
+  onNavigateToServiceDurationPolicy,
+}: FooterProps) {
   return (
     <footer className="border-t py-12 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
@@ -50,6 +55,14 @@ export default function Footer({ onViewTourById, onNavigateToCancellationPolicy 
                   className="hover:text-primary transition-colors"
                 >
                   Cancellation Policy
+                </button>
+              </p>
+              <p>
+                <button
+                  onClick={onNavigateToServiceDurationPolicy}
+                  className="hover:text-primary transition-colors"
+                >
+                  Service Duration Policy
                 </button>
               </p>
             </div>

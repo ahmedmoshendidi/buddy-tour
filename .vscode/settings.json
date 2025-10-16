@@ -5,5 +5,6 @@
 
   // خلي الإضافة تعرف مكان ملف إعدادات Tailwind داخل frontend
   "tailwindCSS.experimental.configFile": "frontend/tailwind.config.js",
-  "tailwindCSS.emmetCompletions": true
+  "tailwindCSS.emmetCompletions": true,
+  "kiroAgent.configureMCP": "Disabled"
 }

@@ -12,6 +12,8 @@ import PaymentResultPage from './components/pages/PaymentResultPage';
 import TourGuideApplicationPage from './components/pages/TourGuideApplicationPage';
 import AdminDashboard from './components/pages/AdminDashboard';
 import CancellationPolicy from './components/pages/CancellationPolicy';
+import ServiceDurationPolicy from './components/pages/ServiceDurationPolicy';
+
 
 
 // Other Components
@@ -35,6 +37,7 @@ function AppContent() {
     navigateToCheckout,
     navigateToTourGuideApplication,
     navigateToCancellationPolicy,
+    navigateToServiceDurationPolicy,
   } = useAppNavigation();
 
   const { tours, loading, error } = useTours();
@@ -191,6 +194,16 @@ function AppContent() {
   }
 
 
+  if (currentView === 'service-duration-policy') {
+    return (
+      <div className="min-h-screen bg-background">
+        <ServiceDurationPolicy />
+      </div>
+    );
+  }
+
+
+
 
   // Render Homepage
   return (
@@ -205,10 +218,16 @@ function AppContent() {
       onPayNow={navigateToCheckout}
       onApplyTourGuide={navigateToTourGuideApplication}
     />
+    {/* <Footer
+      onViewTourById={handleViewTourById}
+      onNavigateToCancellationPolicy={navigateToCancellationPolicy}
+    /> */}
     <Footer
       onViewTourById={handleViewTourById}
       onNavigateToCancellationPolicy={navigateToCancellationPolicy}
+      onNavigateToServiceDurationPolicy={navigateToServiceDurationPolicy}
     />
+
   </>
   );
 }

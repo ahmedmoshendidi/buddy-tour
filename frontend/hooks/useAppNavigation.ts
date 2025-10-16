@@ -11,7 +11,8 @@ export type AppView =
   | 'payment-failure'
   | 'tour-guide-application'
   | 'admin-dashboard'
-  | 'cancellation-policy';
+  | 'cancellation-policy'
+  | "service-duration-policy";
 
 
 export function useAppNavigation() {
@@ -142,6 +143,10 @@ export function useAppNavigation() {
     window.history.pushState({}, document.title, '/CancellationPolicy');
   };
 
+  const navigateToServiceDurationPolicy = () => {
+    setCurrentView("service-duration-policy");
+    window.history.pushState({}, document.title, '/ServiceDurationPolicy');
+  };
 
   return {
     currentView,
@@ -154,5 +159,6 @@ export function useAppNavigation() {
     navigateToPaymentFailure,
     navigateToTourGuideApplication,
     navigateToCancellationPolicy,
+    navigateToServiceDurationPolicy,
   };
 }
