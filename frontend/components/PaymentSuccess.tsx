@@ -188,7 +188,7 @@ export default function PaymentSuccess({
               </p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline" className="bg-white">
-                  📧 support@buddytour.com
+                  📧 support@buddytourguide.com
                 </Badge>
                 <Badge variant="outline" className="bg-white">
                   📱 +20 102 903 1487
