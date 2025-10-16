@@ -191,7 +191,7 @@ export default function PaymentSuccess({
                   📧 support@buddytour.com
                 </Badge>
                 <Badge variant="outline" className="bg-white">
-                  📱 +20 123 456 789
+                  📱 +20 102 903 1487
                 </Badge>
               </div>
             </div>
@@ -210,7 +210,7 @@ export default function PaymentSuccess({
                 variant="outline"
                 onClick={() =>
                   window.open(
-                    "mailto:support@buddytour.com",
+                    "mailto:support@buddytourguide.com",
                     "_blank",
                   )
                 }
