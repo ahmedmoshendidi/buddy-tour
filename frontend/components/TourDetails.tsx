@@ -164,7 +164,7 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
                     'Professional local guide',
                     'Historical insights and stories',
                     'Small group experience',
-                    'Photo opportunities',
+                    'Entry ticket',
                     'Cultural context and background',
                     'Walking tour of main sites',
                   ].map((item, index) => (
