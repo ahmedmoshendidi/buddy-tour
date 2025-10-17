@@ -5,6 +5,7 @@ import ToursGrid from '../tours/ToursGrid';
 import BecomeTourGuide from '../sections/BecomeTourGuide';
 import TrustSection from '../sections/TrustSection';
 import Footer from '../layout/Footer';
+import { useNavigate } from "react-router-dom";
 import WishlistNotification from '../WishlistNotification';
 import { useWishlist } from '../WishlistContext';
 import type { Tour } from '../../hooks/useTourDetails';
@@ -14,7 +15,7 @@ interface HomePageProps {
   tours: Tour[];
   loading: boolean;
   error: string;
-  onViewTourDetails: (tour: Tour) => void;
+  onViewTourDetails: (tour: Tour) => void;        // ← أضف هذا السطر
   onBookNow: (tour: Tour) => void;
   onViewTourById: (tourId: number) => void;
   onPayNow: () => void;
@@ -25,13 +26,14 @@ export default function HomePage({
   tours,
   loading,
   error,
-  onViewTourDetails,
+  onViewTourDetails,   // ← الآن TypeScript سيعرف هذه الخاصية
   onBookNow,
   onViewTourById,
   onPayNow,
   onApplyTourGuide,
 }: HomePageProps) {
   const { notificationTour, showNotification, hideNotification } = useWishlist();
+  const navigate = useNavigate();
 
   // Scroll to tours section - used by hero button
   const handleExploreTours = () => {
@@ -48,19 +50,9 @@ export default function HomePage({
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>BuddyTour — Alexandria Walking Tours with Local Guides</title>
-        <meta
-          name="description"
-          content="Discover and book Alexandria walking tours with trusted local guides. Small groups, fair prices, instant booking."
-        />
-        <link rel="canonical" href="https://buddytourguide.com/" />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="BuddyTour" />
-        <meta property="og:title" content="BuddyTour — Alexandria Walking Tours" />
-        <meta property="og:description" content="Book Alexandria walking tours with trusted local guides." />
-        <meta property="og:url" content="https://buddytourguide.com/" />
-        <meta property="og:image" content="https://buddytourguide.com/images/bibliotheca-alexandrina.webp" />
-        <meta name="twitter:card" content="summary_large_image" />
-     </Helmet>
+        {/* ...meta ... */}
+      </Helmet>
+
       {/* <Header/> */}
 
       <HeroSection onExploreTours={handleExploreTours} />
@@ -69,17 +61,11 @@ export default function HomePage({
         tours={tours}
         loading={loading}
         error={error}
-        onViewTourDetails={onViewTourDetails}
+        onViewTourDetails={onViewTourDetails} // يُمرّر callback من App.tsx
       />
 
       <BecomeTourGuide onApplyClick={onApplyTourGuide} />
       <TrustSection />
-      {/* <Footer onViewTourById={onViewTourById} />
-      <Footer 
-        onViewTourById={onViewTourById} 
-        onNavigateToCancellationPolicy={() => { window.location.href = '/CancellationPolicy'; }}
-      /> */}
-
 
       {/* Notification */}
       <WishlistNotification

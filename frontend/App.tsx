@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 
 import SuccessCleanup from './components/SuccessCleanup';
 import Header from './components/layout/Header';
@@ -22,6 +22,7 @@ import { useWishlist } from './components/WishlistContext';
 import { useCart } from './components/CartContext';
 
 export default function App() {
+  const navigate = useNavigate();
   const { tours, loading, error } = useTours();
   const { notificationTour, showNotification, hideNotification } = useWishlist();
   const {
@@ -45,7 +46,7 @@ export default function App() {
                   tours={tours}
                   loading={loading}
                   error={error}
-                  onViewTourDetails={() => {}}
+                  onViewTourDetails={(tour) => navigate(`/tour/${tour.slug}`)}
                   onBookNow={() => {}}
                   onViewTourById={() => {}}
                   onPayNow={() => {}}
