@@ -56,7 +56,7 @@ export default function App() {
             />
             <Route path="/tour/:slug" element={<TourDetails />} />
             <Route path="/tickets/:slug" element={<TicketsQuantity />} />
-            <Route path="/checkout" element={<CheckoutProcess />} />
+            <Route path="/checkout/:slug" element={<CheckoutProcess />} />
             <Route path="/cancellation-policy" element={<CancellationPolicy />} />
             <Route path="/service-duration-policy" element={<ServiceDurationPolicy />} />
             <Route path="/tour-guide-application" element={<TourGuideApplicationPage />} />
