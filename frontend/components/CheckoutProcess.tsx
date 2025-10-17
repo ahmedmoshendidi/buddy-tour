@@ -5,6 +5,7 @@ import { useCheckoutForm } from '../hooks/useCheckoutForm';
 import { usePaymentProcess } from '../hooks/usePaymentProcess';
 import CountdownTimer from './ui/CountdownTimer';
 import { useCart } from './CartContext';
+import { useNavigate } from 'react-router-dom';
 
 // Step Components
 import CheckoutSteps from './checkout/CheckoutSteps';
@@ -13,38 +14,15 @@ import PaymentMethodStep from './checkout/PaymentMethodStep';
 import ConfirmationStep from './checkout/ConfirmationStep';
 import BookingSummary from './checkout/BookingSummary';
 
-interface CheckoutProcessProps {
-  onBack: () => void;
-}
-
 const steps = [
-  {
-    id: 1,
-    title: 'Contact Information',
-    description: 'Your personal details'
-  },
-  {
-    id: 2,
-    title: 'Payment Method',
-    description: 'Complete payment'
-  },
-  {
-    id: 3,
-    title: 'Confirmation',
-    description: 'Booking complete!'
-  }
+  { id: 1, title: 'Contact Information', description: 'Your personal details' },
+  { id: 2, title: 'Payment Method', description: 'Complete payment' },
+  { id: 3, title: 'Confirmation', description: 'Booking complete!' }
 ];
 
-export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
-  const {
-    currentStep,
-    formData,
-    errors,
-    updateFormData,
-    nextStep,
-    prevStep
-  } = useCheckoutForm();
-
+export default function CheckoutProcess() {
+  const navigate = useNavigate();
+  const { currentStep, formData, errors, updateFormData, nextStep, prevStep } = useCheckoutForm();
   const { isProcessing, paymentResult, processPayment } = usePaymentProcess();
   const { bookedTours } = useCart();
   const [holdExpiration, setHoldExpiration] = useState<Date | null>(null);
@@ -53,11 +31,8 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
   useEffect(() => {
     const raw = localStorage.getItem('bookingData');
     if (!raw) return;
-
     try {
       const data = JSON.parse(raw);
-
-      // مرّر الحقول المطلوبة واحدة واحدة لأن updateFormData(field, value)
       if (data.tour_id !== undefined) updateFormData('tour_id', data.tour_id);
       if (data.date !== undefined) updateFormData('date', data.date);
       if (data.time !== undefined) updateFormData('time', data.time);
@@ -65,19 +40,16 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
       if (data.children !== undefined) updateFormData('children', data.children);
       if (data.price_per_person !== undefined) updateFormData('price_per_person', data.price_per_person);
       if (data.total_amount !== undefined) updateFormData('total_amount', data.total_amount);
-      if (data.session_id !== undefined) updateFormData('session_id', data.session_id); // ← أهم سطر
-
+      if (data.session_id !== undefined) updateFormData('session_id', data.session_id);
       console.log('✅ bookingData merged into formData (includes session_id):', data);
     } catch (e) {
       console.error('Failed to parse bookingData from localStorage:', e);
     }
-  }, []); // run once
+  }, []);
 
-  // Get hold expiration from booking data - check immediately and on storage events
+  // 🕒 Check hold expiration (localStorage + cart fallback)
   useEffect(() => {
-    // Function to check for booking data
     const checkBookingData = () => {
-      // First try localStorage
       const bookingData = localStorage.getItem('bookingData');
       if (bookingData) {
         try {
@@ -92,7 +64,6 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
         }
       }
 
-      // Fallback: Check cart for any booked tours with hold expiration
       if (bookedTours.length > 0) {
         const latestBooking = bookedTours[bookedTours.length - 1];
         if (latestBooking.holdExpiresAt) {
@@ -102,26 +73,14 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
       }
     };
 
-    // Check immediately
     checkBookingData();
-
-    // Listen for storage events (in case data is set after component mounts)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'bookingData') {
-        checkBookingData();
-      }
+      if (e.key === 'bookingData') checkBookingData();
     };
-
-    // Also check periodically for the first 2 seconds (fallback for same-tab updates)
     const intervalId = setInterval(() => {
-      if (!holdExpiration) {
-        checkBookingData();
-      }
+      if (!holdExpiration) checkBookingData();
     }, 100);
-
-    // Clear interval after 2 seconds
     setTimeout(() => clearInterval(intervalId), 2000);
-
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
@@ -132,13 +91,8 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
 
   const handleNext = async () => {
     if (currentStep === 2) {
-      // Process payment on step 2
       const result = await processPayment(formData);
-      if (result.success && !result.bookingId) {
-        // Only move to confirmation if payment was processed locally
-        // Otherwise, user will be redirected to payment gateway
-        nextStep();
-      }
+      if (result.success && !result.bookingId) nextStep();
     } else {
       nextStep();
     }
@@ -148,7 +102,7 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
     if (currentStep > 1) {
       prevStep();
     } else {
-      onBack();
+      navigate(-1);
     }
   };
 
@@ -186,7 +140,7 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
     if (currentStep === 3) {
       return (
         <div className="flex justify-center">
-          <Button onClick={onBack} className="px-8">
+          <Button onClick={() => navigate('/tours')} className="px-8">
             Return to Tours
           </Button>
         </div>
@@ -195,8 +149,8 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
 
     return (
       <div className="flex justify-between">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={handlePrevious}
           className="flex items-center gap-2"
         >
@@ -204,7 +158,7 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
           {currentStep === 1 ? 'Back to Tours' : 'Previous'}
         </Button>
 
-        <Button 
+        <Button
           onClick={handleNext}
           disabled={isProcessing}
           className="flex items-center gap-2"
@@ -232,8 +186,7 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <CheckoutSteps currentStep={currentStep} steps={steps} />
-            
-            {/* Error Display */}
+
             {paymentResult?.error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex items-center gap-2 text-red-600">
@@ -244,35 +197,24 @@ export default function CheckoutProcess({ onBack }: CheckoutProcessProps) {
               </div>
             )}
 
-            {/* Step Content */}
             {renderStepContent()}
-
-            {/* Action Buttons */}
-            <div className="pt-6">
-              {renderActionButtons()}
-            </div>
+            <div className="pt-6">{renderActionButtons()}</div>
           </div>
 
-          {/* Booking Summary Sidebar */}
+          {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Countdown Timer - Above Booking Summary */}
             {holdExpiration && (
               <CountdownTimer
                 expirationTime={holdExpiration.toISOString()}
                 className="!bg-amber-100 !border-amber-300 !text-amber-900"
                 onExpire={() => {
                   setHoldExpiration(null);
-                  // Redirect back to tour selection or show expired message
                   alert('Your seat reservation has expired. Please select your seats again.');
-                  onBack();
+                  navigate(-1);
                 }}
               />
             )}
-            
-            <BookingSummary 
-              formData={formData}
-              tourTitle="Alexandria Walking Tour"
-            />
+            <BookingSummary formData={formData} tourTitle="Alexandria Walking Tour" />
           </div>
         </div>
       </div>

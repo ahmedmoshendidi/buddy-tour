@@ -61,11 +61,7 @@ export default function HomePage({
         <meta property="og:image" content="https://buddytourguide.com/images/bibliotheca-alexandrina.webp" />
         <meta name="twitter:card" content="summary_large_image" />
      </Helmet>
-      <Header
-        onViewTourDetails={onViewTourDetails}
-        onBookNow={onBookNow}
-        onPayNow={onPayNow}   // ✅ Header → CartSidebar
-      />
+      {/* <Header/> */}
 
       <HeroSection onExploreTours={handleExploreTours} />
 

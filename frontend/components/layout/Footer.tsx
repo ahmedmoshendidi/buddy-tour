@@ -1,17 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Compass } from 'lucide-react';
 
-interface FooterProps {
-  onViewTourById: (tourId: number) => void;
-  onNavigateToCancellationPolicy: () => void;
-  onNavigateToServiceDurationPolicy: () => void;
-}
-
-export default function Footer({
-  onViewTourById,
-  onNavigateToCancellationPolicy,
-  onNavigateToServiceDurationPolicy,
-}: FooterProps) {
+export default function Footer() {
   return (
     <footer className="border-t py-12 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
@@ -36,10 +27,10 @@ export default function Footer({
           <div>
             <h4 className="mb-4 font-semibold text-primary">Tours</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><button onClick={() => onViewTourById(1)} className="hover:text-primary transition-colors">Bibliotheca Alexandrina</button></li>
-              <li><button onClick={() => onViewTourById(2)} className="hover:text-primary transition-colors">Roman Theatre</button></li>
-              <li><button onClick={() => onViewTourById(3)} className="hover:text-primary transition-colors">Montaza Palace</button></li>
-              <li><button onClick={() => onViewTourById(4)} className="hover:text-primary transition-colors">Qaitbay Citadel</button></li>
+              <li><Link to="/tour/1" className="hover:text-primary transition-colors">Bibliotheca Alexandrina</Link></li>
+              <li><Link to="/tour/2" className="hover:text-primary transition-colors">Roman Theatre</Link></li>
+              <li><Link to="/tour/3" className="hover:text-primary transition-colors">Montaza Palace</Link></li>
+              <li><Link to="/tour/4" className="hover:text-primary transition-colors">Qaitbay Citadel</Link></li>
             </ul>
           </div>
 
@@ -50,20 +41,14 @@ export default function Footer({
               <p>Email: <a href="mailto:support@buddytourguide.com" className="hover:text-primary transition-colors">support@buddytourguide.com</a></p>
               <p>Phone: <a href="tel:01029031487" className="hover:text-primary transition-colors">01029031487</a></p>
               <p>
-                <button
-                  onClick={onNavigateToCancellationPolicy}
-                  className="hover:text-primary transition-colors"
-                >
+                <Link to="/cancellation-policy" className="hover:text-primary transition-colors">
                   Cancellation Policy
-                </button>
+                </Link>
               </p>
               <p>
-                <button
-                  onClick={onNavigateToServiceDurationPolicy}
-                  className="hover:text-primary transition-colors"
-                >
+                <Link to="/service-duration-policy" className="hover:text-primary transition-colors">
                   Service Duration Policy
-                </button>
+                </Link>
               </p>
             </div>
           </div>
@@ -72,9 +57,9 @@ export default function Footer({
           <div>
             <h4 className="mb-4 font-semibold text-primary">Company</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Become a Guide</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Careers</a></li>
+              <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+              <li><Link to="/become-tour-guide" className="hover:text-primary transition-colors">Become a Guide</Link></li>
+              <li><Link to="/careers" className="hover:text-primary transition-colors">Careers</Link></li>
             </ul>
           </div>
         </div>

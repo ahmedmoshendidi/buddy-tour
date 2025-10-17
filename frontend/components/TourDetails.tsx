@@ -1,21 +1,17 @@
 import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { useCurrency } from './CurrencyContext';
-import { useTourDetails, Tour } from '../hooks/useTourDetails';
+import { useTourDetails } from '../hooks/useTourDetails';
 import SEO from './SEO';
-
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ArrowLeft, MapPin, Clock, Users, Star, CheckCircle, Compass } from 'lucide-react';
 
-interface TourDetailsProps {
-  tourId: string; // slug
-  onBack: () => void;
-  onBookNow: (tour: Tour) => void;
-}
-
-export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsProps) {
-  const { tour, loading, error } = useTourDetails(tourId);
+export default function TourDetails() {
+  const { tourId } = useParams(); // من URL
+  const navigate = useNavigate();
+  const { tour, loading, error } = useTourDetails(tourId!);
   const { formatPrice } = useCurrency();
 
   const pageUrl =
@@ -62,14 +58,14 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
         {seoProps && <SEO {...seoProps} />}
         <div className="min-h-screen bg-gradient-to-b from-muted/30 to-amber-50/20 py-8">
           <div className="container mx-auto px-4 max-w-4xl">
-            <Button variant="ghost" onClick={onBack} className="mb-6">
+            <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Tours
             </Button>
             <Card className="text-center py-20">
               <CardContent>
                 <p className="text-destructive mb-4">❌ {error || 'Tour not found'}</p>
-                <Button onClick={onBack}>Return to Tours</Button>
+                <Button onClick={() => navigate('/')}>Return to Home</Button>
               </CardContent>
             </Card>
           </div>
@@ -78,11 +74,15 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
     );
   }
 
-  // Extract numeric price for currency conversion
+  // السعر
   const numericPrice =
     typeof tour.price_per_person === 'number'
       ? tour.price_per_person
       : parseFloat(tour.price_per_person.toString().replace('$', ''));
+
+  const handleBookNow = () => {
+    navigate(`/checkout/${tourId}`, { state: { tour } });
+  };
 
   return (
     <>
@@ -91,7 +91,7 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
       <div className="min-h-screen bg-gradient-to-b from-muted/30 to-amber-50/20 py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Back Button */}
-          <Button variant="ghost" onClick={onBack} className="mb-6 hover:bg-white/50">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6 hover:bg-white/50">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Tours
           </Button>
@@ -118,10 +118,14 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
                   <div className="flex items-center gap-1">
                     <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
                     <span className="font-semibold">{tour.rating}</span>
-                    <span className="text-muted-foreground">({tour.reviews_count} reviews)</span>
+                    <span className="text-muted-foreground">
+                      ({tour.reviews_count} reviews)
+                    </span>
                   </div>
                   <div className="ml-auto">
-                    <span className="text-2xl font-bold text-primary">{formatPrice(numericPrice)}</span>
+                    <span className="text-2xl font-bold text-primary">
+                      {formatPrice(numericPrice)}
+                    </span>
                     <span className="text-muted-foreground">/person</span>
                   </div>
                 </div>
@@ -132,7 +136,9 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
               {/* Description */}
               <div className="mb-8">
                 <h2 className="text-xl mb-4 text-primary">About This Tour</h2>
-                <p className="text-muted-foreground leading-relaxed text-base">{tour.description}</p>
+                <p className="text-muted-foreground leading-relaxed text-base">
+                  {tour.description}
+                </p>
               </div>
 
               {/* Tour Highlights */}
@@ -146,7 +152,9 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
                 <div className="text-center p-4 bg-gradient-to-br from-amber-50 to-coral-50 rounded-lg border">
                   <Users className="h-8 w-8 text-amber-600 mx-auto mb-2" />
                   <div className="font-medium">Group Size</div>
-                  <div className="text-muted-foreground">Max {tour.max_group_size} people</div>
+                  <div className="text-muted-foreground">
+                    Max {tour.max_group_size} people
+                  </div>
                 </div>
 
                 <div className="text-center p-4 bg-gradient-to-br from-coral-50 to-teal-50 rounded-lg border">
@@ -183,8 +191,9 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
                   Local Expertise
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Experience Alexandria through the eyes of passionate local guides with deep knowledge of the city's history and culture.
-                  Discover authentic stories and hidden gems that only locals know about.
+                  Experience Alexandria through the eyes of passionate local guides with deep
+                  knowledge of the city's history and culture. Discover authentic stories and
+                  hidden gems that only locals know about.
                 </p>
               </div>
 
@@ -192,7 +201,7 @@ export default function TourDetails({ tourId, onBack, onBookNow }: TourDetailsPr
               <div className="text-center">
                 <Button
                   size="lg"
-                  onClick={() => onBookNow(tour)}
+                  onClick={handleBookNow}
                   className="bg-gradient-to-r from-primary to-teal-600 hover:from-teal-700 hover:to-teal-700 shadow-lg px-8 py-3 text-lg"
                 >
                   Check Availability
