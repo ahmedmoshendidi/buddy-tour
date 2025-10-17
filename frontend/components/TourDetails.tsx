@@ -9,15 +9,16 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ArrowLeft, MapPin, Clock, Users, Star, CheckCircle, Compass } from 'lucide-react';
 
 export default function TourDetails() {
-  const { tourId } = useParams(); // من URL
+  // ✅ استخدم slug بدل tourId
+  const { slug } = useParams();
   const navigate = useNavigate();
-  const { tour, loading, error } = useTourDetails(tourId!);
+  const { tour, loading, error } = useTourDetails(slug!);
   const { formatPrice } = useCurrency();
 
   const pageUrl =
     typeof window !== 'undefined'
       ? window.location.href
-      : `https://buddytourguide.com/tour/${tourId}`;
+      : `https://buddytourguide.com/tour/${slug}`;
 
   const seoProps =
     loading
@@ -74,14 +75,15 @@ export default function TourDetails() {
     );
   }
 
-  // السعر
+  // ✅ السعر
   const numericPrice =
     typeof tour.price_per_person === 'number'
       ? tour.price_per_person
       : parseFloat(tour.price_per_person.toString().replace('$', ''));
 
+  // ✅ الزرار هيستخدم slug كمان
   const handleBookNow = () => {
-    navigate(`/checkout/${tourId}`, { state: { tour } });
+    navigate(`/checkout/${slug}`, { state: { tour } });
   };
 
   return (
