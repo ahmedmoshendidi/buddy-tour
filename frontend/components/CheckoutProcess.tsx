@@ -27,6 +27,7 @@ export default function CheckoutProcess() {
   const { bookedTours } = useCart();
   const [holdExpiration, setHoldExpiration] = useState<Date | null>(null);
 
+  // ✅ Merge bookingData (includes session_id) from localStorage into formData
   useEffect(() => {
     const raw = localStorage.getItem('bookingData');
     if (!raw) return;
@@ -46,6 +47,7 @@ export default function CheckoutProcess() {
     }
   }, []);
 
+  // 🕒 Check hold expiration (localStorage + cart fallback)
   useEffect(() => {
     const checkBookingData = () => {
       const bookingData = localStorage.getItem('bookingData');
@@ -87,15 +89,10 @@ export default function CheckoutProcess() {
     };
   }, [holdExpiration, bookedTours]);
 
-  // ✅ تعديل الجزء الخاص بالدفع
   const handleNext = async () => {
     if (currentStep === 2) {
       const result = await processPayment(formData);
-      if (result.success) {
-        navigate('/payment-success');
-      } else {
-        navigate('/payment-failure');
-      }
+      if (result.success && !result.bookingId) nextStep();
     } else {
       nextStep();
     }
@@ -186,6 +183,7 @@ export default function CheckoutProcess() {
     <div className="min-h-screen bg-gradient-to-b from-muted/30 to-amber-50/20 py-8">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <CheckoutSteps currentStep={currentStep} steps={steps} />
 
@@ -203,6 +201,7 @@ export default function CheckoutProcess() {
             <div className="pt-6">{renderActionButtons()}</div>
           </div>
 
+          {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             {holdExpiration && (
               <CountdownTimer
