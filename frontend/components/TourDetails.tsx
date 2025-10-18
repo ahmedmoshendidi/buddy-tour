@@ -83,7 +83,7 @@ export default function TourDetails() {
 
   // ✅ الزرار هيستخدم slug كمان
   const handleBookNow = () => {
-    navigate(`/checkout/${slug}`, { state: { tour } });
+    navigate(`/tickets/${slug}`, { state: { tour } });
   };
 
   return (
