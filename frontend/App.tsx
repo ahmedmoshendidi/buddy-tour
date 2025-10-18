@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 
 import SuccessCleanup from './components/SuccessCleanup';
 import Header from './components/layout/Header';
@@ -20,6 +20,24 @@ import CheckoutProcess from './components/CheckoutProcess';
 import { useTours } from './hooks/useTours';
 import { useWishlist } from './components/WishlistContext';
 import { useCart } from './components/CartContext';
+
+function TicketsQuantityWrapper() {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+
+  const handleBack = () => navigate(-1);
+  const handleCheckout = (bookingInfo: any) => {
+    navigate(`/checkout/${slug}`, { state: { bookingInfo } });
+  };
+
+  return (
+    <TicketsQuantity
+      tourId={slug || ''}
+      onBack={handleBack}
+      onCheckout={handleCheckout}
+    />
+  );
+}
 
 export default function App() {
   const navigate = useNavigate();
@@ -55,7 +73,7 @@ export default function App() {
               }
             />
             <Route path="/tour/:slug" element={<TourDetails />} />
-            <Route path="/tickets/:slug" element={<TicketsQuantity />} />
+            <Route path="/tickets/:slug" element={<TicketsQuantityWrapper />} />
             <Route path="/checkout/:slug" element={<CheckoutProcess />} />
             <Route path="/cancellation-policy" element={<CancellationPolicy />} />
             <Route path="/service-duration-policy" element={<ServiceDurationPolicy />} />
