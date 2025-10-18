@@ -28,7 +28,7 @@ interface TimeSlot {
 }
 
 export default function TicketsQuantity() {
-  const { tourId } = useParams<{ tourId: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -48,7 +48,7 @@ export default function TicketsQuantity() {
   const { addBookedTour } = useCart();
 
   const [sessionId] = useState<string>(() => {
-    const storageKey = `buddy_tour_session_${tourId}`;
+    const storageKey = `buddy_tour_session_${slug}`;
     const existingSession = localStorage.getItem(storageKey);
     if (existingSession) return existingSession;
     const newSession = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -69,10 +69,10 @@ export default function TicketsQuantity() {
       setLoading(true);
       setError('');
       try {
-        const isNumericId = /^\d+$/.test(String(tourId));
+        const isNumericId = /^\d+$/.test(String(slug));
         const endpoint = isNumericId
-          ? `${API_PREFIX}/tours/${tourId}`
-          : `${API_PREFIX}/tours/by-slug/${encodeURIComponent(String(tourId))}`;
+          ? `${API_PREFIX}/tours/${slug}`
+          : `${API_PREFIX}/tours/by-slug/${encodeURIComponent(String(slug))}`;
 
         const response = await fetch(endpoint);
         if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to load tour`);
@@ -107,7 +107,7 @@ export default function TicketsQuantity() {
     };
 
     loadTourData();
-  }, [tourId]);
+  }, [slug]);
 
   useEffect(() => {
     checkSeatAvailability();
