@@ -79,8 +79,7 @@ export default function App() {
             <Route path="/service-duration-policy" element={<ServiceDurationPolicy />} />
             <Route path="/tour-guide-application" element={<TourGuideApplicationPage />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            <Route path="/payment-success" element={<PaymentResultPage isSuccess={true} />} />
-            <Route path="/payment-failure" element={<PaymentResultPage isSuccess={false} />} />
+            <Route path="/payment-result" element={<PaymentResultPage />} />
           </Routes>
         </main>
 

@@ -1,22 +1,27 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../layout/Header';
 import PaymentSuccess from '../PaymentSuccess';
 import PaymentFailure from '../PaymentFailure';
 import WishlistNotification from '../WishlistNotification';
 import { useWishlist } from '../WishlistContext';
 
-interface PaymentResultPageProps {
-  isSuccess: boolean;
-}
-
-export default function PaymentResultPage({ isSuccess }: PaymentResultPageProps) {
+export default function PaymentResultPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { notificationTour, showNotification, hideNotification } = useWishlist();
+
+  // ✅ نقرأ من الـ URL لو الحالة success أو failed
+  const params = new URLSearchParams(location.search);
+  const successParam = params.get('success') || params.get('status');
+  const isSuccess =
+    successParam === 'true' ||
+    successParam === 'success' ||
+    successParam === 'completed';
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header بدون props — بيستخدم <Link> جوه */}
+      {/* Header */}
       <Header />
 
       {/* محتوى الصفحة */}
