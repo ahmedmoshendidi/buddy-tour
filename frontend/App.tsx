@@ -21,6 +21,10 @@ import { useTours } from './hooks/useTours';
 import { useWishlist } from './components/WishlistContext';
 import { useCart } from './components/CartContext';
 
+// ✅ Layouts
+import MainLayout from './components/layout/MainLayout';
+import MinimalLayout from './components/layout/MinimalLayout';
+
 function TicketsQuantityWrapper() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -52,40 +56,41 @@ export default function App() {
   return (
     <>
       <SuccessCleanup />
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
 
-        <main className="flex-grow">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <HomePage
-                  tours={tours}
-                  loading={loading}
-                  error={error}
-                  onViewTourDetails={(tour) => navigate(`/tour/${tour.slug}`)}
-                  onBookNow={() => {}}
-                  onViewTourById={() => {}}
-                  onPayNow={() => {}}
-                  onApplyTourGuide={() => {}}
-                />
-              }
-            />
-            <Route path="/tour/:slug" element={<TourDetails />} />
-            <Route path="/tickets/:slug" element={<TicketsQuantityWrapper />} />
-            <Route path="/checkout/:slug" element={<CheckoutProcess />} />
-            <Route path="/cancellation-policy" element={<CancellationPolicy />} />
-            <Route path="/service-duration-policy" element={<ServiceDurationPolicy />} />
-            <Route path="/tour-guide-application" element={<TourGuideApplicationPage />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            <Route path="/payment-result" element={<PaymentResultPage />} />
-          </Routes>
-        </main>
+      <Routes>
+        {/* ✅ الصفحات اللي فيها Header/Footer */}
+        <Route element={<MainLayout />}>
+          <Route
+            path="/"
+            element={
+              <HomePage
+                tours={tours}
+                loading={loading}
+                error={error}
+                onViewTourDetails={(tour) => navigate(`/tour/${tour.slug}`)}
+                onBookNow={() => {}}
+                onViewTourById={() => {}}
+                onPayNow={() => {}}
+                onApplyTourGuide={() => {}}
+              />
+            }
+          />
+          <Route path="/tour/:slug" element={<TourDetails />} />
+          <Route path="/tickets/:slug" element={<TicketsQuantityWrapper />} />
+          <Route path="/checkout/:slug" element={<CheckoutProcess />} />
+          <Route path="/cancellation-policy" element={<CancellationPolicy />} />
+          <Route path="/service-duration-policy" element={<ServiceDurationPolicy />} />
+          <Route path="/tour-guide-application" element={<TourGuideApplicationPage />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        </Route>
 
-        <Footer />
-      </div>
+        {/* ✅ صفحات بدون Header/Footer */}
+        <Route element={<MinimalLayout />}>
+          <Route path="/payment-result" element={<PaymentResultPage />} />
+        </Route>
+      </Routes>
 
+      {/* ✅ الإشعارات */}
       <WishlistNotification
         tour={notificationTour}
         isVisible={showNotification}
