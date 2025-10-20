@@ -10,7 +10,6 @@ import {
   Mail,
   Phone,
   Star,
-  Compass,
 } from "lucide-react";
 
 interface PaymentSuccessProps {
@@ -20,36 +19,31 @@ interface PaymentSuccessProps {
 export default function PaymentSuccess({
   onBackToHome,
 }: PaymentSuccessProps) {
-  const [transactionId, setTransactionId] =
-    useState<string>("");
+  const [transactionId, setTransactionId] = useState<string>("");
   const [amount, setAmount] = useState<number>(0);
   const { formatPrice } = useCurrency();
 
   useEffect(() => {
     // Read URL parameters for transaction details
-    const urlParams = new URLSearchParams(
-      window.location.search,
-    );
-    const txId =
-      urlParams.get("id") || urlParams.get("transaction_id");
+    const urlParams = new URLSearchParams(window.location.search);
+    const txId = urlParams.get("id") || urlParams.get("transaction_id");
     const amountCents = urlParams.get("amount_cents");
     const amountDirect = urlParams.get("amount");
 
-    if (txId) {
-      setTransactionId(txId);
-    }
+    if (txId) setTransactionId(txId);
 
     if (amountCents) {
-      // Convert from cents to main currency unit
       setAmount(parseFloat(amountCents) / 100);
     } else if (amountDirect) {
       setAmount(parseFloat(amountDirect));
     }
 
-     const t = setTimeout(() => {
-    window.history.replaceState({}, document.title, window.location.pathname);
-    }, 0);
-    return () => clearTimeout(t);
+    // ✅ safer cleanup for query params (won’t trigger router reload)
+    const url = new URL(window.location.href);
+    if (url.search) {
+      url.search = "";
+      window.history.replaceState({}, document.title, url.toString());
+    }
   }, []);
 
   return (
@@ -95,10 +89,7 @@ export default function PaymentSuccess({
                     Transaction ID
                   </label>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge
-                      variant="outline"
-                      className="font-mono"
-                    >
+                    <Badge variant="outline" className="font-mono">
                       {transactionId || "Processing..."}
                     </Badge>
                   </div>
@@ -110,9 +101,7 @@ export default function PaymentSuccess({
                   </label>
                   <div className="mt-1">
                     <span className="text-xl font-semibold text-primary">
-                      {amount > 0
-                        ? formatPrice(amount)
-                        : "Confirming..."}
+                      {amount > 0 ? formatPrice(amount) : "Confirming..."}
                     </span>
                   </div>
                 </div>
@@ -129,47 +118,36 @@ export default function PaymentSuccess({
               <div className="space-y-3">
                 <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-amber-50 to-coral-50 rounded-lg border border-amber-200">
                   <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-white text-sm font-medium">
-                      1
-                    </span>
+                    <span className="text-white text-sm font-medium">1</span>
                   </div>
                   <div>
-                    <p className="font-medium">
-                      Confirmation Email
-                    </p>
+                    <p className="font-medium">Confirmation Email</p>
                     <p className="text-sm text-muted-foreground">
-                      You'll receive a detailed booking
-                      confirmation within 5 minutes
+                      You'll receive a detailed booking confirmation within 5 minutes
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-coral-50 to-teal-50 rounded-lg border border-coral-200">
                   <div className="w-6 h-6 bg-coral-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-white text-sm font-medium">
-                      2
-                    </span>
+                    <span className="text-white text-sm font-medium">2</span>
                   </div>
                   <div>
                     <p className="font-medium">Guide Contact</p>
                     <p className="text-sm text-muted-foreground">
-                      Your local guide will contact you 24 hours
-                      before the tour
+                      Your local guide will contact you 24 hours before the tour
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-teal-50 to-amber-50 rounded-lg border border-teal-200">
                   <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-white text-sm font-medium">
-                      3
-                    </span>
+                    <span className="text-white text-sm font-medium">3</span>
                   </div>
                   <div>
                     <p className="font-medium">Tour Day</p>
                     <p className="text-sm text-muted-foreground">
-                      Meet your guide at the designated location
-                      and start exploring!
+                      Meet your guide at the designated location and start exploring!
                     </p>
                   </div>
                 </div>
@@ -183,8 +161,7 @@ export default function PaymentSuccess({
                 Need Help?
               </h4>
               <p className="text-sm text-muted-foreground mb-3">
-                Our support team is here to assist you with any
-                questions about your booking.
+                Our support team is here to assist you with any questions about your booking.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline" className="bg-white">
@@ -209,10 +186,7 @@ export default function PaymentSuccess({
               <Button
                 variant="outline"
                 onClick={() =>
-                  window.open(
-                    "mailto:support@buddytourguide.com",
-                    "_blank",
-                  )
+                  window.open("mailto:support@buddytourguide.com", "_blank")
                 }
                 className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
               >
@@ -226,8 +200,7 @@ export default function PaymentSuccess({
         {/* Footer Message */}
         <div className="text-center mt-6">
           <p className="text-sm text-muted-foreground">
-            Thank you for choosing BuddyTour • Made with ❤️ in
-            Alexandria, Egypt
+            Thank you for choosing BuddyTour • Made with ❤️ in Alexandria, Egypt
           </p>
         </div>
       </div>

@@ -19,18 +19,15 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
     const txId = urlParams.get('id') || urlParams.get('transaction_id');
     const reason = urlParams.get('reason') || urlParams.get('error');
 
-    if (txId) {
-      setTransactionId(txId);
-    }
+    if (txId) setTransactionId(txId);
+    if (reason) setErrorReason(reason);
 
-    if (reason) {
-      setErrorReason(reason);
+    // ✅ Clean URL params safely (no reload or redirect)
+    const url = new URL(window.location.href);
+    if (url.search) {
+      url.search = '';
+      window.history.replaceState({}, document.title, url.toString());
     }
-
-     const t = setTimeout(() => {
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }, 0);
-    return () => clearTimeout(t);
   }, []);
 
   const getErrorMessage = (reason: string) => {
@@ -51,13 +48,9 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
 
   const getErrorIcon = (reason: string) => {
     const lowerReason = reason.toLowerCase();
-    if (lowerReason.includes('network') || lowerReason.includes('timeout')) {
-      return '🌐';
-    } else if (lowerReason.includes('card') || lowerReason.includes('expired')) {
-      return '💳';
-    } else if (lowerReason.includes('insufficient')) {
-      return '💰';
-    }
+    if (lowerReason.includes('network') || lowerReason.includes('timeout')) return '🌐';
+    if (lowerReason.includes('card') || lowerReason.includes('expired')) return '💳';
+    if (lowerReason.includes('insufficient')) return '💰';
     return '⚠️';
   };
 
@@ -72,10 +65,8 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
               <AlertCircle className="h-12 w-12 text-white" />
             </div>
           </div>
-          
-          <h1 className="text-3xl md:text-4xl mb-4 text-red-600">
-            Payment Failed
-          </h1>
+
+          <h1 className="text-3xl md:text-4xl mb-4 text-red-600">Payment Failed</h1>
           <p className="text-lg text-muted-foreground mb-2">
             Don't worry, let's get this sorted out
           </p>
@@ -93,7 +84,7 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
                 <span className="text-xl mr-2">{getErrorIcon(errorReason)}</span>
                 What Went Wrong?
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-muted-foreground">Error Details</label>
@@ -101,7 +92,7 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
                     {getErrorMessage(errorReason)}
                   </p>
                 </div>
-                
+
                 {transactionId && (
                   <div>
                     <label className="text-sm text-muted-foreground">Reference ID</label>
@@ -121,7 +112,7 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
                 <HelpCircle className="h-5 w-5 mr-2" />
                 Quick Solutions
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="p-4 bg-gradient-to-r from-teal-50 to-amber-50 rounded-lg border border-teal-200">
                   <div className="flex items-center gap-2 mb-2">
@@ -132,7 +123,7 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
                     Double-check your card details, expiry date, and security code
                   </p>
                 </div>
-                
+
                 <div className="p-4 bg-gradient-to-r from-amber-50 to-coral-50 rounded-lg border border-amber-200">
                   <div className="flex items-center gap-2 mb-2">
                     <Phone className="h-4 w-4 text-amber-600" />
@@ -142,7 +133,7 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
                     Your bank may be blocking international transactions
                   </p>
                 </div>
-                
+
                 <div className="p-4 bg-gradient-to-r from-coral-50 to-teal-50 rounded-lg border border-coral-200">
                   <div className="flex items-center gap-2 mb-2">
                     <RotateCcw className="h-4 w-4 text-coral-600" />
@@ -152,7 +143,7 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
                     Network issues can sometimes cause temporary failures
                   </p>
                 </div>
-                
+
                 <div className="p-4 bg-gradient-to-r from-teal-50 to-amber-50 rounded-lg border border-teal-200">
                   <div className="flex items-center gap-2 mb-2">
                     <Mail className="h-4 w-4 text-primary" />
@@ -175,38 +166,38 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
                 Our team is available 24/7 to help resolve payment issues and secure your booking.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className="bg-white">
-                  📧 support@buddytour.com
-                </Badge>
-                <Badge variant="outline" className="bg-white">
-                  📱 +20 123 456 789
-                </Badge>
-                <Badge variant="outline" className="bg-white">
-                  💬 Live Chat Available
-                </Badge>
+                <Badge variant="outline" className="bg-white">📧 support@buddytourguide.com</Badge>
+                <Badge variant="outline" className="bg-white">📱 +20 102 903 1487</Badge>
+                <Badge variant="outline" className="bg-white">💬 Live Chat Available</Badge>
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
+              <Button
                 onClick={onRetryPayment}
                 className="flex-1 bg-gradient-to-r from-coral-500 to-red-500 hover:from-coral-600 hover:to-red-600 text-white shadow-lg"
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Retry Payment
               </Button>
-              
-              <Button 
+
+              <Button
                 variant="outline"
-                onClick={() => window.open('mailto:support@buddytour.com?subject=Payment%20Issue%20-%20' + (transactionId || 'Help%20Needed'), '_blank')}
+                onClick={() =>
+                  window.open(
+                    'mailto:support@buddytour.com?subject=Payment%20Issue%20-%20' +
+                      (transactionId || 'Help%20Needed'),
+                    '_blank'
+                  )
+                }
                 className="flex-1 border-primary text-primary hover:bg-primary hover:text-white"
               >
                 <Mail className="h-4 w-4 mr-2" />
                 Contact Support
               </Button>
-              
-              <Button 
+
+              <Button
                 variant="ghost"
                 onClick={onBackToHome}
                 className="flex-1 text-muted-foreground hover:text-primary"
