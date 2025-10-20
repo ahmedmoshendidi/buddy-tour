@@ -12,6 +12,8 @@ import TourGuideApplicationPage from './components/pages/TourGuideApplicationPag
 import AdminDashboard from './components/pages/AdminDashboard';
 import CancellationPolicy from './components/pages/CancellationPolicy';
 import ServiceDurationPolicy from './components/pages/ServiceDurationPolicy';
+import PrivacyAndTermsPage from './components/pages/PrivacyAndTermsPage';
+
 import PaymentResultPage from './components/pages/PaymentResultPage';
 import TourDetails from './components/TourDetails';
 import TicketsQuantity from './components/TicketsQuantity';
@@ -24,6 +26,7 @@ import { useCart } from './components/CartContext';
 // ✅ Layouts
 import MainLayout from './components/layout/MainLayout';
 import MinimalLayout from './components/layout/MinimalLayout';
+
 
 function TicketsQuantityWrapper() {
   const { slug } = useParams();
@@ -78,15 +81,17 @@ export default function App() {
           <Route path="/tour/:slug" element={<TourDetails />} />
           <Route path="/tickets/:slug" element={<TicketsQuantityWrapper />} />
           <Route path="/checkout/:slug" element={<CheckoutProcess />} />
-          <Route path="/cancellation-policy" element={<CancellationPolicy />} />
-          <Route path="/service-duration-policy" element={<ServiceDurationPolicy />} />
           <Route path="/tour-guide-application" element={<TourGuideApplicationPage />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
         </Route>
 
         {/* ✅ صفحات بدون Header/Footer */}
         <Route element={<MinimalLayout />}>
+          <Route path="/cancellation-policy" element={<CancellationPolicy />} />
+          <Route path="/service-duration-policy" element={<ServiceDurationPolicy />} />
           <Route path="/payment-result" element={<PaymentResultPage />} />
+          <Route path="/privacy-policy" element={<PrivacyAndTermsPage />} />
+          <Route path="/terms-and-conditions" element={<PrivacyAndTermsPage />} />
         </Route>
       </Routes>
 

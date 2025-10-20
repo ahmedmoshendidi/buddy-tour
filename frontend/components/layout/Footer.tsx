@@ -40,14 +40,28 @@ export default function Footer() {
             <div className="text-sm text-muted-foreground space-y-2">
               <p>Email: <a href="mailto:support@buddytourguide.com" className="hover:text-primary transition-colors">support@buddytourguide.com</a></p>
               <p>Phone: <a href="tel:01029031487" className="hover:text-primary transition-colors">01029031487</a></p>
+
               <p>
                 <Link to="/cancellation-policy" className="hover:text-primary transition-colors">
                   Cancellation Policy
                 </Link>
               </p>
+
               <p>
                 <Link to="/service-duration-policy" className="hover:text-primary transition-colors">
                   Service Duration Policy
+                </Link>
+              </p>
+
+              {/* Added new links below */}
+              <p>
+                <Link to="/privacy-policy" className="hover:text-primary transition-colors">
+                  Privacy Policy
+                </Link>
+              </p>
+              <p>
+                <Link to="/terms-and-conditions" className="hover:text-primary transition-colors">
+                  Terms & Conditions
                 </Link>
               </p>
             </div>
