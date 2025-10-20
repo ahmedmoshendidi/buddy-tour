@@ -21,8 +21,6 @@ export default function PaymentResultPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <Header />
 
       {/* محتوى الصفحة */}
       {isSuccess ? (
