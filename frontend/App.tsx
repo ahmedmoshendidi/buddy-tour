@@ -27,7 +27,6 @@ import { useCart } from './components/CartContext';
 import MainLayout from './components/layout/MainLayout';
 import MinimalLayout from './components/layout/MinimalLayout';
 
-
 function TicketsQuantityWrapper() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -56,6 +55,11 @@ export default function App() {
     hideNotification: hideCartNotification,
   } = useCart();
 
+  // ✅ دالة التقديم كـ مرشد سياحي
+  const handleApplyTourGuide = () => {
+    navigate('/tour-guide-application');
+  };
+
   return (
     <>
       <SuccessCleanup />
@@ -74,7 +78,7 @@ export default function App() {
                 onBookNow={() => {}}
                 onViewTourById={() => {}}
                 onPayNow={() => {}}
-                onApplyTourGuide={() => {}}
+                onApplyTourGuide={handleApplyTourGuide} // ✅ تم الربط هنا
               />
             }
           />
