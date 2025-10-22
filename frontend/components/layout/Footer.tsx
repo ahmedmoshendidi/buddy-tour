@@ -27,10 +27,26 @@ export default function Footer() {
           <div>
             <h4 className="mb-4 font-semibold text-primary">Tours</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/tour/1" className="hover:text-primary transition-colors">Bibliotheca Alexandrina</Link></li>
-              <li><Link to="/tour/2" className="hover:text-primary transition-colors">Roman Theatre</Link></li>
-              <li><Link to="/tour/3" className="hover:text-primary transition-colors">Montaza Palace</Link></li>
-              <li><Link to="/tour/4" className="hover:text-primary transition-colors">Qaitbay Citadel</Link></li>
+              <li>
+                <Link to="/tour/bibliotheca-alexandrina-tour" className="hover:text-primary transition-colors">
+                  Bibliotheca Alexandrina
+                </Link>
+              </li>
+              <li>
+                <Link to="/tour/roman-amphitheatre-tour" className="hover:text-primary transition-colors">
+                  Roman Theatre
+                </Link>
+              </li>
+              <li>
+                <Link to="/tour/montaza-palace-gardens-walk" className="hover:text-primary transition-colors">
+                  Montaza Palace
+                </Link>
+              </li>
+              <li>
+                <Link to="/tour/qaitbay-citadel-experience" className="hover:text-primary transition-colors">
+                  Qaitbay Citadel
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -53,7 +69,6 @@ export default function Footer() {
                 </Link>
               </p>
 
-              {/* Added new links below */}
               <p>
                 <Link to="/privacy-policy" className="hover:text-primary transition-colors">
                   Privacy Policy
@@ -71,9 +86,17 @@ export default function Footer() {
           <div>
             <h4 className="mb-4 font-semibold text-primary">Company</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-              <li><Link to="/become-tour-guide" className="hover:text-primary transition-colors">Become a Guide</Link></li>
-              <li><Link to="/careers" className="hover:text-primary transition-colors">Careers</Link></li>
+              <li>
+                <Link to="/about" className="hover:text-primary transition-colors">About Us</Link>
+              </li>
+              <li>
+                <Link to="/tour-guide-application" className="hover:text-primary transition-colors">
+                  Become a Guide
+                </Link>
+              </li>
+              <li>
+                <Link to="/careers" className="hover:text-primary transition-colors">Careers</Link>
+              </li>
             </ul>
 
             {/* --- Address --- */}
