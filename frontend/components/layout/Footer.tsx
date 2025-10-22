@@ -75,6 +75,12 @@ export default function Footer() {
               <li><Link to="/become-tour-guide" className="hover:text-primary transition-colors">Become a Guide</Link></li>
               <li><Link to="/careers" className="hover:text-primary transition-colors">Careers</Link></li>
             </ul>
+
+            {/* --- Address --- */}
+            <div className="mt-4 text-sm text-muted-foreground">
+              <p className="font-medium text-primary">Address:</p>
+              <p>Fawzy Moaz St., Smouha, Alexandria, Egypt</p>
+            </div>
           </div>
         </div>
 
