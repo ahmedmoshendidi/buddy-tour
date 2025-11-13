@@ -10,7 +10,8 @@ const corsOptions = {
       "http://localhost:3000", 
       "http://127.0.0.1:3000",
       "http://localhost:5000",
-      "http://127.0.0.1:5000"
+      "http://127.0.0.1:5000",
+      "https://buddy-tour-staging.up.railway.app",
     ];
     if (!origin || allowed.includes(origin)) return cb(null, true);
     cb(new Error("Not allowed by CORS"));
