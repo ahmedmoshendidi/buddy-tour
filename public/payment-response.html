@@ -37,9 +37,8 @@
     </div>
   </div>
 
-  <script>
+ <script>
 (async function () {
-  // Read transaction UUID saved earlier before user started payment
   const transactionUuid = localStorage.getItem("transaction_uuid");
 
   if (!transactionUuid) {
@@ -48,15 +47,15 @@
     return;
   }
 
+  // ⏱️ استنى 2 ثانية عشان الـ callback ينفذ
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
   try {
-    // Ask the backend for the REAL payment status
     const res = await fetch(`/api/xpay/verify/${transactionUuid}`);
     const data = await res.json();
 
-    // 🔍 Debug: شوف إيه اللي راجع
     console.log("📦 Full response data:", data);
     console.log("📦 Status value:", data.status);
-    console.log("📦 Status type:", typeof data.status);
 
     const success =
       ["successful", "completed", "SUCCESSFUL", "COMPLETED"].includes(data.status);
@@ -64,7 +63,6 @@
     console.log("✅ Payment verification result:", success);
 
     if (success) {
-      // Clean up client booking info
       const raw = localStorage.getItem("bookingData");
       const booking = raw ? JSON.parse(raw) : null;
 
