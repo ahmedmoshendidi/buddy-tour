@@ -50,18 +50,17 @@
 
   try {
     // Ask the backend for the REAL payment status
-    // const res = await fetch(`/api/xpay/payment-status/${transactionUuid}`);
     const res = await fetch(`/api/xpay/verify/${transactionUuid}`);
     const data = await res.json();
 
-    // const success = data.status === "successful" || data.status === "completed";
-
-    // const success =
-    // data.status?.toLowerCase() === "successful" ||
-    // data.status?.toLowerCase() === "completed";
+    // 🔍 Debug: شوف إيه اللي راجع
+    console.log("📦 Full response data:", data);
+    console.log("📦 Status value:", data.status);
+    console.log("📦 Status type:", typeof data.status);
 
     const success =
-    ["successful", "completed", "SUCCESSFUL", "COMPLETED"].includes(data.status);
+      ["successful", "completed", "SUCCESSFUL", "COMPLETED"].includes(data.status);
+    
     console.log("✅ Payment verification result:", success);
 
     if (success) {
@@ -90,6 +89,5 @@
   }
 })();
 </script>
-
 </body>
 </html>
