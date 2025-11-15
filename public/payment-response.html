@@ -38,55 +38,55 @@
   </div>
 
   <script>
-  (function () {
-    const q = new URLSearchParams(location.search);
-    const pick = k => (q.get(k) || '').toLowerCase();
+(async function () {
+  // Read transaction UUID saved earlier before user started payment
+  const transactionUuid = localStorage.getItem("transaction_uuid");
 
-    // تحديد النجاح من باراميترات Paymob/الرد
+  if (!transactionUuid) {
+    console.warn("❌ No transaction UUID found in localStorage.");
+    location.replace("/payment-result?success=false");
+    return;
+  }
+
+  try {
+    // Ask the backend for the REAL payment status
+    // const res = await fetch(`/api/xpay/payment-status/${transactionUuid}`);
+    const res = await fetch(`/api/xpay/verify/${transactionUuid}`);
+    const data = await res.json();
+
+    // const success = data.status === "successful" || data.status === "completed";
+
     const success =
-      pick('success') === 'true' ||
-      pick('payment_status') === 'success' ||
-      pick('status') === 'completed' ||
-      ((q.get('txn_response_code') || '').toUpperCase().startsWith('APPROVED') &&
-       pick('error_occured') !== 'true');
+    data.status?.toLowerCase() === "successful" ||
+    data.status?.toLowerCase() === "completed";
+    console.log("✅ Payment verification result:", success);
 
-    // ✅ لو الدفع نجح: اكتب علامة الدفع ونضّف بيانات الحجز
     if (success) {
-      try {
-        const raw = localStorage.getItem('bookingData');
-        const data = raw ? JSON.parse(raw) : null;
+      // Clean up client booking info
+      const raw = localStorage.getItem("bookingData");
+      const booking = raw ? JSON.parse(raw) : null;
 
-        // اكتب علامة الدفع بالـ session_id عشان SuccessCleanup يشيل عنصر الكارت المقابل
-        if (data && data.session_id) {
-          localStorage.setItem('paid_booking', JSON.stringify({
-            session_id: data.session_id,
-            at: Date.now()
-          }));
-        }
+      if (booking && booking.session_id) {
+        localStorage.setItem("paid_booking", JSON.stringify({
+          session_id: booking.session_id,
+          at: Date.now()
+        }));
+      }
 
-        // امسح بيانات الشيك آوت (ده اللي بيعتمد عليه العداد)
-        localStorage.removeItem('bookingData');
-
-        // امسح سيشن الحجز الخاص بالتور (لو موجود)
-        if (data && data.tour_id) {
-          localStorage.removeItem(`buddy_tour_session_${data.tour_id}`);
-        }
-
-        // ملاحظة: ما بنلمسش الـ wishlist — هتفضل زي ما هي 👌
-      } catch (e) {
-        // تجاهل أي أخطاء parsing بسيطة
+      localStorage.removeItem("bookingData");
+      if (booking?.tour_id) {
+        localStorage.removeItem(`buddy_tour_session_${booking.tour_id}`);
       }
     }
 
-    // ✅ تعديل واحد فقط: التحويل إلى /payment-result بدل /
-    const next = new URL('/payment-result', location.origin);
-    q.forEach((v, k) => next.searchParams.set(k, v));
-    next.searchParams.set('status', success ? 'success' : 'failed');
-    next.searchParams.set('success', success ? 'true' : 'false');
+    location.replace(`/payment-result?success=${success}`);
 
-    // استخدم replace عشان ما تزودش history entry
-    location.replace(next.toString());
-  })();
-  </script>
+  } catch (err) {
+    console.error("❌ Verification error:", err);
+    location.replace("/payment-result?success=false");
+  }
+})();
+</script>
+
 </body>
 </html>
