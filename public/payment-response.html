@@ -56,7 +56,8 @@
     console.log(`🔄 Verification attempt ${attempts}/${maxAttempts}`);
 
     try {
-      const res = await fetch(`/api/xpay/verify/${transactionUuid}`);
+      // const res = await fetch(`/api/xpay/verify/${transactionUuid}`);
+      const res = await fetch(`https://buddy-tour-staging.up.railway.app/api/xpay/verify/${transactionUuid}`);
       const data = await res.json();
 
       console.log("📦 Response:", data);
