@@ -56,9 +56,12 @@
 
     // const success = data.status === "successful" || data.status === "completed";
 
+    // const success =
+    // data.status?.toLowerCase() === "successful" ||
+    // data.status?.toLowerCase() === "completed";
+
     const success =
-    data.status?.toLowerCase() === "successful" ||
-    data.status?.toLowerCase() === "completed";
+    ["successful", "completed", "SUCCESSFUL", "COMPLETED"].includes(data.status);
     console.log("✅ Payment verification result:", success);
 
     if (success) {
