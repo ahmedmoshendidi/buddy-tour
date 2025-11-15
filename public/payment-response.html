@@ -37,7 +37,7 @@
     </div>
   </div>
 
- <script>
+<script>
 (async function () {
   const transactionUuid = localStorage.getItem("transaction_uuid");
 
@@ -47,44 +47,59 @@
     return;
   }
 
-  // ⏱️ استنى 2 ثانية عشان الـ callback ينفذ
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  let success = false;
+  let attempts = 0;
+  const maxAttempts = 5;
 
-  try {
-    const res = await fetch(`/api/xpay/verify/${transactionUuid}`);
-    const data = await res.json();
+  while (attempts < maxAttempts && !success) {
+    attempts++;
+    console.log(`🔄 Verification attempt ${attempts}/${maxAttempts}`);
 
-    console.log("📦 Full response data:", data);
-    console.log("📦 Status value:", data.status);
+    try {
+      const res = await fetch(`/api/xpay/verify/${transactionUuid}`);
+      const data = await res.json();
 
-    const success =
-      ["successful", "completed", "SUCCESSFUL", "COMPLETED"].includes(data.status);
-    
-    console.log("✅ Payment verification result:", success);
+      console.log("📦 Response:", data);
 
-    if (success) {
-      const raw = localStorage.getItem("bookingData");
-      const booking = raw ? JSON.parse(raw) : null;
+      success = ["successful", "completed", "SUCCESSFUL", "COMPLETED"].includes(data.status);
 
-      if (booking && booking.session_id) {
-        localStorage.setItem("paid_booking", JSON.stringify({
-          session_id: booking.session_id,
-          at: Date.now()
-        }));
+      if (success) {
+        console.log("✅ Payment verified successfully!");
+        break;
       }
 
-      localStorage.removeItem("bookingData");
-      if (booking?.tour_id) {
-        localStorage.removeItem(`buddy_tour_session_${booking.tour_id}`);
+      // لو مش ناجحة، استنى ثانية وحاول تاني
+      if (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+
+    } catch (err) {
+      console.error(`❌ Attempt ${attempts} failed:`, err);
+      if (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
       }
     }
-
-    location.replace(`/payment-result?success=${success}`);
-
-  } catch (err) {
-    console.error("❌ Verification error:", err);
-    location.replace("/payment-result?success=false");
   }
+
+  if (success) {
+    const raw = localStorage.getItem("bookingData");
+    const booking = raw ? JSON.parse(raw) : null;
+
+    if (booking && booking.session_id) {
+      localStorage.setItem("paid_booking", JSON.stringify({
+        session_id: booking.session_id,
+        at: Date.now()
+      }));
+    }
+
+    localStorage.removeItem("bookingData");
+    if (booking?.tour_id) {
+      localStorage.removeItem(`buddy_tour_session_${booking.tour_id}`);
+    }
+  }
+
+  location.replace(`/payment-result?success=${success}`);
+
 })();
 </script>
 </body>
