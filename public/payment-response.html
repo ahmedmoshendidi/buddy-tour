@@ -90,62 +90,45 @@ function addLog(message, type = 'info') {
   while (attempts < maxAttempts && !success) {
     attempts++;
     addLog(`🔄 Verification attempt ${attempts}/${maxAttempts}`, 'warning');
-    console.log(`🔄 Verification attempt ${attempts}/${maxAttempts}`);
 
     try {
-      const apiUrl = `https://buddy-tour-staging.up.railway.app/api/xpay/verify/${transactionUuid}`;
+      // Use the ID from URL if available, otherwise fallback to localStorage
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id') || transactionUuid;
+      
+      const apiUrl = `/api/payment-status/${id}`;
       addLog(`🌐 Calling API: ${apiUrl}`);
       
       const res = await fetch(apiUrl);
       
-      addLog(`📡 Response status: ${res.status}`);
-      console.log("📡 Response status:", res.status);
-      
       if (!res.ok) {
-        addLog(`⚠️ API returned non-OK status: ${res.status}`, 'warning');
+        addLog(`⚠️ API returned status: ${res.status}`, 'warning');
         throw new Error(`API returned ${res.status}`);
       }
       
-      const rawText = await res.text();
-      addLog(`📦 Raw response: ${rawText.substring(0, 100)}...`);
-      
-      const data = JSON.parse(rawText);
-      addLog(`📦 Parsed data: ${JSON.stringify(data)}`);
-      console.log("📦 Response:", data);
-      
-      addLog(`🔍 Status value: "${data.status}" (type: ${typeof data.status})`);
-      console.log("🔍 Status:", data.status, typeof data.status);
+      const data = await res.json();
+      addLog(`📦 Status: "${data.status}"`);
 
-      success = ["successful", "completed", "SUCCESSFUL", "COMPLETED"].includes(data.status);
+      success = ["captured", "successful", "completed"].includes(data.status?.toLowerCase());
       
-      addLog(`✨ Success check result: ${success}`, success ? 'success' : 'warning');
-      console.log("✅ Success check:", success);
-
       if (success) {
         addLog('✅ Payment verified successfully!', 'success');
-        console.log("✅ Payment verified successfully!");
         break;
       }
 
-      // Check if it's a definite failure
-      if (["failed", "FAILED", "cancelled", "CANCELLED"].includes(data.status)) {
+      if (["failed", "voided", "declined"].includes(data.status?.toLowerCase())) {
         addLog(`❌ Payment failed with status: ${data.status}`, 'error');
         break;
       }
 
-      // لو مش ناجحة، استنى ثانية وحاول تاني
+      // Wait before retry
       if (attempts < maxAttempts) {
-        addLog(`⏳ Waiting 1.5s before retry...`, 'warning');
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        addLog(`⏳ Waiting 2s before retry...`, 'warning');
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
-
     } catch (err) {
-      addLog(`❌ Attempt ${attempts} failed: ${err.message}`, 'error');
-      console.error(`❌ Attempt ${attempts} failed:`, err);
-      if (attempts < maxAttempts) {
-        addLog(`⏳ Waiting 1.5s before retry...`, 'warning');
-        await new Promise(resolve => setTimeout(resolve, 1500));
-      }
+      addLog(`⚠️ Attempt ${attempts} failed: ${err.message}`, 'error');
+      if (attempts < maxAttempts) await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
 

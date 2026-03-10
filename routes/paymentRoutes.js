@@ -143,7 +143,7 @@ router.post("/payment-callback", async (req, res) => {
     const billingData = transaction.payment_key_claims?.billing_data || {};
     const existing = paymentStatus.get(orderId.toString()) || {};
 
-    paymentStatus.set(transactionId.toString(), {
+    const statusObj = {
       ...existing,
       status: isSuccess ? "captured" : "failed",
       transactionId,
@@ -151,7 +151,11 @@ router.post("/payment-callback", async (req, res) => {
       amountCents: transaction.amount_cents,
       billingData,
       updatedAt: new Date(),
-    });
+    };
+
+    // Store by both IDs so either can be used for polling
+    paymentStatus.set(transactionId.toString(), statusObj);
+    paymentStatus.set(orderId.toString(), statusObj);
 
     if (isSuccess) {
       const client = await pool.connect();
