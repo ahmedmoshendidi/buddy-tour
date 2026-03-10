@@ -1,7 +1,7 @@
 // Exchange rates service
 const axios = require('axios');
 
-const RATES_URL = "https://api.exchangerate.host/latest?base=USD&symbols=USD,EUR,GBP,CAD,EGP";
+const RATES_URL = "https://api.exchangerate-api.com/v4/latest/USD";
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 // Simple in-memory cache
@@ -30,7 +30,7 @@ const getExchangeRates = async () => {
 
     const payload = {
       base: 'USD',
-      provider: 'exchangerate.host',
+      provider: 'exchangerate-api.com',
       updated_at: new Date().toISOString(),
       rates,
     };

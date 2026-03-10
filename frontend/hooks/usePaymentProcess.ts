@@ -33,10 +33,9 @@ export function usePaymentProcess() {
         session_id: formData.session_id,
       };
 
-      console.log('💳 Processing XPay payment:', paymentData);
+      console.log('💳 Processing Paymob payment:', paymentData);
 
-      // ⚠️ تغيير الـ endpoint لـ XPay
-      const response = await fetch(`${API_PREFIX}/xpay/pay`, {
+      const response = await fetch(`${API_PREFIX}/pay`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,24 +49,24 @@ export function usePaymentProcess() {
         throw new Error(data.error || data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // ✅ Handle XPay response
-      if (data.iframe_url && data.transaction_uuid) {
-        console.log('✅ XPay payment initiated:', {
+      // ✅ Handle Paymob response
+      if (data.iframe_url && data.order_id) {
+        console.log('✅ Paymob payment initiated:', {
           iframe_url: data.iframe_url,
-          transaction_uuid: data.transaction_uuid
+          order_id: data.order_id
         });
 
-        // 🔑 CRITICAL: Save transaction_uuid to localStorage BEFORE opening iframe
-        localStorage.setItem('transaction_uuid', data.transaction_uuid);
-        console.log('💾 Saved transaction_uuid to localStorage:', data.transaction_uuid);
+        // 🔑 CRITICAL: Save order_id to localStorage BEFORE opening iframe
+        localStorage.setItem('transaction_uuid', data.order_id.toString());
+        console.log('💾 Saved order_id to localStorage mapped as transaction_uuid:', data.order_id);
 
-        // Redirect to XPay payment iframe
+        // Redirect to Paymob payment iframe
         window.location.href = data.iframe_url;
         
         return { 
           success: true, 
-          bookingId: data.order_id || data.transaction_uuid,
-          transactionId: data.transaction_uuid
+          bookingId: data.order_id.toString(),
+          transactionId: data.order_id.toString()
         };
       } else {
         throw new Error(data.error || 'Payment initiation failed');
