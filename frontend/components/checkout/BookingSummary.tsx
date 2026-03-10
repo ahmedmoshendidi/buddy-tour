@@ -11,13 +11,23 @@ interface BookingSummaryProps {
 }
 
 export default function BookingSummary({ formData, tourTitle }: BookingSummaryProps) {
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency, exchangeRates } = useCurrency();
 
   const adults = formData.adults || 0;
   const children = formData.children || 0;
   const totalPeople = adults + children;
   const pricePerPerson = formData.price_per_person || 0;
   const totalAmount = formData.total_amount || (pricePerPerson * totalPeople);
+
+  const formatEGP = (usdPrice: number) => {
+    const value = usdPrice * (exchangeRates['EGP'] || 48.5);
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: 'EGP',
+      currencyDisplay: 'narrowSymbol',
+      maximumFractionDigits: 0
+    }).format(value);
+  };
 
   return (
     <Card className="sticky top-6">
@@ -82,7 +92,14 @@ export default function BookingSummary({ formData, tourTitle }: BookingSummaryPr
           
           <div className="flex justify-between font-medium text-base">
             <span>Total</span>
-            <span className="text-primary">{formatPrice(totalAmount)}</span>
+            <div className="text-right">
+              <span className="text-primary block">{formatPrice(totalAmount)}</span>
+              {currency !== 'EGP' && (
+                <span className="text-sm text-muted-foreground block">
+                  {formatEGP(totalAmount)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

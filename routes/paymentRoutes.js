@@ -2,6 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const path = require("path");
 const sendConfirmationEmail = require("../utils/sendConfirmationEmail");
+const { getExchangeRates } = require("../services/exchangeRates");
 require("dotenv").config();
 
 const { Pool } = require("pg");
@@ -96,7 +97,11 @@ router.post("/pay", async (req, res) => {
 
     const basePrice = tourRes.rows[0].price_per_person;
     const tourTitle = tourRes.rows[0].title;
-    const totalAmountCents = Math.round((basePrice * adults + basePrice * 0.8 * children) * 100);
+    const totalAmountUSD = basePrice * adults + basePrice * 0.8 * children;
+
+    const ratesResult = await getExchangeRates();
+    const egpRate = ratesResult.success ? (ratesResult.data.rates?.EGP || 48.5) : 48.5;
+    const totalAmountCents = Math.round(totalAmountUSD * egpRate * 100);
 
     const token = await getAuthToken();
     const orderId = parseInt(await createOrder(token, totalAmountCents));
