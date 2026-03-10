@@ -20,13 +20,21 @@ export default function BookingSummary({ formData, tourTitle }: BookingSummaryPr
   const totalAmount = formData.total_amount || (pricePerPerson * totalPeople);
 
   const formatEGP = (usdPrice: number) => {
-    const value = usdPrice * (exchangeRates['EGP'] || 48.5);
+    // Convert USD to the currently selected currency, then calculate the precise EGP equivalent
+    // to match exactly what the user sees in their chosen currency.
+    const selectedCurrencyRate = exchangeRates[currency] || 1;
+    const egpRate = exchangeRates['EGP'] || 48.5;
+    
+    // Convert the displayed price in selected currency directly to EGP
+    const displayedPriceInSelectedCurrency = usdPrice * selectedCurrencyRate;
+    const equivalentEGP = displayedPriceInSelectedCurrency * (egpRate / selectedCurrencyRate);
+
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency: 'EGP',
       currencyDisplay: 'narrowSymbol',
       maximumFractionDigits: 0
-    }).format(value);
+    }).format(equivalentEGP);
   };
 
   return (
