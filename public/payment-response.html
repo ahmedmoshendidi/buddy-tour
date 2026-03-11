@@ -2,178 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Payment Response | BuddyTour</title>
+  <title>Redirecting... | BuddyTour</title>
   <meta name="robots" content="noindex, nofollow" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    // Instant redirect to the React result page
+    const url = new URL(window.location.href);
+    url.pathname = '/payment-result';
+    window.location.replace(url.toString());
+  </script>
   <style>
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      margin: 0;
-      background: #0f172a;
-      color: #fff;
+    body { 
+      background: #0f172a; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      height: 100vh; 
+      margin: 0; 
+      color: #9ca3af; 
+      font-family: system-ui, -apple-system, sans-serif; 
     }
-    .wrap {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 48px 20px;
-      text-align: center;
-    }
-    .card {
-      background: #0b1220;
-      border: 1px solid #1f2a44;
-      border-radius: 16px;
-      padding: 32px;
-    }
-    .muted {
-      color: #9ca3af;
-    }
-    #debug-log {
-      margin-top: 20px;
-      text-align: left;
-      background: #1e293b;
-      padding: 16px;
-      border-radius: 8px;
-      font-family: monospace;
-      font-size: 12px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .log-line {
-      margin: 4px 0;
-      padding: 4px;
-      border-left: 3px solid #3b82f6;
-      padding-left: 8px;
-    }
-    .log-success { border-color: #10b981; color: #10b981; }
-    .log-error { border-color: #ef4444; color: #ef4444; }
-    .log-warning { border-color: #f59e0b; color: #f59e0b; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Processing payment…</h1>
-      <p class="muted">Please wait, you will be redirected shortly.</p>
-      <div id="debug-log"></div>
-    </div>
-  </div>
-
-<script>
-// Debug logger
-function addLog(message, type = 'info') {
-  const logDiv = document.getElementById('debug-log');
-  const line = document.createElement('div');
-  line.className = `log-line log-${type}`;
-  line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-  logDiv.appendChild(line);
-  logDiv.scrollTop = logDiv.scrollHeight;
-}
-
-(async function () {
-  addLog('🚀 Starting payment verification process...');
-  
-  const transactionUuid = localStorage.getItem("transaction_uuid");
-  addLog(`🔑 Transaction UUID: ${transactionUuid || 'NOT FOUND'}`, transactionUuid ? 'info' : 'error');
-
-  if (!transactionUuid) {
-    console.warn("❌ No transaction UUID found in localStorage.");
-    addLog('❌ No transaction UUID found - redirecting to failure page', 'error');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    location.replace("/payment-result?success=false");
-    return;
-  }
-
-  let success = false;
-  let attempts = 0;
-  const maxAttempts = 5;
-
-  while (attempts < maxAttempts && !success) {
-    attempts++;
-    addLog(`🔄 Verification attempt ${attempts}/${maxAttempts}`, 'warning');
-
-    try {
-      // Use the ID from URL if available, otherwise fallback to localStorage
-      const urlParams = new URLSearchParams(window.location.search);
-      const id = urlParams.get('id') || transactionUuid;
-      
-      const apiUrl = `/api/payment-status/${id}`;
-      addLog(`🌐 Calling API: ${apiUrl}`);
-      
-      const res = await fetch(apiUrl);
-      
-      if (!res.ok) {
-        addLog(`⚠️ API returned status: ${res.status}`, 'warning');
-        throw new Error(`API returned ${res.status}`);
-      }
-      
-      const data = await res.json();
-      addLog(`📦 Status: "${data.status}"`);
-      
-      // Store amount if available for final redirect
-      if (data.amount_cents) {
-        window.lastPaymentAmount = data.amount_cents;
-      }
-
-      success = ["captured", "successful", "completed"].includes(data.status?.toLowerCase());
-      
-      if (success) {
-        addLog('✅ Payment verified successfully!', 'success');
-        break;
-      }
-
-      if (["failed", "voided", "declined"].includes(data.status?.toLowerCase())) {
-        addLog(`❌ Payment failed with status: ${data.status}`, 'error');
-        break;
-      }
-
-      // Wait before retry
-      if (attempts < maxAttempts) {
-        addLog(`⏳ Waiting 2s before retry...`, 'warning');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    } catch (err) {
-      addLog(`⚠️ Attempt ${attempts} failed: ${err.message}`, 'error');
-      if (attempts < maxAttempts) await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-  }
-
-  // Cleanup localStorage if successful
-  if (success) {
-    addLog('🧹 Cleaning up localStorage...', 'success');
-    const raw = localStorage.getItem("bookingData");
-    const booking = raw ? JSON.parse(raw) : null;
-
-    if (booking && booking.session_id) {
-      localStorage.setItem("paid_booking", JSON.stringify({
-        session_id: booking.session_id,
-        at: Date.now()
-      }));
-      addLog('💾 Saved paid_booking to localStorage', 'success');
-    }
-
-    localStorage.removeItem("bookingData");
-    localStorage.removeItem("transaction_uuid");
-    if (booking?.tour_id) {
-      localStorage.removeItem(`buddy_tour_session_${booking.tour_id}`);
-    }
-    addLog('✅ localStorage cleanup complete', 'success');
-  }
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const id = urlParams.get('id') || transactionUuid;
-  let redirectUrl = `/payment-result?success=${success}&id=${id}`;
-  
-  // Try to get amount_cents if it was fetched
-  if (window.lastPaymentAmount) {
-     redirectUrl += `&amount_cents=${window.lastPaymentAmount}`;
-  }
-
-  addLog(`🔄 Redirecting to: ${redirectUrl}`, success ? 'success' : 'error');
-  
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  location.replace(redirectUrl);
-
-})();
-</script>
+  <p>Redirecting to your booking details...</p>
 </body>
 </html>
