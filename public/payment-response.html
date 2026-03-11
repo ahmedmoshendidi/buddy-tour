@@ -170,9 +170,6 @@ function addLog(message, type = 'info') {
 
   addLog(`🔄 Redirecting to: ${redirectUrl}`, success ? 'success' : 'error');
   
-  // Show alert before redirect
-  alert(`Payment Status: ${success ? 'SUCCESS ✅' : 'FAILED ❌'}\n\nRedirecting to result page...`);
-  
   await new Promise(resolve => setTimeout(resolve, 1000));
   location.replace(redirectUrl);
 
