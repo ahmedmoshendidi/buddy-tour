@@ -13,7 +13,7 @@ const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
 const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID;
 const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID;
 const FRONTEND_URL = process.env.FRONTEND_URL;
-const DOMAIN = "https://buddy-tour-production.up.railway.app";
+const DOMAIN = "https://buddytourguide.com";
 
 // ====== DB Connection ======
 const pool = new Pool({
