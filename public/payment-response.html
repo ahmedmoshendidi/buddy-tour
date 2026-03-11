@@ -108,6 +108,11 @@ function addLog(message, type = 'info') {
       
       const data = await res.json();
       addLog(`📦 Status: "${data.status}"`);
+      
+      // Store amount if available for final redirect
+      if (data.amount_cents) {
+        window.lastPaymentAmount = data.amount_cents;
+      }
 
       success = ["captured", "successful", "completed"].includes(data.status?.toLowerCase());
       
@@ -154,12 +159,19 @@ function addLog(message, type = 'info') {
     addLog('✅ localStorage cleanup complete', 'success');
   }
 
-  const redirectUrl = `/payment-result?success=${success}`;
+  const urlParams = new URLSearchParams(window.location.search);
+  const id = urlParams.get('id') || transactionUuid;
+  let redirectUrl = `/payment-result?success=${success}&id=${id}`;
+  
+  // Try to get amount_cents if it was fetched
+  if (window.lastPaymentAmount) {
+     redirectUrl += `&amount_cents=${window.lastPaymentAmount}`;
+  }
+
   addLog(`🔄 Redirecting to: ${redirectUrl}`, success ? 'success' : 'error');
-  console.log(`🔄 Redirecting to: ${redirectUrl}`);
   
   // Show alert before redirect
-  alert(`Payment Status: ${success ? 'SUCCESS ✅' : 'FAILED ❌'}\n\nRedirecting to: ${redirectUrl}\n\nCheck console for details.`);
+  alert(`Payment Status: ${success ? 'SUCCESS ✅' : 'FAILED ❌'}\n\nRedirecting to result page...`);
   
   await new Promise(resolve => setTimeout(resolve, 1000));
   location.replace(redirectUrl);

@@ -58,13 +58,15 @@ export default function SuccessCleanup() {
         }
       }
 
-      // 4) نظّف الـ URL من باراميترات النجاح
-      params.delete('success');
-      params.delete('status');
-      const newQuery = params.toString();
-      const cleanUrl =
-        window.location.pathname + (newQuery ? `?${newQuery}` : '');
-      window.history.replaceState({}, '', cleanUrl);
+      // 4) نظّف الـ URL من باراميترات النجاح (إلا لو في صفحة النتيجة عشان الصفحة محتجاهم)
+      if (window.location.pathname !== '/payment-result') {
+        params.delete('success');
+        params.delete('status');
+        const newQuery = params.toString();
+        const cleanUrl =
+          window.location.pathname + (newQuery ? `?${newQuery}` : '');
+        window.history.replaceState({}, '', cleanUrl);
+      }
     } catch (err) {
       console.error('SuccessCleanup error:', err);
     }
