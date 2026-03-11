@@ -55,7 +55,7 @@ async function generatePaymentKey(token, orderId, billingData, amountCents) {
     currency: "EGP",
     integration_id: PAYMOB_INTEGRATION_ID,
     lock_order_when_paid: true,
-    return_url: `${FRONTEND_URL}/payment-response.html?id=${orderId}`,
+    return_url: `${FRONTEND_URL}/payment-result`,
   });
   return response.data.token;
 }
