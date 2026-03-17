@@ -1,6 +1,7 @@
 const express = require("express");
 const axios = require("axios");
 const path = require("path");
+const crypto = require("crypto");
 const sendConfirmationEmail = require("../utils/sendConfirmationEmail");
 const { getExchangeRates } = require("../services/exchangeRates");
 require("dotenv").config();
@@ -12,6 +13,12 @@ const router = express.Router();
 const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
 const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID;
 const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID;
+
+// ====== Paysky Config ======
+const PAYSKY_MID = process.env.PAYSKY_MID;
+const PAYSKY_TID = process.env.PAYSKY_TID;
+const PAYSKY_SECRET = process.env.PAYSKY_SECRET;
+
 const FRONTEND_URL = process.env.FRONTEND_URL;
 const DOMAIN = "https://buddytourguide.com";
 
@@ -23,6 +30,18 @@ const pool = new Pool({
 
 // ====== Payment Status Cache ======
 const paymentStatus = new Map();
+
+// === Generate Paysky Hash ===
+function generatePayskyHash(dateTimeLocalTrxn, amount, merchantReference) {
+  const hashingString = `Amount=${amount}&DateTimeLocalTrxn=${dateTimeLocalTrxn}&MerchantId=${PAYSKY_MID}&MerchantReference=${merchantReference}&TerminalId=${PAYSKY_TID}`;
+  
+  const key = Buffer.from(PAYSKY_SECRET, 'hex');
+  const hmac = crypto.createHmac('sha256', key);
+  hmac.update(hashingString);
+  const hash = hmac.digest('hex').toUpperCase();
+  
+  return hash;
+}
 
 // === Get Paymob Auth Token ===
 async function getAuthToken() {
@@ -312,6 +331,193 @@ router.get("/payment-status/:transactionId", (req, res) => {
     orderId: statusData.orderId,
     amount_cents: statusData.amountCents,
   });
+});
+
+// === /api/paysky/pay ===
+router.post("/paysky/pay", async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      nationality,
+      tour_id,
+      date,
+      time,
+      adults,
+      children,
+      session_id,
+    } = req.body;
+
+    const client = await pool.connect();
+    const tourRes = await client.query("SELECT price_per_person, title FROM tours WHERE id = $1", [tour_id]);
+    if (tourRes.rows.length === 0) return res.status(400).json({ error: "Invalid tour ID" });
+
+    const basePrice = tourRes.rows[0].price_per_person;
+    const tourTitle = tourRes.rows[0].title;
+    const totalAmountUSD = basePrice * adults + basePrice * 0.8 * children;
+
+    const ratesResult = await getExchangeRates();
+    const egpRate = ratesResult.success ? (ratesResult.data.rates?.EGP || 48.5) : 48.5;
+    
+    // Paysky usually takes amount as string with 2 decimal places or just decimal
+    const totalAmount = (totalAmountUSD * egpRate).toFixed(2);
+    const merchantReference = `BT-${Date.now()}`;
+    const trxDateTime = new Date().toGMTString();
+    
+    const secureHash = generatePayskyHash(trxDateTime, totalAmount, merchantReference);
+
+    // Store context for callback
+    paymentStatus.set(merchantReference, {
+      status: "pending",
+      billingData: { firstName, lastName, email, phone, nationality },
+      tourId: parseInt(tour_id),
+      tourTitle,
+      selectedDate: date,
+      timeSlot: time,
+      peopleCount: { adults, children },
+      sessionId: session_id,
+      createdAt: new Date(),
+    });
+
+    client.release();
+    
+    res.json({
+      MID: PAYSKY_MID,
+      TID: PAYSKY_TID,
+      AmountTrxn: totalAmount,
+      MerchantReference: merchantReference,
+      TrxDateTime: trxDateTime,
+      SecureHash: secureHash,
+    });
+  } catch (err) {
+    console.error("❌ Paysky initiation error:", err.message);
+    res.status(500).json({ error: "Paysky initiation failed" });
+  }
+});
+
+// === /api/paysky/callback ===
+router.post("/paysky/callback", async (req, res) => {
+  // Paysky sends completion data
+  const data = req.body;
+  console.log('📥 Paysky Callback Received:', data);
+
+  const merchantReference = data.MerchantReference;
+  const isSuccess = data.Success === "true" || data.ResponseCode === "000";
+
+  if (!merchantReference) return res.status(400).send("Invalid callback data");
+
+  const existing = paymentStatus.get(merchantReference);
+  if (!existing) {
+    console.warn('⚠️ No existing context for Paysky reference:', merchantReference);
+    return res.status(200).send("OK"); // Still return 200 to acknowledge
+  }
+
+  const statusObj = {
+    ...existing,
+    status: isSuccess ? "captured" : "failed",
+    transactionId: data.SystemReference || data.NetworkReference,
+    orderId: merchantReference,
+    amountCents: Math.round(parseFloat(data.Amount) * 100),
+    updatedAt: new Date(),
+  };
+
+  paymentStatus.set(merchantReference, statusObj);
+  if (data.SystemReference) paymentStatus.set(data.SystemReference.toString(), statusObj);
+
+  if (isSuccess) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const {
+        billingData,
+        tourId,
+        tourTitle,
+        selectedDate,
+        timeSlot,
+        peopleCount,
+        sessionId,
+      } = existing;
+
+      const fullName = `${billingData.firstName} ${billingData.lastName || ''}`.trim();
+      const email = billingData.email;
+      const phone = billingData.phone;
+      const nationality = billingData.nationality || "NA";
+
+      // Idempotency
+      const transactionId = data.SystemReference || data.NetworkReference;
+      const alreadyProcessed = await client.query(
+        `SELECT 1 FROM payments WHERE transaction_id = $1`,
+        [transactionId]
+      );
+      if (alreadyProcessed.rowCount > 0) {
+        await client.query('COMMIT');
+        return res.status(200).send("OK");
+      }
+
+      if (sessionId) {
+        const holdConfirm = await client.query(
+          `UPDATE seat_holds 
+           SET status = 'confirmed', order_id = $1 
+           WHERE session_id = $2 AND status = 'active'
+           RETURNING id, time_slot_id, seats`,
+          [merchantReference, sessionId]
+        );
+
+        if (holdConfirm.rowCount > 0) {
+          const hold = holdConfirm.rows[0];
+          await client.query(
+            `UPDATE time_slots 
+             SET booked_seats = booked_seats + $1, held_seats = held_seats - $1
+             WHERE id = $2`,
+            [hold.seats, hold.time_slot_id]
+          );
+        }
+      }
+
+      const totalPeople = Number(peopleCount.adults || 0) + Number(peopleCount.children || 0);
+      const bookingInsert = await client.query(
+        `INSERT INTO bookings
+         (tour_id, guide_id, full_name, email, phone, nationality, selected_date, time_slot, people_count)
+         VALUES ($1,$2,$3,$4,$5,$6,$7::date,$8,$9)
+         RETURNING id`,
+        [tourId, 1, fullName, email, phone, nationality, selectedDate, timeSlot, totalPeople]
+      );
+
+      await client.query(
+        `INSERT INTO payments (order_id, transaction_id, email, full_name, amount_cents, status)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [merchantReference, transactionId, email, fullName, Math.round(parseFloat(data.Amount) * 100), 'captured']
+      );
+
+      await client.query('COMMIT');
+
+      try {
+        await sendConfirmationEmail(email, "Booking Confirmation", {
+          firstName: billingData.firstName,
+          lastName: billingData.lastName || "-",
+          tourTitle,
+          date: selectedDate,
+          time: timeSlot,
+          adults: peopleCount.adults,
+          children: peopleCount.children,
+          amount: parseFloat(data.Amount),
+        });
+      } catch (mailErr) {
+        console.warn("✉️ Email send failed:", mailErr.message);
+      }
+
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error("❌ DB error in Paysky callback:", err);
+    } finally {
+      client.release();
+    }
+  }
+
+  res.status(200).send("OK");
 });
 
 module.exports = router;
