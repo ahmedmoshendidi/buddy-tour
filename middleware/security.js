@@ -30,6 +30,8 @@ const helmetOptions = {
       "script-src": [
         "'self'",
         "https://cdn.jsdelivr.net",
+        "https://red3.paysky.io:3011",
+        "https://cdnjs.cloudflare.com",
         "'unsafe-inline'"
       ],
       "style-src": [
@@ -46,7 +48,7 @@ const helmetOptions = {
         "https://*.cloudinary.com",
         "https://*.amazonaws.com"
       ],
-      "connect-src": ["'self'", "https://accept.paymob.com"]
+      "connect-src": ["'self'", "https://accept.paymob.com", "https://red3.paysky.io:3011"]
     }
   }
 };

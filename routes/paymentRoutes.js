@@ -366,6 +366,11 @@ router.post("/paysky/pay", async (req, res) => {
     const merchantReference = `BT-${Date.now()}`;
     const trxDateTime = new Date().toGMTString();
     
+    console.log('🔐 Generating hash for:', { trxDateTime, totalAmount, merchantReference });
+    console.log('🔑 PAYSKY_MID:', PAYSKY_MID);
+    console.log('🔑 PAYSKY_TID:', PAYSKY_TID);
+    console.log('🔑 PAYSKY_SECRET set:', !!PAYSKY_SECRET);
+
     const secureHash = generatePayskyHash(trxDateTime, totalAmount, merchantReference);
 
     // Store context for callback
