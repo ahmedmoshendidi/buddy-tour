@@ -35,6 +35,10 @@ const paymentStatus = new Map();
 function generatePayskyHash(dateTimeLocalTrxn, amount, merchantReference) {
   const hashingString = `Amount=${amount}&DateTimeLocalTrxn=${dateTimeLocalTrxn}&MerchantId=${PAYSKY_MID}&MerchantReference=${merchantReference}&TerminalId=${PAYSKY_TID}`;
   
+  if (!PAYSKY_SECRET) {
+    throw new Error("PAYSKY_SECRET is not defined in environment variables");
+  }
+
   const key = Buffer.from(PAYSKY_SECRET, 'hex');
   const hmac = crypto.createHmac('sha256', key);
   hmac.update(hashingString);
