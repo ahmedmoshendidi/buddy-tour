@@ -103,12 +103,8 @@ export default function CheckoutProcess() {
     if (currentStep > 1) {
       prevStep();
     } else {
-      // Navigate back to the specific tour
-      if (slug) {
-        navigate(`/tour/${slug}`);
-      } else {
-        navigate('/');
-      }
+      // Always go back to Home for "Back to Tours"
+      navigate('/');
     }
   };
 
@@ -216,7 +212,7 @@ export default function CheckoutProcess() {
                 onExpire={() => {
                   setHoldExpiration(null);
                   alert('Your seat reservation has expired. Please select your seats again.');
-                  navigate(-1);
+                  navigate('/');
                 }}
               />
             )}
