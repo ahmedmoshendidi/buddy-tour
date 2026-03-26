@@ -30,28 +30,28 @@ const helmetOptions = {
       "script-src": [
         "'self'",
         "https://cdn.jsdelivr.net",
-        "https://red3.paysky.io:3011",
+        "https://cube.paysky.io:6006",
         "https://cdnjs.cloudflare.com",
         "'unsafe-inline'"
       ],
       "style-src": [
         "'self'",
         "https://cdn.jsdelivr.net",
-        "https://red3.paysky.io:3011",
+        "https://cube.paysky.io:6006",
         "'unsafe-inline'"
       ],
       "img-src": [
         "'self'",
         "data:",
         "https://cdn.jsdelivr.net",
-        "https://red3.paysky.io:3011",
+        "https://cube.paysky.io:6006",
         "https://images.unsplash.com",
         "https://*.unsplash.com",
         "https://*.cloudinary.com",
         "https://*.amazonaws.com"
       ],
-      "connect-src": ["'self'", "https://accept.paymob.com", "https://red3.paysky.io:3011"],
-      "frame-src": ["'self'", "https://red3.paysky.io:3011"]
+      "connect-src": ["'self'", "https://accept.paymob.com", "https://cube.paysky.io:6006"],
+      "frame-src": ["'self'", "https://cube.paysky.io:6006"]
     }
   }
 };
