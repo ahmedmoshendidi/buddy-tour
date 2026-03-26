@@ -67,6 +67,9 @@ export function usePaymentProcess() {
             SecureHash: data.SecureHash,
             MerchantReference: data.MerchantReference,
             TrxDateTime: data.TrxDateTime,
+            // Wallet requires MobileNumber (usually with country code like 201xxxxxxxxx)
+            MobileNumber: data.CustomerMobile ? (data.CustomerMobile.startsWith('2') ? data.CustomerMobile : '2' + data.CustomerMobile) : '',
+            CustomerEmail: data.CustomerEmail || '',
             completeCallback: function (res: any) {
               console.log('✅ Paysky completed:', res);
               localStorage.setItem('transaction_uuid', data.MerchantReference);

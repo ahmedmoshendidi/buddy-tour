@@ -31,15 +31,19 @@ const pool = new Pool({
 // ====== Payment Status Cache ======
 const paymentStatus = new Map();
 
-// === Format Paysky Date (yyyyMMddHHmm) ===
-function formatPayskyDate(date) {
+// === Format Paysky Date ===
+function formatPayskyDate(date, includeSeconds = false) {
   const pad = (n) => String(n).padStart(2, "0");
   const y = date.getUTCFullYear();
   const m = pad(date.getUTCMonth() + 1);
   const d = pad(date.getUTCDate());
   const h = pad(date.getUTCHours());
   const min = pad(date.getUTCMinutes());
-  return `${y}${m}${d}${h}${min}`;
+  let str = `${y}${m}${d}${h}${min}`;
+  if (includeSeconds) {
+    str += pad(date.getUTCSeconds());
+  }
+  return str;
 }
 
 // === Generate Paysky Hash ===
@@ -379,14 +383,16 @@ router.post("/paysky/pay", async (req, res) => {
     // Paysky Live expects amount as integer in smallest unit (cents/piasters)
     const amountCents = Math.round(totalAmountUSD * egpRate * 100);
     const merchantReference = `BT-${Date.now()}`;
-    const trxDateTime = formatPayskyDate(new Date());
+    const now = new Date();
+    const trxDateTime = formatPayskyDate(now, false); // "yyyyMMddHHmm" (12 chars)
+    const dateTimeLocalTrxn = formatPayskyDate(now, true); // "yyyyMMddHHmmss" (14 chars)
     
-    console.log('🔐 Generating hash for:', { trxDateTime, amountCents, merchantReference });
+    console.log('🔐 Generating hash for:', { trxDateTime, dateTimeLocalTrxn, amountCents, merchantReference });
     console.log('🔑 PAYSKY_MID:', PAYSKY_MID);
     console.log('🔑 PAYSKY_TID:', PAYSKY_TID);
     console.log('🔑 PAYSKY_SECRET set:', !!PAYSKY_SECRET);
 
-    const secureHash = generatePayskyHash(trxDateTime, amountCents, merchantReference);
+    const secureHash = generatePayskyHash(dateTimeLocalTrxn, amountCents, merchantReference);
 
     // Store context for callback
     paymentStatus.set(merchantReference, {
@@ -411,6 +417,9 @@ router.post("/paysky/pay", async (req, res) => {
       MerchantReference: merchantReference,
       TrxDateTime: trxDateTime,
       SecureHash: secureHash,
+      // Pass back phone for Lightbox Wallet use
+      CustomerMobile: phone,
+      CustomerEmail: email,
     });
   } catch (err) {
     console.error("❌ Paysky initiation error:", err.message);
