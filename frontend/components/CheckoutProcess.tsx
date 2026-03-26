@@ -5,7 +5,7 @@ import { useCheckoutForm } from '../hooks/useCheckoutForm';
 import { usePaymentProcess } from '../hooks/usePaymentProcess';
 import CountdownTimer from './ui/CountdownTimer';
 import { useCart } from './CartContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // Step Components
 import CheckoutSteps from './checkout/CheckoutSteps';
@@ -22,6 +22,7 @@ const steps = [
 
 export default function CheckoutProcess() {
   const navigate = useNavigate();
+  const { slug } = useParams();
   const { currentStep, formData, errors, updateFormData, nextStep, prevStep } = useCheckoutForm();
   const { isProcessing, paymentResult, processPayment } = usePaymentProcess();
   const { bookedTours } = useCart();
@@ -102,7 +103,12 @@ export default function CheckoutProcess() {
     if (currentStep > 1) {
       prevStep();
     } else {
-      navigate(-1);
+      // Navigate back to the specific tour
+      if (slug) {
+        navigate(`/tour/${slug}`);
+      } else {
+        navigate('/');
+      }
     }
   };
 
@@ -140,7 +146,7 @@ export default function CheckoutProcess() {
     if (currentStep === 3) {
       return (
         <div className="flex justify-center">
-          <Button onClick={() => navigate('/tours')} className="px-8">
+          <Button onClick={() => navigate('/')} className="px-8">
             Return to Tours
           </Button>
         </div>
