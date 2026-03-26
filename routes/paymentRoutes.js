@@ -385,7 +385,8 @@ router.post("/paysky/pay", async (req, res) => {
     const merchantReference = `BT-${Date.now()}`;
     const now = new Date();
     const trxDateTime = formatPayskyDate(now, false); // "yyyyMMddHHmm" (12 chars)
-    const dateTimeLocalTrxn = formatPayskyDate(now, true); // "yyyyMMddHHmmss" (14 chars)
+    // Reverting hash to 12 chars as 14 chars broke cards
+    const dateTimeLocalTrxn = trxDateTime; 
     
     console.log('🔐 Generating hash for:', { trxDateTime, dateTimeLocalTrxn, amountCents, merchantReference });
     console.log('🔑 PAYSKY_MID:', PAYSKY_MID);

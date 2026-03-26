@@ -67,8 +67,15 @@ export function usePaymentProcess() {
             SecureHash: data.SecureHash,
             MerchantReference: data.MerchantReference,
             TrxDateTime: data.TrxDateTime,
-            // Wallet requires MobileNumber (usually with country code like 201xxxxxxxxx)
-            MobileNumber: data.CustomerMobile ? (data.CustomerMobile.startsWith('2') ? data.CustomerMobile : '2' + data.CustomerMobile) : '',
+            // Wallet requires MobileNumber (numeric only, 12-14 digits, starting with 2 for Egypt)
+            MobileNumber: (() => {
+              if (!data.CustomerMobile) return '';
+              let cleaned = data.CustomerMobile.replace(/\D/g, ''); // Keep only digits
+              if (cleaned.startsWith('00')) cleaned = cleaned.slice(2);
+              if (cleaned.startsWith('0')) cleaned = '2' + cleaned;
+              if (cleaned.length === 11 && cleaned.startsWith('1')) cleaned = '20' + cleaned;
+              return cleaned;
+            })(),
             CustomerEmail: data.CustomerEmail || '',
             completeCallback: function (res: any) {
               console.log('✅ Paysky completed:', res);
