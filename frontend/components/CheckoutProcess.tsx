@@ -5,7 +5,7 @@ import { useCheckoutForm } from '../hooks/useCheckoutForm';
 import { usePaymentProcess } from '../hooks/usePaymentProcess';
 import CountdownTimer from './ui/CountdownTimer';
 import { useCart } from './CartContext';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 
 // Step Components
 import CheckoutSteps from './checkout/CheckoutSteps';
@@ -151,14 +151,24 @@ export default function CheckoutProcess() {
 
     return (
       <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handlePrevious}
-          className="flex items-center gap-2"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          {currentStep === 1 ? 'Back to Tours' : 'Previous'}
-        </Button>
+        {currentStep === 1 ? (
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border rounded-md hover:bg-accent hover:text-accent-foreground border-input bg-background"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back to Tours
+          </Link>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            className="flex items-center gap-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+        )}
 
         <Button
           onClick={handleNext}

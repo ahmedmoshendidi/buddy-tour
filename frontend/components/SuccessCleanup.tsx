@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from './CartContext';
 
 export default function SuccessCleanup() {
+  const navigate = useNavigate();
   const { removeBookedTourBySession, markTourAsPaid } = useCart();
   // لتفادي تشغيل الـ effect مرتين في React Strict Mode أثناء التطوير
   const ranRef = useRef(false);
@@ -65,7 +67,7 @@ export default function SuccessCleanup() {
         const newQuery = params.toString();
         const cleanUrl =
           window.location.pathname + (newQuery ? `?${newQuery}` : '');
-        window.history.replaceState({}, '', cleanUrl);
+        navigate(cleanUrl, { replace: true });
       }
     } catch (err) {
       console.error('SuccessCleanup error:', err);
