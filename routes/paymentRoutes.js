@@ -31,6 +31,17 @@ const pool = new Pool({
 // ====== Payment Status Cache ======
 const paymentStatus = new Map();
 
+// === Format Paysky Date (yyyyMMddHHmm) ===
+function formatPayskyDate(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const y = date.getUTCFullYear();
+  const m = pad(date.getUTCMonth() + 1);
+  const d = pad(date.getUTCDate());
+  const h = pad(date.getUTCHours());
+  const min = pad(date.getUTCMinutes());
+  return `${y}${m}${d}${h}${min}`;
+}
+
 // === Generate Paysky Hash ===
 function generatePayskyHash(dateTimeLocalTrxn, amount, merchantReference) {
   const hashingString = `Amount=${amount}&DateTimeLocalTrxn=${dateTimeLocalTrxn}&MerchantId=${PAYSKY_MID}&MerchantReference=${merchantReference}&TerminalId=${PAYSKY_TID}`;
@@ -365,17 +376,17 @@ router.post("/paysky/pay", async (req, res) => {
     const ratesResult = await getExchangeRates();
     const egpRate = ratesResult.success ? (ratesResult.data.rates?.EGP || 48.5) : 48.5;
     
-    // Paysky usually takes amount as string with 2 decimal places or just decimal
-    const totalAmount = (totalAmountUSD * egpRate).toFixed(2);
+    // Paysky Live expects amount as integer in smallest unit (cents/piasters)
+    const amountCents = Math.round(totalAmountUSD * egpRate * 100);
     const merchantReference = `BT-${Date.now()}`;
-    const trxDateTime = new Date().toGMTString();
+    const trxDateTime = formatPayskyDate(new Date());
     
-    console.log('🔐 Generating hash for:', { trxDateTime, totalAmount, merchantReference });
+    console.log('🔐 Generating hash for:', { trxDateTime, amountCents, merchantReference });
     console.log('🔑 PAYSKY_MID:', PAYSKY_MID);
     console.log('🔑 PAYSKY_TID:', PAYSKY_TID);
     console.log('🔑 PAYSKY_SECRET set:', !!PAYSKY_SECRET);
 
-    const secureHash = generatePayskyHash(trxDateTime, totalAmount, merchantReference);
+    const secureHash = generatePayskyHash(trxDateTime, amountCents, merchantReference);
 
     // Store context for callback
     paymentStatus.set(merchantReference, {
@@ -387,6 +398,7 @@ router.post("/paysky/pay", async (req, res) => {
       timeSlot: time,
       peopleCount: { adults, children },
       sessionId: session_id,
+      amountCents: amountCents, // Store the cents for callback comparison
       createdAt: new Date(),
     });
 
@@ -395,7 +407,7 @@ router.post("/paysky/pay", async (req, res) => {
     res.json({
       MID: PAYSKY_MID,
       TID: PAYSKY_TID,
-      AmountTrxn: totalAmount,
+      AmountTrxn: amountCents,
       MerchantReference: merchantReference,
       TrxDateTime: trxDateTime,
       SecureHash: secureHash,
@@ -428,7 +440,8 @@ router.post("/paysky/callback", async (req, res) => {
     status: isSuccess ? "captured" : "failed",
     transactionId: data.SystemReference || data.NetworkReference,
     orderId: merchantReference,
-    amountCents: Math.round(parseFloat(data.Amount) * 100),
+    // Callback amount will now be in smallest unit if we sent it that way
+    amountCents: parseInt(data.Amount), 
     updatedAt: new Date(),
   };
 
