@@ -157,10 +157,24 @@ const createSeatHold = async (req, res) => {
     const timeSlot = timeSlotRes.rows[0];
     const timeSlotId = timeSlot.id;
 
-    // 2. Check if enough seats are available (excluding current session's hold)
+    // 2. Check for existing holds for this session and slot to avoid unique constraint violation
+    // If an active hold exists, we need to release those seats first
+    const existingActiveHold = await client.query(
+      'SELECT seats FROM seat_holds WHERE session_id = $1 AND time_slot_id = $2 AND status = $3',
+      [session_id, timeSlotId, 'active']
+    );
+
+    if (existingActiveHold.rows.length > 0) {
+      await client.query(
+        'UPDATE time_slots SET held_seats = held_seats - $1 WHERE id = $2',
+        [existingActiveHold.rows[0].seats, timeSlotId]
+      );
+    }
+
+    // Delete ANY existing hold for this session/slot (clears unique constraint)
     await client.query(
-      'DELETE FROM seat_holds WHERE session_id = $1 AND status = $2',
-      [session_id, 'active']
+      'DELETE FROM seat_holds WHERE session_id = $1 AND time_slot_id = $2',
+      [session_id, timeSlotId]
     );
     
     // Recalculate availability after removing old hold
