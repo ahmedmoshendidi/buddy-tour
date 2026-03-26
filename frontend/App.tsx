@@ -31,7 +31,7 @@ function TicketsQuantityWrapper() {
   const { slug } = useParams();
   const navigate = useNavigate();
 
-  const handleBack = () => navigate('/');
+  const handleBack = () => navigate(`/tour/${slug}`);
   const handleCheckout = (bookingInfo: any) => {
     navigate(`/checkout/${slug}`, { state: { bookingInfo } });
   };
