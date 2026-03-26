@@ -59,7 +59,7 @@ export default function TourDetails() {
         {seoProps && <SEO {...seoProps} />}
         <div className="min-h-screen bg-gradient-to-b from-muted/30 to-amber-50/20 py-8">
           <div className="container mx-auto px-4 max-w-4xl">
-            <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
+            <Button variant="ghost" onClick={() => navigate('/')} className="mb-6">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Tours
             </Button>
@@ -93,7 +93,7 @@ export default function TourDetails() {
       <div className="min-h-screen bg-gradient-to-b from-muted/30 to-amber-50/20 py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Back Button */}
-          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6 hover:bg-white/50">
+          <Button variant="ghost" onClick={() => navigate('/')} className="mb-6 hover:bg-white/50">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Tours
           </Button>
