@@ -101,6 +101,7 @@ export default function Header() {
       <CartSidebar
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
+        onPayNow={(slug) => navigate(`/checkout/${slug}`)}
       />
     </>
   );

@@ -13,6 +13,7 @@ import { useCart } from './CartContext';
 
 interface Tour {
   id: number;
+  slug: string;
   title: string;
   price_per_person: number;
   max_group_size?: number;
@@ -106,6 +107,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
         
         const tourData: Tour = {
           id: data.tour.id,
+          slug: data.tour.slug || String(tourId),
           title: data.tour.title,
           price_per_person: pricePerPerson,
           max_group_size: data.tour.max_group_size || 12
@@ -307,6 +309,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
 
     addBookedTour({
       tourId: tour?.id || Number(tourId),
+      tourSlug: tour?.slug || String(tourId),
       tourTitle: tour?.title || 'Tour',
       date: selectedDate,
       time: selectedTime,
@@ -359,6 +362,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
 
     addBookedTour({
       tourId: tour?.id || Number(tourId),
+      tourSlug: tour?.slug || String(tourId),
       tourTitle: tour?.title || 'Tour',
       date: selectedDate,
       time: selectedTime,

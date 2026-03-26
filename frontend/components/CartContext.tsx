@@ -10,6 +10,7 @@ interface Tour {
 interface BookedTour {
   id: string; // Unique cart item ID
   tourId: number;
+  tourSlug: string; // Added for navigation
   tourTitle: string;
   date: string;
   time: string;

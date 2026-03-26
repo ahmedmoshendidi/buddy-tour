@@ -11,6 +11,7 @@ import CountdownTimer from './ui/CountdownTimer';
 interface BookedTour {
   id: string;
   tourId: number;
+  tourSlug: string;
   tourTitle: string;
   date: string;
   time: string;
@@ -27,7 +28,7 @@ interface BookedTour {
 interface CartSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  onPayNow?: () => void;
+  onPayNow?: (slug: string) => void;
 }
 
 export default function CartSidebar({ 
@@ -54,6 +55,7 @@ export default function CartSidebar({
       total_amount: bookedTour.totalAmount,
       price_per_person: bookedTour.pricePerPerson,
       session_id: bookedTour.sessionId,
+      tour_slug: bookedTour.tourSlug,
       hold_expires_at: bookedTour.holdExpiresAt
     };
     
@@ -63,9 +65,9 @@ export default function CartSidebar({
     
     // Navigate to checkout
    if (onPayNow) {
-      onPayNow();
+      onPayNow(bookedTour.tourSlug);
     } else {
-      window.location.href = '/?goto=checkout'; // fallback
+      window.location.href = `/?goto=checkout&slug=${bookedTour.tourSlug}`; // fallback
     }
   };
 
