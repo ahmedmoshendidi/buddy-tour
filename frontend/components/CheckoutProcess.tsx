@@ -142,9 +142,12 @@ export default function CheckoutProcess() {
     if (currentStep === 3) {
       return (
         <div className="flex justify-center">
-          <Button onClick={() => navigate('/')} className="px-8">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 px-8 py-2 text-sm font-medium transition-colors border rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+          >
             Return to Tours
-          </Button>
+          </a>
         </div>
       );
     }
@@ -152,13 +155,13 @@ export default function CheckoutProcess() {
     return (
       <div className="flex justify-between">
         {currentStep === 1 ? (
-          <Link
-            to="/"
+          <a
+            href="/"
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border rounded-md hover:bg-accent hover:text-accent-foreground border-input bg-background"
           >
             <ChevronLeft className="h-4 w-4" />
             Back to Tours
-          </Link>
+          </a>
         ) : (
           <Button
             variant="outline"
