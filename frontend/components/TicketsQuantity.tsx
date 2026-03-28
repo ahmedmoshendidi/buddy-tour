@@ -269,6 +269,15 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
     }
   };
 
+  const getLanguageDisplay = (code?: string) => {
+    if (!code) return 'English';
+    const map: { [key: string]: string } = {
+      en: 'English',
+      ar: 'Arabic'
+    };
+    return map[code.toLowerCase()] || code;
+  };
+
   // Common validation function
   const validateSelection = () => {
     if (!selectedDate || !selectedTime) {
@@ -320,7 +329,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       pricePerPerson: tour?.price_per_person || 0,
       sessionId: sessionId,
       holdExpiresAt: expirationTime.toISOString(),
-      language: timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language || 'English'
+      language: getLanguageDisplay(timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language)
     }, tourData);
 
     // Store booking data for checkout
@@ -328,7 +337,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       tour_id: tour?.id || tourId,
       date: selectedDate,
       time: selectedTime,
-      language: timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language || 'English',
+      language: getLanguageDisplay(timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language),
       adults,
       children,
       total_amount: calculateTotal(),
@@ -375,7 +384,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       pricePerPerson: tour?.price_per_person || 0,
       sessionId: sessionId,
       holdExpiresAt: expirationTime.toISOString(),
-      language: timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language || 'English'
+      language: getLanguageDisplay(timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language)
     }, tourData);
 
     // Store booking data even for cart (in case user navigates to checkout later)
@@ -383,7 +392,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       tour_id: tour?.id || tourId,
       date: selectedDate,
       time: selectedTime,
-      language: timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language || 'English',
+      language: getLanguageDisplay(timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language),
       adults,
       children,
       total_amount: calculateTotal(),

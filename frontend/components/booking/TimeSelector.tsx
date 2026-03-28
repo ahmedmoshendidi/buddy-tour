@@ -21,6 +21,15 @@ export default function TimeSelector({
   selectedDate,
   onTimeSelect
 }: TimeSelectorProps) {
+  const getLanguageName = (code?: string) => {
+    if (!code) return '';
+    const map: { [key: string]: string } = {
+      en: 'English',
+      ar: 'Arabic',
+    };
+    return map[code.toLowerCase()] || code;
+  };
+
   return (
     <div>
       <h3 className="text-lg mb-4 text-primary flex items-center">
@@ -42,10 +51,12 @@ export default function TimeSelector({
                 }
               `}
             >
-              <div className="flex items-center justify-center gap-1.5">
+              <div className="flex items-center justify-center gap-1.5 flex-wrap">
                 <span className="font-semibold">{slot.time.slice(0, 5)}</span>
                 {slot.language && (
-                  <span className="opacity-90">{slot.language}</span>
+                  <span className="text-xs opacity-80 font-normal">
+                    {getLanguageName(slot.language)}
+                  </span>
                 )}
               </div>
             </Button>
