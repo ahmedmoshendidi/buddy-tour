@@ -5,6 +5,7 @@ import { Clock } from 'lucide-react';
 interface TimeSlot {
   time: string;
   date: string;
+  language?: string;
 }
 
 interface TimeSelectorProps {
@@ -41,7 +42,12 @@ export default function TimeSelector({
                 }
               `}
             >
-              {slot.time.slice(0, 5)}
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="font-semibold">{slot.time.slice(0, 5)}</span>
+                {slot.language && (
+                  <span className="opacity-90">{slot.language}</span>
+                )}
+              </div>
             </Button>
           ))
         ) : (

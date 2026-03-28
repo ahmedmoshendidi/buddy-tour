@@ -22,6 +22,7 @@ interface BookedTour {
   holdExpiresAt: string;
   createdAt: string;
   isPaid?: boolean;
+  language?: string;
 }
 
 interface CartSidebarProps {
@@ -194,6 +195,11 @@ function CartItemCard({ bookedTour, onRemove, onPayNow, formatPrice }: CartItemC
               {bookedTour.children > 0 && `, ${bookedTour.children} child${bookedTour.children !== 1 ? 'ren' : ''}`}
             </span>
           </div>
+          {bookedTour.language && (
+            <div className="flex items-center gap-1 text-primary">
+              <span>🗣️ {bookedTour.language}</span>
+            </div>
+          )}
         </div>
 
         {/* Price */}
