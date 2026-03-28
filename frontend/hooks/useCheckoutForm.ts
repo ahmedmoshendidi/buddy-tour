@@ -20,6 +20,7 @@ export interface FormData {
   session_id?: string;
   total_amount?: number;
   price_per_person?: number;
+  language?: string;
   [key: string]: any;
 }
 

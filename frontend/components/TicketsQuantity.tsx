@@ -25,6 +25,7 @@ interface TimeSlot {
   capacity?: number;
   booked_seats?: number;
   available_spots?: number;
+  language?: string;
 }
 
 interface TicketsQuantityProps {
@@ -318,7 +319,8 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       totalAmount: calculateTotal(),
       pricePerPerson: tour?.price_per_person || 0,
       sessionId: sessionId,
-      holdExpiresAt: expirationTime.toISOString()
+      holdExpiresAt: expirationTime.toISOString(),
+      language: timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language || 'English'
     }, tourData);
 
     // Store booking data for checkout
@@ -326,6 +328,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       tour_id: tour?.id || tourId,
       date: selectedDate,
       time: selectedTime,
+      language: timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language || 'English',
       adults,
       children,
       total_amount: calculateTotal(),
@@ -371,7 +374,8 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       totalAmount: calculateTotal(),
       pricePerPerson: tour?.price_per_person || 0,
       sessionId: sessionId,
-      holdExpiresAt: expirationTime.toISOString()
+      holdExpiresAt: expirationTime.toISOString(),
+      language: timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language || 'English'
     }, tourData);
 
     // Store booking data even for cart (in case user navigates to checkout later)
@@ -379,6 +383,7 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
       tour_id: tour?.id || tourId,
       date: selectedDate,
       time: selectedTime,
+      language: timeSlots.find(s => s.date === selectedDate && s.time === selectedTime)?.language || 'English',
       adults,
       children,
       total_amount: calculateTotal(),

@@ -22,6 +22,7 @@ interface BookedTour {
   holdExpiresAt: string;
   createdAt: string;
   isPaid?: boolean; // Track paid status
+  language?: string; // Add language property
 }
 
 // interface CartContextType {

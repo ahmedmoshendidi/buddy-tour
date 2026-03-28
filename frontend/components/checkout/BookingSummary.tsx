@@ -66,6 +66,13 @@ export default function BookingSummary({ formData, tourTitle }: BookingSummaryPr
             </div>
           )}
 
+          {formData.language && (
+            <div className="flex items-center gap-2 text-sm text-primary">
+              <span className="text-lg leading-none">🗣️</span>
+              <span>{formData.language}</span>
+            </div>
+          )}
+
           {totalPeople > 0 && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
