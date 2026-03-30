@@ -61,17 +61,30 @@ export default function AdminDashboard() {
   const navigate = useNavigate(); // ✅ نستخدمه بدل prop
 
   useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      window.location.href = '/admin';
+      return;
+    }
     fetchApplications();
   }, []);
 
   const fetchApplications = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('adminToken');
       const response = await fetch('/api/tour-guide-applications', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken') || 'admin_secret_token_2024'}`
+          'Authorization': `Bearer ${token}`
         }
       });
+      
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem('adminToken');
+        window.location.href = '/admin';
+        return;
+      }
+
       const data = await response.json();
       
       if (response.ok) {
@@ -88,14 +101,21 @@ export default function AdminDashboard() {
 
   const updateApplicationStatus = async (id: number, newStatus: 'approved' | 'rejected') => {
     try {
+      const token = localStorage.getItem('adminToken');
       const response = await fetch(`/api/tour-guide-applications/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken') || 'admin_secret_token_2024'}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status: newStatus, reviewedBy: 'Admin' }),
       });
+
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem('adminToken');
+        window.location.href = '/admin';
+        return;
+      }
 
       if (response.ok) {
         await fetchApplications();
