@@ -144,7 +144,7 @@ app.get("/admin", (req, res) => {
                 if (response.ok) {
                     localStorage.setItem('adminToken', token);
                     // Redirect to admin dashboard in main app
-                    window.location.href = '/#admin-dashboard';
+                    window.location.href = '/admin-dashboard';
                 } else {
                     const error = document.getElementById('error');
                     error.textContent = 'Invalid access token';
