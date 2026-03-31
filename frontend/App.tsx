@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 
 import SuccessCleanup from './components/SuccessCleanup';
+import ScrollToTop from './components/ScrollToTop';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import WishlistNotification from './components/WishlistNotification';
@@ -61,6 +62,7 @@ export default function App() {
 
   return (
     <>
+      <ScrollToTop />
       <SuccessCleanup />
 
       <Routes>
