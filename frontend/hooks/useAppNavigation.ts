@@ -73,7 +73,7 @@ export function useAppNavigation() {
       }
     } else if (path === '/checkout') {
       setCurrentView('checkout');
-    } else if (path === '/become-tour-guide') {
+    } else if (path === '/tour-guide-application') {
       setCurrentView('tour-guide-application');
     }
     else if (path === '/CancellationPolicy') {
@@ -135,7 +135,7 @@ export function useAppNavigation() {
 
   const navigateToTourGuideApplication = () => {
     setCurrentView('tour-guide-application');
-    window.history.pushState({}, document.title, '/become-tour-guide');
+    window.history.pushState({}, document.title, '/tour-guide-application');
   };
 
   const navigateToCancellationPolicy = () => {

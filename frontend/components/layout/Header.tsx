@@ -73,7 +73,7 @@ export default function Header() {
 
             <nav className="hidden md:flex items-center space-x-6">
               <Link
-                to="/become-tour-guide"
+                to="/tour-guide-application"
                 className="hover:text-primary transition-colors font-medium"
               >
                 Become a Tour Guide

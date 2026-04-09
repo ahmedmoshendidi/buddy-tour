@@ -9,6 +9,7 @@ import WishlistNotification from './components/WishlistNotification';
 import CartNotification from './components/CartNotification';
 
 import HomePage from './components/pages/HomePage';
+import AboutPage from './components/pages/AboutPage';
 import TourGuideApplicationPage from './components/pages/TourGuideApplicationPage';
 import CancellationPolicy from './components/pages/CancellationPolicy';
 import ServiceDurationPolicy from './components/pages/ServiceDurationPolicy';
@@ -83,6 +84,7 @@ export default function App() {
               />
             }
           />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/tour/:slug" element={<TourDetails />} />
           <Route path="/tickets/:slug" element={<TicketsQuantityWrapper />} />
           <Route path="/checkout/:slug" element={<CheckoutProcess />} />
