@@ -36,8 +36,8 @@ export default function AboutPage() {
               <div className="mx-auto w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-6">
                 <Shield className="h-6 w-6 text-teal-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Safe & Reliable</h3>
-              <p className="text-muted-foreground">Every guide is vetted and verified to ensure you have a secure, comfortable, and completely reliable touring experience.</p>
+              <h3 className="text-xl font-semibold mb-3">Licensed Professionals</h3>
+              <p className="text-muted-foreground">Your safety and experience are paramount. We strictly select only officially licensed tour guides to work on our platform, not just anyone.</p>
             </CardContent>
           </Card>
 
@@ -56,12 +56,12 @@ export default function AboutPage() {
         <div className="bg-white/80 backdrop-blur-md rounded-3xl p-8 md:p-12 shadow-sm border border-muted/50 max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-6 text-foreground">Our Vision</h2>
+              <h2 className="text-3xl font-bold mb-6 text-foreground">Our Vision & Platform</h2>
               <p className="text-muted-foreground mb-4 leading-relaxed">
-                BuddyTour was born out of a simple idea: traveling should be about human connection. We noticed that many visitors to Alexandria were only seeing the surface. They were missing out on the vibrant street life, the rich undocumented history, and the warmth of the Egyptian people.
+                BuddyTour was born out of a simple idea: traveling should be about human connection. As a dedicated tourism marketplace, the passionate people providing services on our platform work for themselves as independent professionals.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                We envision a world where anyone can step into a new city and instantly find a knowledgeable "buddy" to show them around. By empowering local residents to become professional guides, we are fostering sustainable tourism and supporting the local economy.
+                We envision a world where anyone can step into a new city and instantly find a knowledgeable "buddy" to show them around. By giving local, licensed residents the platform to run their own businesses, we are fostering sustainable tourism and supporting the local economy directly.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
