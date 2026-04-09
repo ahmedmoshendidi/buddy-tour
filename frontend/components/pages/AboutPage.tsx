@@ -58,10 +58,10 @@ export default function AboutPage() {
             <div>
               <h2 className="text-3xl font-bold mb-6 text-foreground">Our Vision & Platform</h2>
               <p className="text-muted-foreground mb-4 leading-relaxed">
-                BuddyTour was born out of a simple idea: traveling should be about human connection. As a dedicated tourism marketplace, the passionate people providing services on our platform work for themselves as independent professionals.
+                BuddyTour was born out of a simple idea: traveling should be about human connection. As a dedicated tourism marketplace, the professionals offering services on our platform operate independently, bringing their expertise directly to travelers.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                We envision a world where anyone can step into a new city and instantly find a knowledgeable "buddy" to show them around. By giving local, licensed residents the platform to run their own businesses, we are fostering sustainable tourism and supporting the local economy directly.
+                We envision a world where anyone can step into a new city and instantly find a knowledgeable, licensed tour guide to show them around. By empowering certified tour guides to run their own businesses, we are fostering sustainable tourism while ensuring high-quality, trustworthy experiences.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
