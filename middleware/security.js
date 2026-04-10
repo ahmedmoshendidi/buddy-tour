@@ -32,6 +32,8 @@ const helmetOptions = {
         "https://cdn.jsdelivr.net",
         "https://cube.paysky.io:6006",
         "https://cdnjs.cloudflare.com",
+        "https://connect.facebook.net",
+        "https://www.clarity.ms",
         "'unsafe-inline'"
       ],
       "style-src": [
@@ -48,9 +50,17 @@ const helmetOptions = {
         "https://images.unsplash.com",
         "https://*.unsplash.com",
         "https://*.cloudinary.com",
-        "https://*.amazonaws.com"
+        "https://*.amazonaws.com",
+        "https://www.facebook.com",
+        "https://*.clarity.ms"
       ],
-      "connect-src": ["'self'", "https://accept.paymob.com", "https://cube.paysky.io:6006"],
+      "connect-src": [
+        "'self'", 
+        "https://accept.paymob.com", 
+        "https://cube.paysky.io:6006",
+        "https://www.facebook.com",
+        "https://*.clarity.ms"
+      ],
       "frame-src": ["'self'", "https://cube.paysky.io:6006"]
     }
   }
