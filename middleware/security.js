@@ -34,6 +34,8 @@ const helmetOptions = {
         "https://cdnjs.cloudflare.com",
         "https://connect.facebook.net",
         "https://www.clarity.ms",
+        "https://scripts.clarity.ms",
+        "https://*.clarity.ms",
         "'unsafe-inline'"
       ],
       "style-src": [
