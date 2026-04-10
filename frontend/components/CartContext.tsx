@@ -125,6 +125,17 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     
     setBookedTours(prev => [...prev, newBookedTour]);
     console.log('✅ Added to cart:', newBookedTour);
+
+    // Meta Pixel AddToCart Event
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'AddToCart', {
+        content_name: tourData?.title || tour.tourTitle,
+        content_ids: [tour.tourId],
+        content_type: 'product',
+        value: tour.totalAmount,
+        currency: 'USD'
+      });
+    }
     
     // Show notification if tour data is provided
     if (tourData) {

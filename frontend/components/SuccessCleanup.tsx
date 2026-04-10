@@ -37,6 +37,21 @@ export default function SuccessCleanup() {
       if (sessionId) {
         markTourAsPaid(sessionId);
         
+        // Meta Pixel Purchase Event
+        if (typeof window !== 'undefined' && (window as any).fbq) {
+          const purchaseTrackingKey = `fbq_purchase_${sessionId}`;
+          if (!localStorage.getItem(purchaseTrackingKey)) {
+            (window as any).fbq('track', 'Purchase', {
+              content_type: 'product',
+              content_ids: [tourId],
+              value: paidBooking?.total_amount || bookingData?.total_amount || 0,
+              currency: 'USD'
+            });
+            localStorage.setItem(purchaseTrackingKey, 'true');
+            console.log('✅ Meta Pixel Purchase Logged');
+          }
+        }
+        
         // 2) استناه شوية عشان اليوزر يشوف انه paid، بعدين امسحه من الكارت
         setTimeout(() => {
           console.log('🗑️ SuccessCleanup: Removing tour with sessionId:', sessionId);

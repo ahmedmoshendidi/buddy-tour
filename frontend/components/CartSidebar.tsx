@@ -46,6 +46,18 @@ export default function CartSidebar({
   const { formatPrice } = useCurrency();
 
   const handlePayForItem = (bookedTour: BookedTour) => {
+    // Meta Pixel InitiateCheckout Event
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'InitiateCheckout', {
+        content_name: bookedTour.tourTitle,
+        content_ids: [bookedTour.tourId],
+        content_type: 'product',
+        value: bookedTour.totalAmount,
+        currency: 'USD',
+        num_items: bookedTour.adults + bookedTour.children
+      });
+    }
+
     // Set booking data and navigate to checkout
     const bookingData = {
       tour_id: bookedTour.tourId,
