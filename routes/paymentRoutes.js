@@ -50,7 +50,7 @@ function formatPayskyDate(date, includeSeconds = false) {
 // === Generate Paysky Hash ===
 function generatePayskyHash(dateTimeLocalTrxn, amount, merchantReference) {
   const hashingString = `Amount=${amount}&DateTimeLocalTrxn=${dateTimeLocalTrxn}&MerchantId=${PAYSKY_MID}&MerchantReference=${merchantReference}&TerminalId=${PAYSKY_TID}`;
-  
+
   if (!PAYSKY_SECRET) {
     throw new Error("PAYSKY_SECRET is not defined in environment variables");
   }
@@ -59,7 +59,7 @@ function generatePayskyHash(dateTimeLocalTrxn, amount, merchantReference) {
   const hmac = crypto.createHmac('sha256', key);
   hmac.update(hashingString);
   const hash = hmac.digest('hex').toUpperCase();
-  
+
   return hash;
 }
 
@@ -385,15 +385,15 @@ router.post("/paysky/pay", async (req, res) => {
 
     const ratesResult = await getExchangeRates();
     const egpRate = ratesResult.success ? (ratesResult.data.rates?.EGP || 48.5) : 48.5;
-    
+
     // Paysky Live expects amount as integer in smallest unit (cents/piasters)
     const amountCents = Math.round(totalAmountUSD * egpRate * 100);
     const merchantReference = `BT-${Date.now()}`;
     const now = new Date();
     const trxDateTime = formatPayskyDate(now, false); // "yyyyMMddHHmm" (12 chars)
     // Reverting hash to 12 chars as 14 chars broke cards
-    const dateTimeLocalTrxn = trxDateTime; 
-    
+    const dateTimeLocalTrxn = trxDateTime;
+
     console.log('🔐 Generating hash for:', { trxDateTime, dateTimeLocalTrxn, amountCents, merchantReference });
     console.log('🔑 PAYSKY_MID:', PAYSKY_MID);
     console.log('🔑 PAYSKY_TID:', PAYSKY_TID);
@@ -416,7 +416,7 @@ router.post("/paysky/pay", async (req, res) => {
     });
 
     client.release();
-    
+
     res.json({
       MID: PAYSKY_MID,
       TID: PAYSKY_TID,
@@ -441,14 +441,17 @@ router.post("/paysky/callback", async (req, res) => {
   console.log('📥 Paysky Callback Received:', data);
 
   const merchantReference = data.MerchantReference;
-  const isSuccess = data.Success === "true" || data.ResponseCode === "000";
+  const isSuccess = data.ActionCode === "00" || 
+                    (data.Message && data.Message.toLowerCase() === "approved") || 
+                    data.Success === "true" || 
+                    data.ResponseCode === "000";
 
   if (!merchantReference) return res.status(400).send("Invalid callback data");
 
   const existing = paymentStatus.get(merchantReference);
   if (!existing) {
     console.warn('⚠️ No existing context for Paysky reference:', merchantReference);
-    return res.status(200).send("OK"); // Still return 200 to acknowledge
+    return res.status(200).json({ Message: "Success", Success: true }); // Still return standard success response
   }
 
   const statusObj = {
@@ -457,7 +460,7 @@ router.post("/paysky/callback", async (req, res) => {
     transactionId: data.SystemReference || data.NetworkReference,
     orderId: merchantReference,
     // Callback amount will now be in smallest unit if we sent it that way
-    amountCents: parseInt(data.Amount), 
+    amountCents: parseInt(data.Amount),
     updatedAt: new Date(),
   };
 
@@ -492,7 +495,7 @@ router.post("/paysky/callback", async (req, res) => {
       );
       if (alreadyProcessed.rowCount > 0) {
         await client.query('COMMIT');
-        return res.status(200).send("OK");
+        return res.status(200).json({ Message: "Success", Success: true });
       }
 
       if (sessionId) {
@@ -560,7 +563,7 @@ router.post("/paysky/callback", async (req, res) => {
     }
   }
 
-  res.status(200).send("OK");
+  res.status(200).json({ Message: "Success", Success: true });
 });
 
 module.exports = router;
