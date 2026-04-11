@@ -3,6 +3,7 @@ const axios = require("axios");
 const path = require("path");
 const crypto = require("crypto");
 const sendConfirmationEmail = require("../utils/sendConfirmationEmail");
+const sendAdminBookingNotification = require("../utils/sendAdminBookingNotification");
 const { getExchangeRates } = require("../services/exchangeRates");
 require("dotenv").config();
 
@@ -309,17 +310,22 @@ router.post("/payment-callback", async (req, res) => {
 
         // Send email AFTER commit only
         try {
-          await sendConfirmationEmail(email, "Booking Confirmation", {
+          const emailVariables = {
             firstName: billingData.first_name,
             lastName: billingData.last_name || "-",
+            email: billingData.email,
+            phone: billingData.phone_number,
+            nationality: billingData.country || "NA",
             tourTitle,
             date: selectedDate,
             time: timeSlot,
             adults: peopleCount.adults,
             children: peopleCount.children,
             amount: transaction.amount_cents / 100,
-          });
-          console.log("📨 Confirmation email sent.");
+          };
+          await sendConfirmationEmail(email, "Booking Confirmation", emailVariables);
+          await sendAdminBookingNotification(emailVariables);
+          console.log("📨 Confirmation & Admin emails sent.");
         } catch (mailErr) {
           console.warn("✉️ Email send failed (after commit):", mailErr.message);
         }
@@ -527,16 +533,21 @@ router.post("/paysky/callback", async (req, res) => {
       await client.query('COMMIT');
 
       try {
-        await sendConfirmationEmail(email, "Booking Confirmation", {
+        const emailVariables = {
           firstName: billingData.firstName,
           lastName: billingData.lastName || "-",
+          email: billingData.email,
+          phone: billingData.phone,
+          nationality: billingData.nationality || "NA",
           tourTitle,
           date: selectedDate,
           time: timeSlot,
           adults: peopleCount.adults,
           children: peopleCount.children,
           amount: parseFloat(data.Amount),
-        });
+        };
+        await sendConfirmationEmail(email, "Booking Confirmation", emailVariables);
+        await sendAdminBookingNotification(emailVariables);
       } catch (mailErr) {
         console.warn("✉️ Email send failed:", mailErr.message);
       }
