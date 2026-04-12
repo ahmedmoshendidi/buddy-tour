@@ -77,8 +77,24 @@ export function usePaymentProcess() {
               return cleaned;
             })(),
             CustomerEmail: data.CustomerEmail || '',
-            completeCallback: function (res: any) {
+            completeCallback: async function (res: any) {
               console.log('✅ Paysky completed:', res);
+              
+              // 🔒 SECURE FRONTEND FALLBACK: Send exact Paysky object to backend
+              // Our backend will verify `res.SecureHash` cryptographically using PAYSKY_SECRET!
+              try {
+                await fetch(`${API_PREFIX}/paysky/callback`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    MerchantReference: data.MerchantReference, // Guarantee reference
+                    ...res // Provide exact fields Paysky sent for hash validation
+                  }),
+                });
+              } catch (e) {
+                console.error("Failed to securely notify backend", e);
+              }
+
               localStorage.setItem('transaction_uuid', data.MerchantReference);
               resolve({ 
                 success: true, 

@@ -63,6 +63,21 @@ function generatePayskyHash(dateTimeLocalTrxn, amount, merchantReference) {
   return hash;
 }
 
+// === Verify Paysky Hash ===
+function verifyPayskyHash(data) {
+  if (!PAYSKY_SECRET || !data || !data.SecureHash) return false;
+  
+  // Sorted keys: Amount, Currency, DateTimeLocalTrxn, MerchantId, TerminalId
+  const hashingString = `Amount=${data.Amount}&Currency=${data.Currency}&DateTimeLocalTrxn=${data.DateTimeLocalTrxn}&MerchantId=${PAYSKY_MID}&TerminalId=${PAYSKY_TID}`;
+  
+  const key = Buffer.from(PAYSKY_SECRET, 'hex');
+  const hmac = crypto.createHmac('sha256', key);
+  hmac.update(hashingString);
+  const hash = hmac.digest('hex').toUpperCase();
+  
+  return hash === data.SecureHash.toUpperCase();
+}
+
 // === Get Paymob Auth Token ===
 async function getAuthToken() {
   const response = await axios.post("https://accept.paymob.com/api/auth/tokens", {
@@ -447,6 +462,12 @@ router.post("/paysky/callback", async (req, res) => {
                     data.ResponseCode === "000";
 
   if (!merchantReference) return res.status(400).send("Invalid callback data");
+
+  // SEVERE SECURITY CHECK: Verify that the callback payload actually originated from Paysky
+  if (!verifyPayskyHash(data)) {
+    console.error("🚨 SECURITY ALERT: Invalid Paysky SecureHash detected! Someone might be trying to fake a payment. Reference:", merchantReference);
+    return res.status(401).json({ error: "Unauthorized transaction" });
+  }
 
   const existing = paymentStatus.get(merchantReference);
   if (!existing) {
