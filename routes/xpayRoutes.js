@@ -28,7 +28,7 @@ async function processXpayFulfillment(transactionUuid, verifiedStatus, amount) {
   const paymentData = paymentStatus.get(transactionUuid.toString());
   if (!paymentData) return false;
 
-  const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful"].includes(verifiedStatus);
+  const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful","SUCCESS","success"].includes(verifiedStatus);
   if (!isSuccess) return false;
 
   const client = await pool.connect();
@@ -216,7 +216,7 @@ router.get("/success-return", async (req, res) => {
       const transactionStatus = transaction.status;
       const totalAmount = transaction.total_amount;
 
-      const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful"].includes(transactionStatus);
+      const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful","SUCCESS","success"].includes(transactionStatus);
       
       if (isSuccess) {
          await processXpayFulfillment(transactionUuid, transactionStatus, totalAmount);
@@ -255,7 +255,7 @@ router.post("/callback", async (req, res) => {
       });
     }
 
-    const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful"].includes(transactionStatus);
+    const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful","SUCCESS","success"].includes(transactionStatus);
     if (!isSuccess) return res.status(200).send("OK - Not successful");
 
     await processXpayFulfillment(transactionUuid, transactionStatus, totalAmount);
