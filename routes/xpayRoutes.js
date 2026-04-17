@@ -142,6 +142,8 @@ router.post("/pay", async (req, res) => {
     const totalAmountWithFees = prepareResponse.data.data.total_amount;
     console.log("💰 Total amount including fees:", totalAmountWithFees);
 
+    const currentHost = `${req.protocol}://${req.get('host')}`;
+
     const xpayPayload = {
       billing_data: {
         name: `${firstName} ${lastName}`.trim(),
@@ -153,8 +155,8 @@ router.post("/pay", async (req, res) => {
       variable_amount_id: parseInt(XPAY_VARIABLE_AMOUNT_ID),
       community_id: XPAY_COMMUNITY_ID,
       pay_using: "card",
-      custom_return_url: `${FRONTEND_URL}/api/xpay/success-return`,
-      return_url: `${FRONTEND_URL}/api/xpay/success-return`
+      custom_return_url: `${currentHost}/api/xpay/success-return`,
+      return_url: `${currentHost}/api/xpay/success-return`
     };
 
     console.log("💳 Creating XPay payment:", xpayPayload);
@@ -197,10 +199,11 @@ router.post("/pay", async (req, res) => {
 });
 
 // === /api/xpay/success-return ===
-router.get("/success-return", async (req, res) => {
+router.all("/success-return", async (req, res) => {
   try {
-    console.log("🔄 Redirected from XPay:", req.query);
-    const transactionUuid = req.query.transaction_id || req.query.uuid || req.query.order_id || req.query.id;
+    console.log("🔄 Redirected from XPay:", { query: req.query, body: req.body });
+    const payload = req.method === "POST" ? req.body : req.query;
+    const transactionUuid = payload.transaction_id || payload.uuid || payload.order_id || payload.id;
 
     if (!transactionUuid) {
       return res.redirect(`${FRONTEND_URL}/payment/failure?message=Missing+Transaction+ID`);
@@ -230,7 +233,8 @@ router.get("/success-return", async (req, res) => {
     }
   } catch (err) {
     console.error("❌ XPay success-return error:", err.message);
-    const transactionUuid = req.query.transaction_id || req.query.uuid || req.query.order_id || req.query.id || '';
+    const payload = req.method === "POST" ? req.body : req.query;
+    const transactionUuid = payload.transaction_id || payload.uuid || payload.order_id || payload.id || '';
     return res.redirect(`${FRONTEND_URL}/payment/success?id=${transactionUuid}&message=Pending+Verification`);
   }
 });
