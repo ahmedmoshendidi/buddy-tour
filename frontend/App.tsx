@@ -2,14 +2,15 @@ import React from 'react';
 import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 
 import SuccessCleanup from './components/SuccessCleanup';
+import ScrollToTop from './components/ScrollToTop';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import WishlistNotification from './components/WishlistNotification';
 import CartNotification from './components/CartNotification';
 
 import HomePage from './components/pages/HomePage';
+import AboutPage from './components/pages/AboutPage';
 import TourGuideApplicationPage from './components/pages/TourGuideApplicationPage';
-import AdminDashboard from './components/pages/AdminDashboard';
 import CancellationPolicy from './components/pages/CancellationPolicy';
 import ServiceDurationPolicy from './components/pages/ServiceDurationPolicy';
 import PrivacyAndTermsPage from './components/pages/PrivacyAndTermsPage';
@@ -31,7 +32,7 @@ function TicketsQuantityWrapper() {
   const { slug } = useParams();
   const navigate = useNavigate();
 
-  const handleBack = () => navigate(-1);
+  const handleBack = () => navigate(`/tour/${slug}`);
   const handleCheckout = (bookingInfo: any) => {
     navigate(`/checkout/${slug}`, { state: { bookingInfo } });
   };
@@ -62,6 +63,7 @@ export default function App() {
 
   return (
     <>
+      <ScrollToTop />
       <SuccessCleanup />
 
       <Routes>
@@ -82,11 +84,11 @@ export default function App() {
               />
             }
           />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/tour/:slug" element={<TourDetails />} />
           <Route path="/tickets/:slug" element={<TicketsQuantityWrapper />} />
           <Route path="/checkout/:slug" element={<CheckoutProcess />} />
           <Route path="/tour-guide-application" element={<TourGuideApplicationPage />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
         </Route>
 
         {/* ✅ صفحات بدون Header/Footer */}

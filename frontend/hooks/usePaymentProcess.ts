@@ -18,7 +18,6 @@ export function usePaymentProcess() {
     setPaymentResult(null);
 
     try {
-      // Prepare payment data for XPay
       const paymentData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -33,10 +32,10 @@ export function usePaymentProcess() {
         session_id: formData.session_id,
       };
 
-      console.log('💳 Processing XPay payment:', paymentData);
+      console.log('💳 Processing Paysky payment:', paymentData);
 
-      // ⚠️ تغيير الـ endpoint لـ XPay
-      const response = await fetch(`${API_PREFIX}/xpay/pay`, {
+      // We use /paysky/pay for the new gateway "try"
+      const response = await fetch(`${API_PREFIX}/paysky/pay`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,28 +49,85 @@ export function usePaymentProcess() {
         throw new Error(data.error || data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // ✅ Handle XPay response
-      if (data.iframe_url && data.transaction_uuid) {
-        console.log('✅ XPay payment initiated:', {
-          iframe_url: data.iframe_url,
-          transaction_uuid: data.transaction_uuid
+      // ✅ Handle Paysky response
+      if (data.SecureHash) {
+        console.log('✅ Paysky payment initiated:', data);
+
+        return new Promise((resolve) => {
+          const Lightbox = (window as any).Lightbox;
+          if (!Lightbox) {
+            resolve({ success: false, error: 'Paysky Lightbox not loaded' });
+            return;
+          }
+
+          Lightbox.Checkout.configure = {
+            MID: data.MID,
+            TID: data.TID,
+            AmountTrxn: data.AmountTrxn,
+            SecureHash: data.SecureHash,
+            MerchantReference: data.MerchantReference,
+            TrxDateTime: data.TrxDateTime,
+            // Wallet requires MobileNumber (numeric only, 12-14 digits, starting with 2 for Egypt)
+            MobileNumber: (() => {
+              if (!data.CustomerMobile) return '';
+              let cleaned = data.CustomerMobile.replace(/\D/g, ''); // Keep only digits
+              if (cleaned.startsWith('00')) cleaned = cleaned.slice(2);
+              if (cleaned.startsWith('0')) cleaned = '2' + cleaned;
+              if (cleaned.length === 11 && cleaned.startsWith('1')) cleaned = '20' + cleaned;
+              return cleaned;
+            })(),
+            CustomerEmail: data.CustomerEmail || '',
+            completeCallback: async function (res: any) {
+              console.log('✅ Paysky completed:', res);
+              
+              // 🔒 SECURE FRONTEND FALLBACK: Send exact Paysky object to backend
+              // Our backend will verify `res.SecureHash` cryptographically using PAYSKY_SECRET!
+              try {
+                await fetch(`${API_PREFIX}/paysky/callback`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    MerchantReference: data.MerchantReference, // Guarantee reference
+                    ...res // Provide exact fields Paysky sent for hash validation
+                  }),
+                });
+              } catch (e) {
+                console.error("Failed to securely notify backend", e);
+              }
+
+              localStorage.setItem('transaction_uuid', data.MerchantReference);
+              resolve({ 
+                success: true, 
+                bookingId: data.MerchantReference,
+                transactionId: data.MerchantReference
+              });
+              // Force redirect to success page
+              window.location.href = `/payment-result?success=true&order_id=${data.MerchantReference}`;
+            },
+            errorCallback: function (error: any) {
+              console.error('❌ Paysky error:', error);
+              resolve({ success: false, error: error });
+            },
+            cancelCallback: function () {
+              console.log('🛑 Paysky canceled');
+              resolve({ success: false, error: 'Payment canceled by user' });
+            }
+          };
+
+          Lightbox.Checkout.showLightbox();
         });
-
-        // 🔑 CRITICAL: Save transaction_uuid to localStorage BEFORE opening iframe
-        localStorage.setItem('transaction_uuid', data.transaction_uuid);
-        console.log('💾 Saved transaction_uuid to localStorage:', data.transaction_uuid);
-
-        // Redirect to XPay payment iframe
-        window.location.href = data.iframe_url;
-        
-        return { 
-          success: true, 
-          bookingId: data.order_id || data.transaction_uuid,
-          transactionId: data.transaction_uuid
-        };
       } else {
-        throw new Error(data.error || 'Payment initiation failed');
+        throw new Error(data.error || 'Paysky initiation failed');
       }
+
+      /* 
+      // Original Paymob Logic (kept for reference)
+      if (data.iframe_url && data.order_id) {
+        localStorage.setItem('transaction_uuid', data.order_id.toString());
+        window.location.href = data.iframe_url;
+        return { success: true, bookingId: data.order_id.toString() };
+      } 
+      */
 
     } catch (error: any) {
       console.error('❌ Payment processing error:', error);

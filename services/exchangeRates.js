@@ -1,9 +1,7 @@
 // Exchange rates service
-const fetchAny = global.fetch
-  ? (...args) => global.fetch(...args)
-  : (...args) => import('node-fetch').then(({ default: f }) => f(...args));
+const axios = require('axios');
 
-const RATES_URL = "https://api.exchangerate.host/latest?base=USD&symbols=USD,EUR,GBP,CAD,EGP";
+const RATES_URL = "https://api.exchangerate-api.com/v4/latest/USD";
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 // Simple in-memory cache
@@ -16,15 +14,12 @@ const getExchangeRates = async () => {
       return { success: true, data: ratesCache.data, fromCache: true };
     }
 
-    const response = await fetchAny(RATES_URL, {
+    const response = await axios.get(RATES_URL, {
       headers: { 'user-agent': 'BuddyTour/1.0' },
+      timeout: 5000
     });
 
-    if (!response.ok) {
-      throw new Error(`Rates HTTP ${response.status}`);
-    }
-
-    const apiData = await response.json();
+    const apiData = response.data;
     const rates = {
       USD: 1,
       EUR: apiData?.rates?.EUR ?? 0.92,
@@ -35,7 +30,7 @@ const getExchangeRates = async () => {
 
     const payload = {
       base: 'USD',
-      provider: 'exchangerate.host',
+      provider: 'exchangerate-api.com',
       updated_at: new Date().toISOString(),
       rates,
     };

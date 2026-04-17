@@ -12,6 +12,7 @@ import CountdownTimer from './ui/CountdownTimer';
 interface BookedTour {
   id: string;
   tourId: number;
+  tourSlug: string;
   tourTitle: string;
   date: string;
   time: string;
@@ -26,7 +27,7 @@ interface BookedTour {
 }
 
 interface CartProps {
-  onPayNow?: () => void; // For navigating to checkout
+  onPayNow?: (slug: string) => void; // For navigating to checkout
 }
 
 export default function Cart({ onPayNow }: CartProps) {
@@ -42,7 +43,8 @@ export default function Cart({ onPayNow }: CartProps) {
   const handlePayForItem = (bookedTour: BookedTour) => {
     // Set booking data and navigate to checkout
     const bookingData = {
-      tour_id: bookedTour.tourId,
+      tourId: bookedTour.tourId, // Assuming bookedTour.tourId is the correct source
+      tourSlug: bookedTour.tourSlug, // Assuming bookedTour.tourSlug is the correct source
       date: bookedTour.date,
       time: bookedTour.time,
       adults: bookedTour.adults,
@@ -50,6 +52,7 @@ export default function Cart({ onPayNow }: CartProps) {
       total_amount: bookedTour.totalAmount,
       price_per_person: bookedTour.pricePerPerson,
       session_id: bookedTour.sessionId,
+      tour_slug: bookedTour.tourSlug,
       hold_expires_at: bookedTour.holdExpiresAt
     };
     
@@ -59,7 +62,7 @@ export default function Cart({ onPayNow }: CartProps) {
     
     // Navigate to checkout
     if (onPayNow) {
-      onPayNow();
+      onPayNow(bookedTour.tourSlug);
     }
   };
 

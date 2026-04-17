@@ -5,7 +5,7 @@ import { useCheckoutForm } from '../hooks/useCheckoutForm';
 import { usePaymentProcess } from '../hooks/usePaymentProcess';
 import CountdownTimer from './ui/CountdownTimer';
 import { useCart } from './CartContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 
 // Step Components
 import CheckoutSteps from './checkout/CheckoutSteps';
@@ -22,6 +22,7 @@ const steps = [
 
 export default function CheckoutProcess() {
   const navigate = useNavigate();
+  const { slug } = useParams();
   const { currentStep, formData, errors, updateFormData, nextStep, prevStep } = useCheckoutForm();
   const { isProcessing, paymentResult, processPayment } = usePaymentProcess();
   const { bookedTours } = useCart();
@@ -102,7 +103,8 @@ export default function CheckoutProcess() {
     if (currentStep > 1) {
       prevStep();
     } else {
-      navigate(-1);
+      // Always go back to Home for "Back to Tours"
+      navigate('/');
     }
   };
 
@@ -140,23 +142,36 @@ export default function CheckoutProcess() {
     if (currentStep === 3) {
       return (
         <div className="flex justify-center">
-          <Button onClick={() => navigate('/tours')} className="px-8">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 px-8 py-2 text-sm font-medium transition-colors border rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+          >
             Return to Tours
-          </Button>
+          </a>
         </div>
       );
     }
 
     return (
       <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handlePrevious}
-          className="flex items-center gap-2"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          {currentStep === 1 ? 'Back to Tours' : 'Previous'}
-        </Button>
+        {currentStep === 1 ? (
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border rounded-md hover:bg-accent hover:text-accent-foreground border-input bg-background"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back to Tours
+          </a>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            className="flex items-center gap-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+        )}
 
         <Button
           onClick={handleNext}
@@ -210,7 +225,7 @@ export default function CheckoutProcess() {
                 onExpire={() => {
                   setHoldExpiration(null);
                   alert('Your seat reservation has expired. Please select your seats again.');
-                  navigate(-1);
+                  navigate('/');
                 }}
               />
             )}

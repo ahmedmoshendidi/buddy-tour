@@ -11,6 +11,8 @@ const corsOptions = {
       "http://127.0.0.1:3000",
       "http://localhost:5000",
       "http://127.0.0.1:5000",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
       "https://buddy-tour-staging.up.railway.app",
     ];
     if (!origin || allowed.includes(origin)) return cb(null, true);
@@ -28,23 +30,40 @@ const helmetOptions = {
       "script-src": [
         "'self'",
         "https://cdn.jsdelivr.net",
+        "https://cube.paysky.io:6006",
+        "https://cdnjs.cloudflare.com",
+        "https://connect.facebook.net",
+        "https://www.clarity.ms",
+        "https://scripts.clarity.ms",
+        "https://*.clarity.ms",
         "'unsafe-inline'"
       ],
       "style-src": [
         "'self'",
         "https://cdn.jsdelivr.net",
+        "https://cube.paysky.io:6006",
         "'unsafe-inline'"
       ],
       "img-src": [
         "'self'",
         "data:",
         "https://cdn.jsdelivr.net",
+        "https://cube.paysky.io:6006",
         "https://images.unsplash.com",
         "https://*.unsplash.com",
         "https://*.cloudinary.com",
-        "https://*.amazonaws.com"
+        "https://*.amazonaws.com",
+        "https://www.facebook.com",
+        "https://*.clarity.ms"
       ],
-      "connect-src": ["'self'", "https://accept.paymob.com"]
+      "connect-src": [
+        "'self'", 
+        "https://accept.paymob.com", 
+        "https://cube.paysky.io:6006",
+        "https://www.facebook.com",
+        "https://*.clarity.ms"
+      ],
+      "frame-src": ["'self'", "https://cube.paysky.io:6006"]
     }
   }
 };
