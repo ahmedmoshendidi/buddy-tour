@@ -3,6 +3,7 @@ const axios = require("axios");
 require("dotenv").config();
 const { Pool } = require("pg");
 const sendConfirmationEmail = require("../utils/sendConfirmationEmail");
+const sendAdminBookingNotification = require("../utils/sendAdminBookingNotification");
 
 const router = express.Router();
 
@@ -200,7 +201,7 @@ router.post("/callback", async (req, res) => {
 
       // Send confirmation email
       try {
-        await sendConfirmationEmail(billingData.email, "Booking Confirmation", {
+        const emailVariables = {
           firstName: billingData.firstName,
           lastName: billingData.lastName || "-",
           tourTitle,
@@ -209,7 +210,10 @@ router.post("/callback", async (req, res) => {
           adults: peopleCount.adults,
           children: peopleCount.children,
           amount: totalAmount,
-        });
+        };
+        await sendConfirmationEmail(billingData.email, "Booking Confirmation", emailVariables);
+        await sendAdminBookingNotification(emailVariables);
+        console.log("📨 Confirmation & Admin emails sent.");
       } catch (mailErr) {
         console.warn("✉️ Email send failed:", mailErr.message);
       }
