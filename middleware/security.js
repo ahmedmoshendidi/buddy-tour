@@ -61,9 +61,14 @@ const helmetOptions = {
         "https://accept.paymob.com", 
         "https://cube.paysky.io:6006",
         "https://www.facebook.com",
-        "https://*.clarity.ms"
+        "https://*.clarity.ms",
+        "https://*.xpay.app"
       ],
-      "frame-src": ["'self'", "https://cube.paysky.io:6006"]
+      "frame-src": [
+        "'self'", 
+        "https://cube.paysky.io:6006",
+        "https://*.xpay.app"
+      ]
     }
   }
 };
