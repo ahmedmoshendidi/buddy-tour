@@ -4,6 +4,8 @@ require("dotenv").config();
 const { Pool } = require("pg");
 const sendConfirmationEmail = require("../utils/sendConfirmationEmail");
 const sendAdminBookingNotification = require("../utils/sendAdminBookingNotification");
+const { getExchangeRates } = require("../services/exchangeRates");
+const path = require("path");
 
 const router = express.Router();
 
@@ -131,7 +133,11 @@ router.post("/pay", async (req, res) => {
 
     const basePrice = tourRes.rows[0].price_per_person;
     const tourTitle = tourRes.rows[0].title;
-    const baseAmount = basePrice * adults + basePrice * 0.8 * children;
+    const totalAmountUSD = basePrice * adults + basePrice * 0.8 * children;
+
+    const ratesResult = await getExchangeRates();
+    const egpRate = ratesResult.success ? (ratesResult.data.rates?.EGP || 48.5) : 48.5;
+    const baseAmount = totalAmountUSD * egpRate;
 
     const prepareResponse = await axios.post(
       `${XPAY_BASE_URL}/api/v1/payments/prepare-amount/`,
@@ -223,19 +229,14 @@ router.all("/success-return", async (req, res) => {
       
       if (isSuccess) {
          await processXpayFulfillment(transactionUuid, transactionStatus, totalAmount);
-         const cents = Math.round(totalAmount * 100);
-         return res.redirect(`${FRONTEND_URL}/payment/success?id=${transactionUuid}&amount_cents=${cents}&currency=${transaction.total_amount_currency || 'EGP'}&message=Successful+Operation`);
-      } else {
-         return res.redirect(`${FRONTEND_URL}/payment/failure?id=${transactionUuid}&message=${transactionStatus}`);
       }
+      return res.sendFile(path.join(__dirname, "../public/payment-response.html"));
     } else {
-      return res.redirect(`${FRONTEND_URL}/payment/failure?message=Verification+Failed`);
+      return res.sendFile(path.join(__dirname, "../public/payment-response.html"));
     }
   } catch (err) {
     console.error("❌ XPay success-return error:", err.message);
-    const payload = req.method === "POST" ? req.body : req.query;
-    const transactionUuid = payload.transaction_id || payload.uuid || payload.order_id || payload.id || '';
-    return res.redirect(`${FRONTEND_URL}/payment/success?id=${transactionUuid}&message=Pending+Verification`);
+    return res.sendFile(path.join(__dirname, "../public/payment-response.html"));
   }
 });
 

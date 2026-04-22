@@ -13,11 +13,13 @@ export default function PaymentResultPage() {
 
   // ✅ نقرأ من الـ URL لو الحالة success أو failed
   const params = new URLSearchParams(location.search);
-  const successParam = params.get('success') || params.get('status');
+  const successParam = params.get('success') || params.get('status') || params.get('transaction_status');
   const isSuccess =
     successParam === 'true' ||
     successParam === 'success' ||
-    successParam === 'completed';
+    successParam === 'completed' ||
+    successParam === 'SUCCESSFUL' ||
+    successParam === 'SUCCESS';
 
   return (
     <div className="min-h-screen bg-background">
