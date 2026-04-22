@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { useCurrency } from "./CurrencyContext";
+import { API_PREFIX } from "../config";
 import {
   CheckCircle,
   Calendar,
@@ -26,11 +27,25 @@ export default function PaymentSuccess({
   useEffect(() => {
     // Read URL parameters for transaction details
     const urlParams = new URLSearchParams(window.location.search);
-    const txId = urlParams.get("id") || urlParams.get("transaction_id");
+    const txId = urlParams.get("id") || urlParams.get("transaction_id") || urlParams.get("uuid") || urlParams.get("order_id");
     const amountCents = urlParams.get("amount_cents");
     const amountDirect = urlParams.get("amount");
 
-    if (txId) setTransactionId(txId);
+    if (txId) {
+      setTransactionId(txId);
+
+      // ✅ Fetch amount from backend if not present in URL
+      if (!amountCents && !amountDirect) {
+        fetch(`${API_PREFIX}/xpay/payment-status/${txId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.amount_cents) {
+              setAmount(data.amount_cents / 100);
+            }
+          })
+          .catch((err) => console.error("Error fetching payment status:", err));
+      }
+    }
 
     if (amountCents) {
       setAmount(parseFloat(amountCents) / 100);

@@ -88,6 +88,9 @@ async function processXpayFulfillment(transactionUuid, verifiedStatus, amount) {
       const emailVariables = {
         firstName: billingData.firstName,
         lastName: billingData.lastName || "-",
+        email: billingData.email,
+        phone: billingData.phone,
+        nationality: billingData.nationality,
         tourTitle,
         date: selectedDate,
         time: timeSlot,
