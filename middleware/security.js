@@ -54,7 +54,8 @@ const helmetOptions = {
         "https://*.cloudinary.com",
         "https://*.amazonaws.com",
         "https://www.facebook.com",
-        "https://*.clarity.ms"
+        "https://*.clarity.ms",
+        "https://buddytourguide.com"
       ],
       "connect-src": [
         "'self'", 
@@ -67,7 +68,12 @@ const helmetOptions = {
       "frame-src": [
         "'self'", 
         "https://cube.paysky.io:6006",
-        "https://*.xpay.app"
+        "https://*.xpay.app",
+        "https://www.facebook.com"
+      ],
+      "form-action": [
+        "'self'",
+        "https://www.facebook.com"
       ]
     }
   }
