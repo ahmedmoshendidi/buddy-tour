@@ -116,7 +116,7 @@ export default function PaymentSuccess({
                   </label>
                   <div className="mt-1">
                     <span className="text-xl font-semibold text-primary">
-                      {amount > 0 ? formatPrice(amount) : "Confirming..."}
+                      {amount > 0 ? new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP', currencyDisplay: 'narrowSymbol' }).format(amount) : "Confirming..."}
                     </span>
                   </div>
                 </div>
