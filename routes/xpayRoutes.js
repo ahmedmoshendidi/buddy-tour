@@ -140,7 +140,7 @@ router.post("/pay", async (req, res) => {
 
     const ratesResult = await getExchangeRates();
     const egpRate = ratesResult.success ? (ratesResult.data.rates?.EGP || 48.5) : 48.5;
-    const baseAmount = totalAmountUSD * egpRate;
+    const baseAmount = Math.round(totalAmountUSD * egpRate * 100) / 100;
 
     const prepareResponse = await axios.post(
       `${XPAY_BASE_URL}/api/v1/payments/prepare-amount/`,
