@@ -218,10 +218,21 @@ router.all("/success-return", async (req, res) => {
       return res.redirect(`${FRONTEND_URL}/payment/failure?message=Missing+Transaction+ID`);
     }
 
-    const response = await axios.get(
-      `${XPAY_BASE_URL}/api/v1/communities/${XPAY_COMMUNITY_ID}/transactions/${transactionUuid}`,
-      { headers: { "x-api-key": XPAY_API_KEY } }
-    );
+    let response;
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        response = await axios.get(
+          `${XPAY_BASE_URL}/api/v1/communities/${XPAY_COMMUNITY_ID}/transactions/${transactionUuid}`,
+          { headers: { "x-api-key": XPAY_API_KEY }, timeout: 15000 }
+        );
+        break;
+      } catch (err) {
+        retries--;
+        if (retries === 0) throw err;
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
 
     if (response.data.status?.code === 200 && response.data.data) {
       const transaction = response.data.data;
