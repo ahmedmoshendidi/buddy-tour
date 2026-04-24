@@ -13,9 +13,9 @@ const router = express.Router();
 const NOON_BUSINESS_ID = process.env.NOON_BUSINESS_ID || "buddy_tour";
 const NOON_APP_NAME = process.env.NOON_APP_NAME || "buddy_tour_api";
 const NOON_APP_KEY = process.env.NOON_APP_KEY || "6378ea4ed3734b3193ffe7edfe4db13f";
-const NOON_AUTH_HEADER = process.env.NOON_AUTH_HEADER || "Key YnVkZHlfdG91ci5idWRkeV90b3VyX2FwaTo2Mzc4ZWE0ZWQzNzM0YjMxOTNmZmU3ZWRmZTRkYjEzZg==";
-// Use staging URL for testing
-const NOON_BASE_URL = process.env.NOON_BASE_URL || "https://api-test.eg.noonpayments.com";
+const NOON_AUTH_HEADER = "Key YnVkZHlfdG91ci5idWRkeV90b3VyX2FwaTo2Mzc4ZWE0ZWQzNzM0YjMxOTNmZmU3ZWRmZTRkYjEzZg==";
+// Force the staging URL to the Egypt test server to ignore any wrong environment variables
+const NOON_BASE_URL = "https://api-test.eg.noonpayments.com";
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
 // ====== DB Connection ======
