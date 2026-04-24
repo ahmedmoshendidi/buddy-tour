@@ -13,10 +13,7 @@ const router = express.Router();
 const NOON_BUSINESS_ID = process.env.NOON_BUSINESS_ID || "buddy_tour";
 const NOON_APP_NAME = process.env.NOON_APP_NAME || "buddy_tour_api";
 const NOON_APP_KEY = process.env.NOON_APP_KEY || "6378ea4ed3734b3193ffe7edfe4db13f";
-
-// Automatically generate the Base64 Auth Header if not explicitly provided
-const authString = `${NOON_BUSINESS_ID}.${NOON_APP_NAME}:${NOON_APP_KEY}`;
-const NOON_AUTH_HEADER = process.env.NOON_AUTH_HEADER || `Key ${Buffer.from(authString).toString('base64')}`;
+const NOON_AUTH_HEADER = process.env.NOON_AUTH_HEADER || "Key YnVkZHlfdG91ci5idWRkeV90b3VyX2FwaTo2Mzc4ZWE0ZWQzNzM0YjMxOTNmZmU3ZWRmZTRkYjEzZg==";
 // Use staging URL for testing
 const NOON_BASE_URL = process.env.NOON_BASE_URL || "https://api-test.eg.noonpayments.com";
 const FRONTEND_URL = process.env.FRONTEND_URL;
