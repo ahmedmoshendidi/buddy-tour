@@ -11,6 +11,7 @@ require("dotenv").config();
 // Import routes
 const paymentRoutes = require("./routes/paymentRoutes");
 const xpayRoutes = require("./routes/xpayRoutes");
+const noonRoutes = require("./routes/noonRoutes");
 const bookingRoutes = require('./routes/bookingRoutes');
 const sitemapRoute = require('./routes/sitemapRoute');
 const exchangeRatesRoute = require('./routes/exchangeRatesRoute');
@@ -44,6 +45,7 @@ app.use("/api", rateLimiter);
 // ======================
 app.use("/api", paymentRoutes);
 app.use("/api/xpay", xpayRoutes);
+app.use("/api/noon", noonRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', exchangeRatesRoute);
 app.use('/api/tour-guide-applications', guideApplicationRoutes);

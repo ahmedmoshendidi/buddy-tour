@@ -36,7 +36,7 @@ export default function PaymentSuccess({
 
       // ✅ Fetch amount from backend if not present in URL
       if (!amountCents && !amountDirect) {
-        fetch(`${API_PREFIX}/xpay/payment-status/${txId}`)
+        fetch(`${API_PREFIX}/noon/payment-status/${txId}`)
           .then((res) => res.json())
           .then((data) => {
             if (data.amount_cents) {
