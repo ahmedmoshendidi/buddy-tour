@@ -27,7 +27,7 @@ export default function PaymentSuccess({
   useEffect(() => {
     // Read URL parameters for transaction details
     const urlParams = new URLSearchParams(window.location.search);
-    const txId = urlParams.get("id") || urlParams.get("transaction_id") || urlParams.get("uuid") || urlParams.get("order_id");
+    const txId = urlParams.get("id") || urlParams.get("transaction_id") || urlParams.get("uuid") || urlParams.get("order_id") || urlParams.get("orderId");
     const amountCents = urlParams.get("amount_cents");
     const amountDirect = urlParams.get("amount");
 
