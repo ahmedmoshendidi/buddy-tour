@@ -278,8 +278,34 @@ router.post("/callback", async (req, res) => {
 
     const result = response.data;
     if (result.resultCode === 0 && result.result && result.result.order) {
-      const transactionStatus = result.result.order.status;
+      let transactionStatus = result.result.order.status;
       const totalAmount = result.result.order.amount;
+      const currency = result.result.order.currency || "EGP";
+
+      // ⚡ Auto-Capture Logic
+      if (transactionStatus === "AUTHORIZED" || transactionStatus === "3DS_RESULT_VERIFIED") {
+        console.log(`⚡ Attempting Auto-Capture for order: ${orderId} with status: ${transactionStatus}`);
+        try {
+          const capturePayload = {
+            apiOperation: "CAPTURE",
+            order: { id: orderId },
+            transaction: { amount: totalAmount.toString(), currency: currency }
+          };
+          const capResponse = await axios.post(
+            `${NOON_BASE_URL}/payment/v1/order`,
+            capturePayload,
+            { headers: { "Content-Type": "application/json", "Authorization": NOON_AUTH_HEADER } }
+          );
+          if (capResponse.data.resultCode === 0 && capResponse.data.result.order) {
+            transactionStatus = capResponse.data.result.order.status;
+            console.log(`✅ Auto-capture successful. New status: ${transactionStatus}`);
+          } else {
+            console.warn(`⚠️ Auto-capture returned non-zero code:`, capResponse.data);
+          }
+        } catch (capErr) {
+          console.error(`❌ Auto-capture failed:`, capErr.response?.data || capErr.message);
+        }
+      }
 
       const pData = paymentStatus.get(orderId.toString());
       if (pData) {
@@ -290,8 +316,11 @@ router.post("/callback", async (req, res) => {
         });
       }
 
-      const isSuccess = ["SUCCESSFUL", "COMPLETED", "completed", "successful", "SUCCESS", "success", "CAPTURED", "SALE", "AUTHORIZED"].includes(transactionStatus.toUpperCase());
-      if (!isSuccess) return res.status(200).send("OK - Not successful");
+      const isSuccess = ["SUCCESSFUL", "COMPLETED", "completed", "successful", "SUCCESS", "success", "CAPTURED", "SALE"].includes(transactionStatus.toUpperCase());
+      if (!isSuccess) {
+          console.log(`Order ${orderId} is not successful yet. Current Status: ${transactionStatus}`);
+          return res.status(200).send("OK - Not successful");
+      }
 
       await processNoonFulfillment(orderId, transactionStatus, totalAmount);
     }
