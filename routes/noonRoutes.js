@@ -55,7 +55,13 @@ async function processNoonFulfillment(orderId, verifiedStatus, amount) {
     // Confirm seat holds if sessionId exists
     if (sessionId) {
       const holdConfirm = await client.query(
-        `UPDATE seat_holds SET status = 'confirmed', order_id = $1 WHERE session_id = $2 AND status = 'active' RETURNING id, time_slot_id, seats`,
+        `UPDATE seat_holds 
+         SET status = 'confirmed', order_id = $1 
+         WHERE id = (
+           SELECT id FROM seat_holds 
+           WHERE session_id = $2 AND status = 'active' 
+           ORDER BY created_at DESC LIMIT 1
+         ) RETURNING id, time_slot_id, seats`,
         [orderId.toString(), sessionId]
       );
       if (holdConfirm.rowCount > 0) {
