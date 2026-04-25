@@ -1,5 +1,6 @@
 const express = require("express");
 const axios = require("axios");
+const JSONBig = require("json-bigint")({ storeAsString: true });
 require("dotenv").config();
 const { Pool } = require("pg");
 const sendConfirmationEmail = require("../utils/sendConfirmationEmail");
@@ -172,7 +173,8 @@ router.post("/pay", async (req, res) => {
         headers: {
           "Content-Type": "application/json",
           "Authorization": NOON_AUTH_HEADER
-        }
+        },
+        transformResponse: [data => data ? JSONBig.parse(data) : data]
       }
     );
 
@@ -227,7 +229,11 @@ router.all("/success-return", async (req, res) => {
       try {
         response = await axios.get(
           `${NOON_BASE_URL}/payment/v1/order/${orderId}`,
-          { headers: { "Authorization": NOON_AUTH_HEADER }, timeout: 15000 }
+          { 
+            headers: { "Authorization": NOON_AUTH_HEADER }, 
+            timeout: 15000,
+            transformResponse: [data => data ? JSONBig.parse(data) : data]
+          }
         );
         break;
       } catch (err) {
@@ -272,7 +278,11 @@ router.post("/callback", async (req, res) => {
     // Let's fetch the actual status to be secure
     const response = await axios.get(
       `${NOON_BASE_URL}/payment/v1/order/${orderId}`,
-      { headers: { "Authorization": NOON_AUTH_HEADER }, timeout: 15000 }
+      { 
+        headers: { "Authorization": NOON_AUTH_HEADER }, 
+        timeout: 15000,
+        transformResponse: [data => data ? JSONBig.parse(data) : data]
+      }
     );
 
     const result = response.data;
@@ -294,7 +304,10 @@ router.post("/callback", async (req, res) => {
           const capResponse = await axios.post(
             `${NOON_BASE_URL}/payment/v1/order`,
             capturePayload,
-            { headers: { "Content-Type": "application/json", "Authorization": NOON_AUTH_HEADER } }
+            { 
+              headers: { "Content-Type": "application/json", "Authorization": NOON_AUTH_HEADER },
+              transformResponse: [data => data ? JSONBig.parse(data) : data]
+            }
           );
           if (capResponse.data.resultCode === 0 && capResponse.data.result.order) {
             orderStatus = capResponse.data.result.order.status;
