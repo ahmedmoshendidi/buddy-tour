@@ -41,7 +41,7 @@ async function processNoonFulfillment(orderId, verifiedStatus, amount) {
     await client.query('BEGIN');
 
     // Idempotency check
-    const alreadyProcessed = await client.query(`SELECT 1 FROM payments WHERE transaction_id = $1`, [orderId.toString()]);
+    const alreadyProcessed = await client.query(`SELECT 1 FROM payments WHERE order_id = $1`, [orderId.toString()]);
     if (alreadyProcessed.rowCount > 0) {
       await client.query('COMMIT');
       return true; // Already handled
@@ -184,7 +184,6 @@ router.post("/pay", async (req, res) => {
 
       paymentStatus.set(orderId.toString(), {
         status: "pending",
-        transactionId: orderId,
         orderId: orderId,
         billingData: { firstName, lastName, email, phone, nationality },
         tourId: parseInt(tour_id),
@@ -278,16 +277,17 @@ router.post("/callback", async (req, res) => {
 
     const result = response.data;
     if (result.resultCode === 0 && result.result && result.result.order) {
-      let transactionStatus = result.result.order.status;
+      let orderStatus = result.result.order.status;
       const totalAmount = result.result.order.amount;
       const currency = result.result.order.currency || "EGP";
 
       // ⚡ Auto-Capture Logic
-      if (transactionStatus === "AUTHORIZED") {
-        console.log(`⚡ Attempting Auto-Capture for order: ${orderId} with status: ${transactionStatus}`);
+      if (orderStatus === "AUTHORIZED" || orderStatus === "3DS_RESULT_VERIFIED") {
+        const operation = orderStatus === "AUTHORIZED" ? "CAPTURE" : "SALE";
+        console.log(`⚡ Attempting Auto-${operation} for order: ${orderId} with status: ${orderStatus}`);
         try {
           const capturePayload = {
-            apiOperation: "CAPTURE",
+            apiOperation: operation,
             order: { id: orderId },
             transaction: { amount: totalAmount.toString(), currency: currency }
           };
@@ -297,8 +297,8 @@ router.post("/callback", async (req, res) => {
             { headers: { "Content-Type": "application/json", "Authorization": NOON_AUTH_HEADER } }
           );
           if (capResponse.data.resultCode === 0 && capResponse.data.result.order) {
-            transactionStatus = capResponse.data.result.order.status;
-            console.log(`✅ Auto-capture successful. New status: ${transactionStatus}`);
+            orderStatus = capResponse.data.result.order.status;
+            console.log(`✅ Auto-capture successful. New status: ${orderStatus}`);
           } else {
             console.warn(`⚠️ Auto-capture returned non-zero code:`, capResponse.data);
           }
@@ -311,18 +311,18 @@ router.post("/callback", async (req, res) => {
       if (pData) {
         paymentStatus.set(orderId.toString(), {
           ...pData,
-          status: transactionStatus?.toLowerCase() || "unknown",
+          status: orderStatus?.toLowerCase() || "unknown",
           updatedAt: new Date(),
         });
       }
 
-      const isSuccess = ["SUCCESSFUL", "COMPLETED", "completed", "successful", "SUCCESS", "success", "CAPTURED", "SALE"].includes(transactionStatus.toUpperCase());
+      const isSuccess = ["SUCCESSFUL", "COMPLETED", "completed", "successful", "SUCCESS", "success", "CAPTURED", "SALE"].includes(orderStatus.toUpperCase());
       if (!isSuccess) {
-          console.log(`Order ${orderId} is not successful yet. Current Status: ${transactionStatus}`);
+          console.log(`Order ${orderId} is not successful yet. Current Status: ${orderStatus}`);
           return res.status(200).send("OK - Not successful");
       }
 
-      await processNoonFulfillment(orderId, transactionStatus, totalAmount);
+      await processNoonFulfillment(orderId, orderStatus, totalAmount);
     }
 
     res.status(200).send("OK");
@@ -332,16 +332,15 @@ router.post("/callback", async (req, res) => {
   }
 });
 
-// === /api/noon/payment-status/:transactionId ===
-router.get("/payment-status/:transactionId", (req, res) => {
-  const { transactionId } = req.params;
-  const statusData = paymentStatus.get(transactionId.toString());
+// === /api/noon/payment-status/:orderId ===
+router.get("/payment-status/:orderId", (req, res) => {
+  const { orderId } = req.params;
+  const statusData = paymentStatus.get(orderId.toString());
 
-  if (!statusData) return res.status(404).json({ error: "Transaction not found" });
+  if (!statusData) return res.status(404).json({ error: "Order not found" });
 
   res.json({
     status: statusData.status,
-    transactionId: statusData.transactionId,
     orderId: statusData.orderId,
     amount_cents: Math.round(statusData.amount * 100),
   });
