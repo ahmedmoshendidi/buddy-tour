@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { useCurrency } from "./CurrencyContext";
+import { useCart } from "./CartContext";
 import { API_PREFIX } from "../config";
 import {
   CheckCircle,
@@ -23,6 +24,7 @@ export default function PaymentSuccess({
   const [transactionId, setTransactionId] = useState<string>("");
   const [amount, setAmount] = useState<number>(0);
   const { formatPrice } = useCurrency();
+  const { clearBookedTours } = useCart();
 
   useEffect(() => {
     // Read URL parameters for transaction details
@@ -59,6 +61,9 @@ export default function PaymentSuccess({
       url.search = "";
       window.history.replaceState({}, document.title, url.toString());
     }
+
+    // Clear the cart since checkout was successful
+    clearBookedTours();
   }, []);
 
   return (
