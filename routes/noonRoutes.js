@@ -283,7 +283,7 @@ router.post("/callback", async (req, res) => {
       const currency = result.result.order.currency || "EGP";
 
       // ⚡ Auto-Capture Logic
-      if (transactionStatus === "AUTHORIZED" || transactionStatus === "3DS_RESULT_VERIFIED") {
+      if (transactionStatus === "AUTHORIZED") {
         console.log(`⚡ Attempting Auto-Capture for order: ${orderId} with status: ${transactionStatus}`);
         try {
           const capturePayload = {
