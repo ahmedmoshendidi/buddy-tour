@@ -292,6 +292,7 @@ router.post("/callback", async (req, res) => {
     );
 
     const result = response.data;
+    console.log("🔍 Full Noon Order Response:", JSON.stringify(result, null, 2));
     if (result.resultCode === 0 && result.result && result.result.order) {
       let orderStatus = result.result.order.status;
       const totalAmount = result.result.order.amount;
