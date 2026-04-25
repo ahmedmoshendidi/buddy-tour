@@ -33,7 +33,7 @@ async function processNoonFulfillment(orderId, verifiedStatus, amount) {
   if (!paymentData) return false;
 
   // Noon payments successful statuses: CAPTURED, AUTHORIZED, SALE
-  const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful","SUCCESS","success","CAPTURED","SALE","AUTHORIZED"].includes(verifiedStatus.toUpperCase());
+  const isSuccess = ["SUCCESSFUL", "COMPLETED", "completed", "successful", "SUCCESS", "success", "CAPTURED", "SALE", "AUTHORIZED"].includes(verifiedStatus.toUpperCase());
   if (!isSuccess) return false;
 
   const client = await pool.connect();
@@ -107,7 +107,7 @@ async function processNoonFulfillment(orderId, verifiedStatus, amount) {
     } catch (mailErr) {
       console.warn("✉️ Email send failed:", mailErr.message);
     }
-    
+
     return true;
 
   } catch (err) {
@@ -130,7 +130,7 @@ router.post("/pay", async (req, res) => {
     console.log("📥 Received Noon payment request:", { email, tour_id, session_id });
 
     const client = await pool.connect();
-    
+
     const tourRes = await client.query("SELECT price_per_person, title FROM tours WHERE id = $1", [tour_id]);
     if (tourRes.rows.length === 0) {
       client.release();
@@ -168,11 +168,11 @@ router.post("/pay", async (req, res) => {
     const response = await axios.post(
       `${NOON_BASE_URL}/payment/v1/order`,
       noonPayload,
-      { 
-        headers: { 
-          "Content-Type": "application/json", 
-          "Authorization": NOON_AUTH_HEADER 
-        } 
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": NOON_AUTH_HEADER
+        }
       }
     );
 
@@ -240,14 +240,8 @@ router.all("/success-return", async (req, res) => {
 
     const result = response.data;
     if (result.resultCode === 0 && result.result && result.result.order) {
-      const transactionStatus = result.result.order.status;
-      const totalAmount = result.result.order.amount;
-
-      const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful","SUCCESS","success","CAPTURED","SALE","AUTHORIZED"].includes(transactionStatus.toUpperCase());
-      
-      if (isSuccess) {
-         await processNoonFulfillment(orderId, transactionStatus, totalAmount);
-      }
+      // We no longer call processNoonFulfillment here because the user strictly requested 
+      // that the fulfillment only happens inside the /callback webhook function.
       return res.sendFile(path.join(__dirname, "../public/payment-response.html"));
     } else {
       return res.sendFile(path.join(__dirname, "../public/payment-response.html"));
@@ -262,48 +256,48 @@ router.all("/success-return", async (req, res) => {
 router.post("/callback", async (req, res) => {
   try {
     console.log("📨 Noon Callback received:", req.body);
-    const callbackData = req.body;
     
-    const event = callbackData.event;
-    const eventId = callbackData.eventId;
-    
-    if (event !== 'PAYMENT_CAPTURED' && event !== 'PAYMENT_AUTHORIZED') {
-        return res.status(200).send("OK - Unhandled event");
-    }
-    
-    // In noon webhooks, you usually get order details
+    // Noon sends a JWT in req.body.data
+    const jwt = req.body.data;
+    if (!jwt) return res.status(200).send("OK - No JWT in body");
+
+    // Decode the JWT payload (the second part of the token)
+    const payloadBase64 = jwt.split('.')[1];
+    const callbackData = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf-8'));
+    console.log("🔓 Decoded Webhook Payload:", callbackData);
+
     const orderId = callbackData.orderId;
 
     if (!orderId) return res.status(200).send("OK - No order ID");
 
     // Let's fetch the actual status to be secure
     const response = await axios.get(
-        `${NOON_BASE_URL}/payment/v1/order/${orderId}`,
-        { headers: { "Authorization": NOON_AUTH_HEADER }, timeout: 15000 }
+      `${NOON_BASE_URL}/payment/v1/order/${orderId}`,
+      { headers: { "Authorization": NOON_AUTH_HEADER }, timeout: 15000 }
     );
-    
+
     const result = response.data;
     if (result.resultCode === 0 && result.result && result.result.order) {
-        const transactionStatus = result.result.order.status;
-        const totalAmount = result.result.order.amount;
-        
-        const pData = paymentStatus.get(orderId.toString());
-        if (pData) {
-          paymentStatus.set(orderId.toString(), {
-            ...pData,
-            status: transactionStatus?.toLowerCase() || "unknown",
-            updatedAt: new Date(),
-          });
-        }
-    
-        const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful","SUCCESS","success","CAPTURED","SALE","AUTHORIZED"].includes(transactionStatus.toUpperCase());
-        if (!isSuccess) return res.status(200).send("OK - Not successful");
-    
-        await processNoonFulfillment(orderId, transactionStatus, totalAmount);
+      const transactionStatus = result.result.order.status;
+      const totalAmount = result.result.order.amount;
+
+      const pData = paymentStatus.get(orderId.toString());
+      if (pData) {
+        paymentStatus.set(orderId.toString(), {
+          ...pData,
+          status: transactionStatus?.toLowerCase() || "unknown",
+          updatedAt: new Date(),
+        });
+      }
+
+      const isSuccess = ["SUCCESSFUL", "COMPLETED", "completed", "successful", "SUCCESS", "success", "CAPTURED", "SALE", "AUTHORIZED"].includes(transactionStatus.toUpperCase());
+      if (!isSuccess) return res.status(200).send("OK - Not successful");
+
+      await processNoonFulfillment(orderId, transactionStatus, totalAmount);
     }
 
     res.status(200).send("OK");
-  } catch(err) {
+  } catch (err) {
     console.error("❌ Noon callback error:", err);
     res.status(500).send("Error");
   }
