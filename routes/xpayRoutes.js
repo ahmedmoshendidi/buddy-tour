@@ -27,11 +27,19 @@ const paymentStatus = new Map();
 
 // Helper to fully process successful payment
 async function processXpayFulfillment(transactionUuid, verifiedStatus, amount) {
+  console.log(`🛠️ Processing fulfillment for XPay UUID: ${transactionUuid}, Status: ${verifiedStatus}, Amount: ${amount}`);
+  
   const paymentData = paymentStatus.get(transactionUuid.toString());
-  if (!paymentData) return false;
+  if (!paymentData) {
+    console.warn(`⚠️ paymentData NOT FOUND in cache for UUID: ${transactionUuid}. This usually happens if the server restarted during payment.`);
+    return false;
+  }
 
   const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful","SUCCESS","success"].includes(verifiedStatus);
-  if (!isSuccess) return false;
+  if (!isSuccess) {
+    console.warn(`⚠️ verifiedStatus is NOT success: ${verifiedStatus}`);
+    return false;
+  }
 
   const client = await pool.connect();
   try {
@@ -40,6 +48,7 @@ async function processXpayFulfillment(transactionUuid, verifiedStatus, amount) {
     // Idempotency check
     const alreadyProcessed = await client.query(`SELECT 1 FROM payments WHERE transaction_id = $1`, [transactionUuid.toString()]);
     if (alreadyProcessed.rowCount > 0) {
+      console.log(`🔄 Transaction ${transactionUuid} already processed - skipping duplicate fulfillment.`);
       await client.query('COMMIT');
       return true; // Already handled
     }
@@ -47,6 +56,8 @@ async function processXpayFulfillment(transactionUuid, verifiedStatus, amount) {
     const { billingData, tourId, tourTitle, selectedDate, timeSlot, peopleCount, sessionId } = paymentData;
     const fullName = `${billingData.firstName} ${billingData.lastName || ''}`.trim();
     const totalPeople = Number(peopleCount.adults) + Number(peopleCount.children);
+
+    console.log(`📝 Inserting booking for ${fullName}, Tour: ${tourTitle}`);
 
     // Confirm seat holds if sessionId exists
     if (sessionId) {
@@ -56,7 +67,10 @@ async function processXpayFulfillment(transactionUuid, verifiedStatus, amount) {
       );
       if (holdConfirm.rowCount > 0) {
         const hold = holdConfirm.rows[0];
+        console.log(`✅ Confirmed seat hold ${hold.id} (${hold.seats} seats)`);
         await client.query(`UPDATE time_slots SET booked_seats = booked_seats + $1, held_seats = held_seats - $1 WHERE id = $2`, [hold.seats, hold.time_slot_id]);
+      } else {
+        console.warn(`⚠️ No active seat hold found for session: ${sessionId}`);
       }
     }
 
@@ -66,6 +80,7 @@ async function processXpayFulfillment(transactionUuid, verifiedStatus, amount) {
        VALUES ($1,1,$2,$3,$4,$5,$6::date,$7,$8) RETURNING id`,
       [tourId, fullName, billingData.email, billingData.phone, billingData.nationality, selectedDate, timeSlot, totalPeople]
     );
+    console.log(`✅ Booking created with ID: ${bookingInsert.rows[0].id}`);
 
     // Record payment
     const amountCents = Math.round(amount * 100);
@@ -76,6 +91,7 @@ async function processXpayFulfillment(transactionUuid, verifiedStatus, amount) {
     );
 
     await client.query('COMMIT');
+    console.log(`💳 Payment recorded for ${fullName}, Amount: ${amount} EGP`);
 
     paymentStatus.set(transactionUuid.toString(), {
       ...paymentData,
@@ -98,11 +114,12 @@ async function processXpayFulfillment(transactionUuid, verifiedStatus, amount) {
         children: peopleCount.children,
         amount: amount,
       };
+      console.log(`📧 Sending confirmation emails to ${billingData.email} and admin...`);
       await sendConfirmationEmail(billingData.email, "Booking Confirmation", emailVariables);
       await sendAdminBookingNotification(emailVariables);
       console.log("📨 Confirmation & Admin emails sent.");
     } catch (mailErr) {
-      console.warn("✉️ Email send failed:", mailErr.message);
+      console.error("✉️ Email send failed:", mailErr.message);
     }
     
     return true;
@@ -332,6 +349,32 @@ router.get("/payment-status/:transactionId", (req, res) => {
     orderId: statusData.transactionUuid,
     amount_cents: Math.round(statusData.amount * 100),
   });
+});
+
+// === /api/xpay/test-admin-notification ===
+router.get("/test-admin-notification", async (req, res) => {
+  try {
+    const testVariables = {
+      firstName: "Test",
+      lastName: "User",
+      email: "test@example.com",
+      phone: "+1234567890",
+      nationality: "Egyptian",
+      tourTitle: "Alexandria Walking Tour (Test)",
+      date: "2024-05-01",
+      time: "10:00 AM",
+      adults: 2,
+      children: 1,
+      amount: 1500.00,
+    };
+
+    console.log("🧪 Triggering test admin notification...");
+    await sendAdminBookingNotification(testVariables);
+    res.json({ success: true, message: "Test admin notification triggered. Check admin email." });
+  } catch (err) {
+    console.error("❌ Test notification error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

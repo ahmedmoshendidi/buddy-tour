@@ -32,9 +32,9 @@ export function usePaymentProcess() {
         session_id: formData.session_id,
       };
 
-      console.log('💳 Processing Noon payment:', paymentData);
+      console.log('💳 Processing XPay payment:', paymentData);
 
-      const response = await fetch(`${API_PREFIX}/noon/pay`, {
+      const response = await fetch(`${API_PREFIX}/xpay/pay`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,21 +48,21 @@ export function usePaymentProcess() {
         throw new Error(data.error || data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // ✅ Handle Noon response
-      if (data.iframe_url && data.order_id) {
-        console.log('✅ Noon payment initiated:', data);
-        localStorage.setItem('transaction_uuid', data.order_id.toString());
+      // ✅ Handle XPay response
+      if (data.iframe_url && data.transaction_uuid) {
+        console.log('✅ XPay payment initiated:', data);
+        localStorage.setItem('transaction_uuid', data.transaction_uuid.toString());
         
-        // Redirect to Noon payment page
+        // Redirect to XPay payment page
         window.location.href = data.iframe_url;
         
         return { 
           success: true, 
-          bookingId: data.order_id.toString(),
-          transactionId: data.order_id.toString()
+          bookingId: data.transaction_uuid.toString(),
+          transactionId: data.transaction_uuid.toString()
         };
       } else {
-        throw new Error(data.error || 'Noon initiation failed: missing iframe_url or order_id');
+        throw new Error(data.error || 'XPay initiation failed: missing iframe_url or transaction_uuid');
       }
 
     } catch (error: any) {
