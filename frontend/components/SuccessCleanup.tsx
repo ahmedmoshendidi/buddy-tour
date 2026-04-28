@@ -13,9 +13,13 @@ export default function SuccessCleanup() {
     ranRef.current = true;
 
     const params = new URLSearchParams(window.location.search);
+    const status = params.get('success') || params.get('status') || params.get('transaction_status');
     const isSuccess =
-      params.get('success') === 'true' ||
-      params.get('status') === 'success';
+      status === 'true' ||
+      status === 'success' ||
+      status === 'SUCCESSFUL' ||
+      status === 'SUCCESS' ||
+      status === 'completed';
 
     if (!isSuccess) return;
 

@@ -87,8 +87,8 @@ export default function PaymentSuccess({
       window.history.replaceState({}, document.title, url.toString());
     }
 
-    // Clear the cart since checkout was successful
-    clearBookedTours();
+    // Clear the cart since checkout was successful (Handled by SuccessCleanup for specific tours)
+    // clearBookedTours();
   }, []);
 
   return (
