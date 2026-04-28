@@ -35,24 +35,49 @@ export default function PaymentSuccess({
 
     if (txId) {
       setTransactionId(txId);
+      sessionStorage.setItem('last_tx_id', txId);
 
       // ✅ Fetch amount from backend if not present in URL
       if (!amountCents && !amountDirect) {
-        fetch(`${API_PREFIX}/noon/payment-status/${txId}`)
+        // We now prioritize XPay status as it is the current active gateway
+        fetch(`${API_PREFIX}/xpay/payment-status/${txId}`)
           .then((res) => res.json())
           .then((data) => {
             if (data.amount_cents) {
-              setAmount(data.amount_cents / 100);
+              const val = data.amount_cents / 100;
+              setAmount(val);
+              sessionStorage.setItem('last_amount', val.toString());
+            } else {
+              // Fallback to Noon if XPay fails or doesn't have the data (for backward compatibility)
+              return fetch(`${API_PREFIX}/noon/payment-status/${txId}`);
+            }
+          })
+          .then((res) => (res && typeof res.json === 'function' ? res.json() : null))
+          .then((data) => {
+            if (data && data.amount_cents && !amount) {
+              const val = data.amount_cents / 100;
+              setAmount(val);
+              sessionStorage.setItem('last_amount', val.toString());
             }
           })
           .catch((err) => console.error("Error fetching payment status:", err));
       }
+    } else {
+      // Try to recover from sessionStorage on refresh
+      const savedId = sessionStorage.getItem('last_tx_id');
+      const savedAmount = sessionStorage.getItem('last_amount');
+      if (savedId) setTransactionId(savedId);
+      if (savedAmount) setAmount(parseFloat(savedAmount));
     }
 
     if (amountCents) {
-      setAmount(parseFloat(amountCents) / 100);
+      const val = parseFloat(amountCents) / 100;
+      setAmount(val);
+      sessionStorage.setItem('last_amount', val.toString());
     } else if (amountDirect) {
-      setAmount(parseFloat(amountDirect));
+      const val = parseFloat(amountDirect);
+      setAmount(val);
+      sessionStorage.setItem('last_amount', val.toString());
     }
 
     // ✅ safer cleanup for query params (won’t trigger router reload)
