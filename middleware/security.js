@@ -36,12 +36,14 @@ const helmetOptions = {
         "https://www.clarity.ms",
         "https://scripts.clarity.ms",
         "https://*.clarity.ms",
+        "https://*.noonpayments.com",
         "'unsafe-inline'"
       ],
       "style-src": [
         "'self'",
         "https://cdn.jsdelivr.net",
         "https://cube.paysky.io:6006",
+        "https://*.noonpayments.com",
         "'unsafe-inline'"
       ],
       "img-src": [
@@ -54,16 +56,31 @@ const helmetOptions = {
         "https://*.cloudinary.com",
         "https://*.amazonaws.com",
         "https://www.facebook.com",
-        "https://*.clarity.ms"
+        "https://*.clarity.ms",
+        "https://buddytourguide.com",
+        "https://*.noonpayments.com"
       ],
       "connect-src": [
         "'self'", 
         "https://accept.paymob.com", 
         "https://cube.paysky.io:6006",
         "https://www.facebook.com",
-        "https://*.clarity.ms"
+        "https://*.clarity.ms",
+        "https://*.xpay.app",
+        "https://*.noonpayments.com"
       ],
-      "frame-src": ["'self'", "https://cube.paysky.io:6006"]
+      "frame-src": [
+        "'self'", 
+        "https://cube.paysky.io:6006",
+        "https://*.xpay.app",
+        "https://www.facebook.com",
+        "https://*.noonpayments.com"
+      ],
+      "form-action": [
+        "'self'",
+        "https://www.facebook.com",
+        "https://*.noonpayments.com"
+      ]
     }
   }
 };

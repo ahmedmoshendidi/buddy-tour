@@ -13,11 +13,29 @@ export default function PaymentResultPage() {
 
   // ✅ نقرأ من الـ URL لو الحالة success أو failed
   const params = new URLSearchParams(location.search);
-  const successParam = params.get('success') || params.get('status');
-  const isSuccess =
+  const successParam = params.get('success') || params.get('status') || params.get('transaction_status');
+  const hasOrderId = params.get('orderId') || params.get('order_id') || params.get('uuid') || params.get('id');
+
+  const urlIsSuccess =
     successParam === 'true' ||
     successParam === 'success' ||
-    successParam === 'completed';
+    successParam === 'completed' ||
+    successParam === 'SUCCESSFUL' ||
+    successParam === 'SUCCESS' ||
+    hasOrderId !== null;
+
+  // ✅ Persist success state in sessionStorage to handle refreshes after URL cleanup
+  const [isSuccess, setIsSuccess] = React.useState(() => {
+    const savedSuccess = sessionStorage.getItem('last_payment_success');
+    return urlIsSuccess || savedSuccess === 'true';
+  });
+
+  React.useEffect(() => {
+    if (urlIsSuccess) {
+      sessionStorage.setItem('last_payment_success', 'true');
+      setIsSuccess(true);
+    }
+  }, [urlIsSuccess]);
 
   return (
     <div className="min-h-screen bg-background">

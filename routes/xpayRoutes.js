@@ -3,6 +3,9 @@ const axios = require("axios");
 require("dotenv").config();
 const { Pool } = require("pg");
 const sendConfirmationEmail = require("../utils/sendConfirmationEmail");
+const sendAdminBookingNotification = require("../utils/sendAdminBookingNotification");
+const { getExchangeRates } = require("../services/exchangeRates");
+const path = require("path");
 
 const router = express.Router();
 
@@ -22,33 +25,127 @@ const pool = new Pool({
 // ====== Payment Status Cache ======
 const paymentStatus = new Map();
 
+// Helper to fully process successful payment
+async function processXpayFulfillment(transactionUuid, verifiedStatus, amount) {
+  console.log(`🛠️ Processing fulfillment for XPay UUID: ${transactionUuid}, Status: ${verifiedStatus}, Amount: ${amount}`);
+  
+  const paymentData = paymentStatus.get(transactionUuid.toString());
+  if (!paymentData) {
+    console.warn(`⚠️ paymentData NOT FOUND in cache for UUID: ${transactionUuid}. This usually happens if the server restarted during payment.`);
+    return false;
+  }
+
+  const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful","SUCCESS","success"].includes(verifiedStatus);
+  if (!isSuccess) {
+    console.warn(`⚠️ verifiedStatus is NOT success: ${verifiedStatus}`);
+    return false;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Idempotency check
+    const alreadyProcessed = await client.query(`SELECT 1 FROM payments WHERE transaction_id = $1`, [transactionUuid.toString()]);
+    if (alreadyProcessed.rowCount > 0) {
+      console.log(`🔄 Transaction ${transactionUuid} already processed - skipping duplicate fulfillment.`);
+      await client.query('COMMIT');
+      return true; // Already handled
+    }
+
+    const { billingData, tourId, tourTitle, selectedDate, timeSlot, peopleCount, sessionId } = paymentData;
+    const fullName = `${billingData.firstName} ${billingData.lastName || ''}`.trim();
+    const totalPeople = Number(peopleCount.adults) + Number(peopleCount.children);
+
+    console.log(`📝 Inserting booking for ${fullName}, Tour: ${tourTitle}`);
+
+    // Confirm seat holds if sessionId exists
+    if (sessionId) {
+      const holdConfirm = await client.query(
+        `UPDATE seat_holds SET status = 'confirmed', order_id = $1 WHERE session_id = $2 AND status = 'active' RETURNING id, time_slot_id, seats`,
+        [transactionUuid.toString(), sessionId]
+      );
+      if (holdConfirm.rowCount > 0) {
+        const hold = holdConfirm.rows[0];
+        console.log(`✅ Confirmed seat hold ${hold.id} (${hold.seats} seats)`);
+        await client.query(`UPDATE time_slots SET booked_seats = booked_seats + $1, held_seats = held_seats - $1 WHERE id = $2`, [hold.seats, hold.time_slot_id]);
+      } else {
+        console.warn(`⚠️ No active seat hold found for session: ${sessionId}`);
+      }
+    }
+
+    // Insert booking
+    const bookingInsert = await client.query(
+      `INSERT INTO bookings (tour_id, guide_id, full_name, email, phone, nationality, selected_date, time_slot, people_count)
+       VALUES ($1,1,$2,$3,$4,$5,$6::date,$7,$8) RETURNING id`,
+      [tourId, fullName, billingData.email, billingData.phone, billingData.nationality, selectedDate, timeSlot, totalPeople]
+    );
+    console.log(`✅ Booking created with ID: ${bookingInsert.rows[0].id}`);
+
+    // Record payment
+    const amountCents = Math.round(amount * 100);
+    await client.query(
+      `INSERT INTO payments (order_id, transaction_id, email, full_name, amount_cents, status)
+       VALUES ($1,$2,$3,$4,$5,'captured')`,
+      [transactionUuid.toString(), transactionUuid.toString(), billingData.email, fullName, amountCents]
+    );
+
+    await client.query('COMMIT');
+    console.log(`💳 Payment recorded for ${fullName}, Amount: ${amount} EGP`);
+
+    paymentStatus.set(transactionUuid.toString(), {
+      ...paymentData,
+      status: "successful",
+      updatedAt: new Date(),
+    });
+
+    // Send confirmation email & notification
+    try {
+      const emailVariables = {
+        firstName: billingData.firstName,
+        lastName: billingData.lastName || "-",
+        email: billingData.email,
+        phone: billingData.phone,
+        nationality: billingData.nationality,
+        tourTitle,
+        date: selectedDate,
+        time: timeSlot,
+        adults: peopleCount.adults,
+        children: peopleCount.children,
+        amount: amount,
+      };
+      console.log(`📧 Sending confirmation emails to ${billingData.email} and admin...`);
+      await sendConfirmationEmail(billingData.email, "Booking Confirmation", emailVariables);
+      await sendAdminBookingNotification(emailVariables);
+      console.log("📨 Confirmation & Admin emails sent.");
+    } catch (mailErr) {
+      console.error("✉️ Email send failed:", mailErr.message);
+    }
+    
+    return true;
+
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error("❌ DB error in XPay fulfillment:", err);
+    return false;
+  } finally {
+    client.release();
+  }
+}
+
 // === /api/xpay/pay ===
 router.post("/pay", async (req, res) => {
   try {
     const {
-      firstName,
-      lastName,
-      email,
-      phone,
-      nationality,
-      tour_id,
-      date,
-      time,
-      adults,
-      children,
-      session_id,
+      firstName, lastName, email, phone, nationality,
+      tour_id, date, time, adults, children, session_id,
     } = req.body;
 
     console.log("📥 Received XPay payment request:", { email, tour_id, session_id });
 
     const client = await pool.connect();
-
-    // Get tour details
-    const tourRes = await client.query(
-      "SELECT price_per_person, title FROM tours WHERE id = $1",
-      [tour_id]
-    );
-
+    
+    const tourRes = await client.query("SELECT price_per_person, title FROM tours WHERE id = $1", [tour_id]);
     if (tourRes.rows.length === 0) {
       client.release();
       return res.status(400).json({ error: "Invalid tour ID" });
@@ -56,26 +153,23 @@ router.post("/pay", async (req, res) => {
 
     const basePrice = tourRes.rows[0].price_per_person;
     const tourTitle = tourRes.rows[0].title;
+    const totalAmountUSD = basePrice * adults + basePrice * 0.8 * children;
 
-    // Calculate base amount in EGP
-    const baseAmount = basePrice * adults + basePrice * 0.8 * children;
+    const ratesResult = await getExchangeRates();
+    const egpRate = ratesResult.success ? (ratesResult.data.rates?.EGP || 48.5) : 48.5;
+    const baseAmount = Math.round(totalAmountUSD * egpRate * 100) / 100;
 
-    // ===== Prepare Amount =====
     const prepareResponse = await axios.post(
       `${XPAY_BASE_URL}/api/v1/payments/prepare-amount/`,
-      {
-        community_id: XPAY_COMMUNITY_ID,
-        amount: baseAmount,
-        currency: "EGP",
-        selected_payment_method: "card",
-      },
+      { community_id: XPAY_COMMUNITY_ID, amount: baseAmount, currency: "EGP", selected_payment_method: "card" },
       { headers: { "Content-Type": "application/json", "x-api-key": XPAY_API_KEY } }
     );
 
     const totalAmountWithFees = prepareResponse.data.data.total_amount;
     console.log("💰 Total amount including fees:", totalAmountWithFees);
 
-    // ===== Create XPay Payment =====
+    const currentHost = `${req.protocol}://${req.get('host')}`;
+
     const xpayPayload = {
       billing_data: {
         name: `${firstName} ${lastName}`.trim(),
@@ -87,6 +181,8 @@ router.post("/pay", async (req, res) => {
       variable_amount_id: parseInt(XPAY_VARIABLE_AMOUNT_ID),
       community_id: XPAY_COMMUNITY_ID,
       pay_using: "card",
+      custom_return_url: `${currentHost}/api/xpay/success-return`,
+      return_url: `${currentHost}/api/xpay/success-return`
     };
 
     console.log("💳 Creating XPay payment:", xpayPayload);
@@ -104,7 +200,6 @@ router.post("/pay", async (req, res) => {
       return res.status(500).json({ error: "Invalid payment response" });
     }
 
-    // Store payment context
     paymentStatus.set(transaction_uuid.toString(), {
       status: "pending",
       transactionId: transaction_id,
@@ -121,7 +216,6 @@ router.post("/pay", async (req, res) => {
     });
 
     client.release();
-
     res.json({ iframe_url, transaction_id: transaction_uuid, transaction_uuid, order_id: transaction_uuid });
 
   } catch (err) {
@@ -130,11 +224,57 @@ router.post("/pay", async (req, res) => {
   }
 });
 
+// === /api/xpay/success-return ===
+router.all("/success-return", async (req, res) => {
+  try {
+    console.log("🔄 Redirected from XPay:", { query: req.query, body: req.body });
+    const payload = req.method === "POST" ? req.body : req.query;
+    const transactionUuid = payload.transaction_id || payload.uuid || payload.order_id || payload.id;
+
+    if (!transactionUuid) {
+      return res.redirect(`${FRONTEND_URL}/payment/failure?message=Missing+Transaction+ID`);
+    }
+
+    let response;
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        response = await axios.get(
+          `${XPAY_BASE_URL}/api/v1/communities/${XPAY_COMMUNITY_ID}/transactions/${transactionUuid}`,
+          { headers: { "x-api-key": XPAY_API_KEY }, timeout: 15000 }
+        );
+        break;
+      } catch (err) {
+        retries--;
+        if (retries === 0) throw err;
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+
+    if (response.data.status?.code === 200 && response.data.data) {
+      const transaction = response.data.data;
+      const transactionStatus = transaction.status;
+      const totalAmount = transaction.total_amount;
+
+      const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful","SUCCESS","success"].includes(transactionStatus);
+      
+      if (isSuccess) {
+         await processXpayFulfillment(transactionUuid, transactionStatus, totalAmount);
+      }
+      return res.sendFile(path.join(__dirname, "../public/payment-response.html"));
+    } else {
+      return res.sendFile(path.join(__dirname, "../public/payment-response.html"));
+    }
+  } catch (err) {
+    console.error("❌ XPay success-return error:", err.message);
+    return res.sendFile(path.join(__dirname, "../public/payment-response.html"));
+  }
+});
+
 // === /api/xpay/callback ===
 router.post("/callback", async (req, res) => {
   try {
     console.log("📨 XPay Callback received:", req.body);
-
     const callbackData = req.body;
     const transactionUuid = callbackData.transaction_id || callbackData.uuid;
     const transactionStatus = callbackData.transaction_status || callbackData.status;
@@ -142,90 +282,22 @@ router.post("/callback", async (req, res) => {
 
     if (!transactionUuid) return res.status(200).send("OK - No transaction ID");
 
-    const paymentData = paymentStatus.get(transactionUuid.toString());
-    if (!paymentData) return res.status(200).send("OK - No context");
-
-    paymentStatus.set(transactionUuid.toString(), {
-      ...paymentData,
-      status: transactionStatus?.toLowerCase() || "unknown",
-      updatedAt: new Date(),
-    });
-
-    const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful"].includes(transactionStatus);
-    if (!isSuccess) return res.status(200).send("OK - Not successful");
-
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-
-      const { billingData, tourId, tourTitle, selectedDate, timeSlot, peopleCount, sessionId } = paymentData;
-      const fullName = `${billingData.firstName} ${billingData.lastName || ''}`.trim();
-      const totalPeople = Number(peopleCount.adults) + Number(peopleCount.children);
-
-      // Idempotency check
-      const alreadyProcessed = await client.query(`SELECT 1 FROM payments WHERE transaction_id = $1`, [transactionUuid.toString()]);
-      if (alreadyProcessed.rowCount > 0) {
-        await client.query('COMMIT');
-        return res.status(200).send("OK - Already processed");
-      }
-
-      // Confirm seat holds if sessionId exists
-      if (sessionId) {
-        const holdConfirm = await client.query(
-          `UPDATE seat_holds SET status = 'confirmed', order_id = $1 WHERE session_id = $2 AND status = 'active' RETURNING id, time_slot_id, seats`,
-          [transactionUuid.toString(), sessionId]
-        );
-        if (holdConfirm.rowCount > 0) {
-          const hold = holdConfirm.rows[0];
-          await client.query(`UPDATE time_slots SET booked_seats = booked_seats + $1, held_seats = held_seats - $1 WHERE id = $2`, [hold.seats, hold.time_slot_id]);
-        }
-      }
-
-      // Insert booking
-      const bookingInsert = await client.query(
-        `INSERT INTO bookings (tour_id, guide_id, full_name, email, phone, nationality, selected_date, time_slot, people_count)
-         VALUES ($1,1,$2,$3,$4,$5,$6::date,$7,$8) RETURNING id`,
-        [tourId, fullName, billingData.email, billingData.phone, billingData.nationality, selectedDate, timeSlot, totalPeople]
-      );
-
-      // Record payment
-      const amountCents = Math.round(totalAmount * 100);
-      await client.query(
-        `INSERT INTO payments (order_id, transaction_id, email, full_name, amount_cents, status)
-         VALUES ($1,$2,$3,$4,$5,'captured')`,
-        [transactionUuid.toString(), transactionUuid.toString(), billingData.email, fullName, amountCents]
-      );
-
-      await client.query('COMMIT');
-
-      // Send confirmation email
-      try {
-        await sendConfirmationEmail(billingData.email, "Booking Confirmation", {
-          firstName: billingData.firstName,
-          lastName: billingData.lastName || "-",
-          tourTitle,
-          date: selectedDate,
-          time: timeSlot,
-          adults: peopleCount.adults,
-          children: peopleCount.children,
-          amount: totalAmount,
-        });
-      } catch (mailErr) {
-        console.warn("✉️ Email send failed:", mailErr.message);
-      }
-
-      console.log(`✅ XPay transaction completed. Booking ID: ${bookingInsert.rows[0].id}`);
-      res.status(200).send("OK");
-
-    } catch (err) {
-      await client.query('ROLLBACK');
-      console.error("❌ DB error in XPay callback:", err);
-      res.status(500).send("Error in callback processing");
-    } finally {
-      client.release();
+    const pData = paymentStatus.get(transactionUuid.toString());
+    if (pData) {
+      paymentStatus.set(transactionUuid.toString(), {
+        ...pData,
+        status: transactionStatus?.toLowerCase() || "unknown",
+        updatedAt: new Date(),
+      });
     }
 
-  } catch (err) {
+    const isSuccess = ["SUCCESSFUL","COMPLETED","completed","successful","SUCCESS","success"].includes(transactionStatus);
+    if (!isSuccess) return res.status(200).send("OK - Not successful");
+
+    await processXpayFulfillment(transactionUuid, transactionStatus, totalAmount);
+
+    res.status(200).send("OK");
+  } catch(err) {
     console.error("❌ XPay callback error:", err);
     res.status(500).send("Error");
   }
@@ -236,16 +308,11 @@ router.get("/verify/:transactionId", async (req, res) => {
   try {
     const { transactionId } = req.params;
 
-    // 1) لو عندي status من callback → هو المصدر الأساسي
     const cached = paymentStatus.get(transactionId.toString());
     if (cached && cached.status) {
-      return res.json({
-        status: cached.status,
-        source: "callback-cache",
-      });
+      return res.json({ status: cached.status, source: "callback-cache" });
     }
 
-    // 2) ملقيناش في الكاش → نروح لـ XPay
     const response = await axios.get(
       `${XPAY_BASE_URL}/api/v1/communities/${XPAY_COMMUNITY_ID}/transactions/${transactionId}`,
       { headers: { "x-api-key": XPAY_API_KEY } }
@@ -253,7 +320,6 @@ router.get("/verify/:transactionId", async (req, res) => {
 
     if (response.data.status?.code === 200 && response.data.data) {
       const transaction = response.data.data;
-
       return res.json({
         status: transaction.status,
         amount: transaction.total_amount,
@@ -264,7 +330,6 @@ router.get("/verify/:transactionId", async (req, res) => {
     } else {
       return res.status(404).json({ error: "Transaction not found" });
     }
-
   } catch (err) {
     console.error("❌ XPay verify error:", err.response?.data || err.message);
     return res.status(500).json({ error: "Verification failed" });
@@ -284,6 +349,32 @@ router.get("/payment-status/:transactionId", (req, res) => {
     orderId: statusData.transactionUuid,
     amount_cents: Math.round(statusData.amount * 100),
   });
+});
+
+// === /api/xpay/test-admin-notification ===
+router.get("/test-admin-notification", async (req, res) => {
+  try {
+    const testVariables = {
+      firstName: "Test",
+      lastName: "User",
+      email: "test@example.com",
+      phone: "+1234567890",
+      nationality: "Egyptian",
+      tourTitle: "Alexandria Walking Tour (Test)",
+      date: "2024-05-01",
+      time: "10:00 AM",
+      adults: 2,
+      children: 1,
+      amount: 1500.00,
+    };
+
+    console.log("🧪 Triggering test admin notification...");
+    await sendAdminBookingNotification(testVariables);
+    res.json({ success: true, message: "Test admin notification triggered. Check admin email." });
+  } catch (err) {
+    console.error("❌ Test notification error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

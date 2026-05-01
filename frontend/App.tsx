@@ -77,9 +77,9 @@ export default function App() {
                 loading={loading}
                 error={error}
                 onViewTourDetails={(tour) => navigate(`/tour/${tour.slug}`)}
-                onBookNow={() => {}}
-                onViewTourById={() => {}}
-                onPayNow={() => {}}
+                onBookNow={() => { }}
+                onViewTourById={() => { }}
+                onPayNow={() => { }}
                 onApplyTourGuide={handleApplyTourGuide} // ✅ تم الربط هنا
               />
             }
@@ -96,6 +96,8 @@ export default function App() {
           <Route path="/cancellation-policy" element={<CancellationPolicy />} />
           <Route path="/service-duration-policy" element={<ServiceDurationPolicy />} />
           <Route path="/payment-result" element={<PaymentResultPage />} />
+          {/* Alias for noon payment dashboard return URL typos */}
+          <Route path="/payment_result" element={<PaymentResultPage />} />
           <Route path="/privacy-policy" element={<PrivacyAndTermsPage />} />
           <Route path="/terms-and-conditions" element={<PrivacyAndTermsPage />} />
         </Route>

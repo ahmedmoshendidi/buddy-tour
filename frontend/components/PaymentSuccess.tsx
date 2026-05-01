@@ -3,6 +3,8 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { useCurrency } from "./CurrencyContext";
+import { useCart } from "./CartContext";
+import { API_PREFIX } from "../config";
 import {
   CheckCircle,
   Calendar,
@@ -22,20 +24,60 @@ export default function PaymentSuccess({
   const [transactionId, setTransactionId] = useState<string>("");
   const [amount, setAmount] = useState<number>(0);
   const { formatPrice } = useCurrency();
+  const { clearBookedTours } = useCart();
 
   useEffect(() => {
     // Read URL parameters for transaction details
     const urlParams = new URLSearchParams(window.location.search);
-    const txId = urlParams.get("id") || urlParams.get("transaction_id");
+    const txId = urlParams.get("id") || urlParams.get("transaction_id") || urlParams.get("uuid") || urlParams.get("order_id") || urlParams.get("orderId");
     const amountCents = urlParams.get("amount_cents");
     const amountDirect = urlParams.get("amount");
 
-    if (txId) setTransactionId(txId);
+    if (txId) {
+      setTransactionId(txId);
+      sessionStorage.setItem('last_tx_id', txId);
+
+      // ✅ Fetch amount from backend if not present in URL
+      if (!amountCents && !amountDirect) {
+        // We now prioritize XPay status as it is the current active gateway
+        fetch(`${API_PREFIX}/xpay/payment-status/${txId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.amount_cents) {
+              const val = data.amount_cents / 100;
+              setAmount(val);
+              sessionStorage.setItem('last_amount', val.toString());
+            } else {
+              // Fallback to Noon if XPay fails or doesn't have the data (for backward compatibility)
+              return fetch(`${API_PREFIX}/noon/payment-status/${txId}`);
+            }
+          })
+          .then((res) => (res && typeof res.json === 'function' ? res.json() : null))
+          .then((data) => {
+            if (data && data.amount_cents && !amount) {
+              const val = data.amount_cents / 100;
+              setAmount(val);
+              sessionStorage.setItem('last_amount', val.toString());
+            }
+          })
+          .catch((err) => console.error("Error fetching payment status:", err));
+      }
+    } else {
+      // Try to recover from sessionStorage on refresh
+      const savedId = sessionStorage.getItem('last_tx_id');
+      const savedAmount = sessionStorage.getItem('last_amount');
+      if (savedId) setTransactionId(savedId);
+      if (savedAmount) setAmount(parseFloat(savedAmount));
+    }
 
     if (amountCents) {
-      setAmount(parseFloat(amountCents) / 100);
+      const val = parseFloat(amountCents) / 100;
+      setAmount(val);
+      sessionStorage.setItem('last_amount', val.toString());
     } else if (amountDirect) {
-      setAmount(parseFloat(amountDirect));
+      const val = parseFloat(amountDirect);
+      setAmount(val);
+      sessionStorage.setItem('last_amount', val.toString());
     }
 
     // ✅ safer cleanup for query params (won’t trigger router reload)
@@ -44,6 +86,9 @@ export default function PaymentSuccess({
       url.search = "";
       window.history.replaceState({}, document.title, url.toString());
     }
+
+    // Clear the cart since checkout was successful (Handled by SuccessCleanup for specific tours)
+    // clearBookedTours();
   }, []);
 
   return (
@@ -101,7 +146,7 @@ export default function PaymentSuccess({
                   </label>
                   <div className="mt-1">
                     <span className="text-xl font-semibold text-primary">
-                      {amount > 0 ? formatPrice(amount) : "Confirming..."}
+                      {amount > 0 ? new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP', currencyDisplay: 'narrowSymbol' }).format(amount) : "Confirming..."}
                     </span>
                   </div>
                 </div>

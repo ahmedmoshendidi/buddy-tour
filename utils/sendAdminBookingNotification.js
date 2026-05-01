@@ -14,20 +14,20 @@ module.exports = async function sendAdminBookingNotification(variables) {
 
         <div style="background:#fff;padding:16px;border-left:4px solid #667eea;border-radius:8px;margin:16px 0">
           <h3>Customer Details</h3>
-          <p><b>Name:</b> ${variables.firstName} ${variables.lastName}</p>
-          <p><b>Email:</b> ${variables.email}</p>
-          <p><b>Phone:</b> ${variables.phone}</p>
-          <p><b>Nationality:</b> ${variables.nationality}</p>
+          <p><b>Name:</b> ${variables.firstName || '-'} ${variables.lastName || '-'}</p>
+          <p><b>Email:</b> ${variables.email || '-'}</p>
+          <p><b>Phone:</b> ${variables.phone || '-'}</p>
+          <p><b>Nationality:</b> ${variables.nationality || '-'}</p>
         </div>
 
         <div style="background:#fff;padding:16px;border-left:4px solid #10b981;border-radius:8px;margin:16px 0">
           <h3>Booking Details</h3>
-          <p><b>Tour:</b> ${variables.tourTitle}</p>
-          <p><b>Date:</b> ${variables.date}</p>
-          <p><b>Time:</b> ${variables.time}</p>
-          <p><b>Adults:</b> ${variables.adults}</p>
+          <p><b>Tour:</b> ${variables.tourTitle || '-'}</p>
+          <p><b>Date:</b> ${variables.date || '-'}</p>
+          <p><b>Time:</b> ${variables.time || '-'}</p>
+          <p><b>Adults:</b> ${variables.adults || 0}</p>
           ${variables.children > 0 ? `<p><b>Children:</b> ${variables.children}</p>` : ''}
-          <p><b>Total Paid:</b> ${variables.amount} EGP</p>
+          <p><b>Total Paid:</b> ${variables.amount || 0} EGP</p>
         </div>
 
         <p style="color:#666;text-align:center;margin-top:20px">BuddyTour System</p>
