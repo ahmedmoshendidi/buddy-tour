@@ -151,6 +151,7 @@ router.post("/pay", async (req, res) => {
       currency: "EGP",
       order: orderId,
       merchantRedirect: `${currentHost}/api/kashier/success-return`,
+      merchantRedirectURL: `${currentHost}/api/kashier/success-return`, // Added for redundancy
       display: "en",
       type: "one-time",
       allowedMethods: "card,wallet",
@@ -160,6 +161,7 @@ router.post("/pay", async (req, res) => {
         reference: session_id || email
       },
       serverWebhook: `${currentHost}/api/kashier/webhook`,
+      webhookUrl: `${currentHost}/api/kashier/webhook`, // Added based on docs
       metaData: {
         tourTitle,
         tourId: tour_id,
