@@ -39,6 +39,8 @@ interface BookedTour {
 
 interface CartContextType {
   bookedTours: BookedTour[];
+  unpaidTours: BookedTour[];
+  paidTours: BookedTour[];
   addBookedTour: (tour: Omit<BookedTour, 'id' | 'createdAt'>, tourData?: Tour) => void;
   removeBookedTour: (tourId: string) => void;
   clearBookedTours: () => void;
@@ -190,8 +192,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     }, 300);
   };
 
+  const unpaidTours = bookedTours.filter(t => !t.isPaid);
+  const paidTours = bookedTours.filter(t => t.isPaid);
+
   const value: CartContextType = {
     bookedTours,
+    unpaidTours,
+    paidTours,
     addBookedTour,
     removeBookedTour,
     clearBookedTours,

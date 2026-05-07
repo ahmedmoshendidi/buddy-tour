@@ -56,14 +56,8 @@ export default function SuccessCleanup() {
           }
         }
         
-        // 2) استناه شوية عشان اليوزر يشوف انه paid، بعدين امسحه من الكارت
-        setTimeout(() => {
-          console.log('🗑️ SuccessCleanup: Removing tour with sessionId:', sessionId);
-          removeBookedTourBySession(sessionId);
-          
-          // Clean up paid_booking after removal
-          localStorage.removeItem('paid_booking');
-        }, 3000); // 3 seconds to show paid status
+        // 2) Keep the tour in the list but mark as paid (it will show in BookingsSidebar now)
+        console.log('✅ SuccessCleanup: Tour marked as paid for sessionId:', sessionId);
       }
 
       // Clean up bookingData if it exists
