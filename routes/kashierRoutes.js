@@ -254,8 +254,12 @@ router.get("/payment-status/:orderId", async (req, res) => {
 
 // === /api/kashier/success-return ===
 router.all("/success-return", (req, res) => {
-  // Simple redirect to frontend success page
-  res.redirect(`${FRONTEND_URL}/payment/success`);
+  // Capture all query params from Kashier (orderId, paymentStatus, etc.)
+  const queryString = new URLSearchParams(req.query).toString();
+  
+  // Redirect to frontend success page with the same parameters
+  console.log("🔄 Redirecting to success page with params:", queryString);
+  res.redirect(`${FRONTEND_URL}/payment/success?${queryString}`);
 });
 
 // === /api/kashier/refund ===
