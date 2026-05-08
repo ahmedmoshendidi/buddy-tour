@@ -97,13 +97,16 @@ async function processKashierFulfillment(orderId, status, amount) {
         email: billingData.email,
         phone: billingData.phone,
         nationality: billingData.nationality,
-        tourTitle,
+        tourTitle: tourTitle,
         date: selectedDate,
         time: timeSlot,
         adults: peopleCount.adults,
         children: peopleCount.children,
         amount: amount,
+        transactionId: orderId,
+        orderId: orderId
       };
+      console.log("📧 Sending emails for Order:", orderId);
       await sendConfirmationEmail(billingData.email, "Booking Confirmation", emailVariables);
       await sendAdminBookingNotification(emailVariables);
     } catch (mailErr) {
@@ -254,12 +257,9 @@ router.get("/payment-status/:orderId", async (req, res) => {
 
 // === /api/kashier/success-return ===
 router.all("/success-return", (req, res) => {
-  // Capture all query params from Kashier (orderId, paymentStatus, etc.)
   const queryString = new URLSearchParams(req.query).toString();
-  
-  // Redirect to frontend success page with the same parameters
-  console.log("🔄 Redirecting to success page with params:", queryString);
-  res.redirect(`${FRONTEND_URL}/payment/success?${queryString}`);
+  console.log("🔄 Redirecting to payment-response.html with params:", queryString);
+  res.redirect(`/payment-response.html?${queryString}`);
 });
 
 // === /api/kashier/refund ===
