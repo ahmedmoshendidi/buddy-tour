@@ -14,10 +14,10 @@
     const isSuccess = params.get('paymentStatus') === 'SUCCESS' || params.get('status') === 'SUCCESS';
     
     if (isSuccess) {
-      window.location.replace('/payment/success' + url.search);
+      window.location.replace('/payment-result' + url.search);
     } else {
       // If failed or unknown, go to success anyway (the page will handle status)
-      window.location.replace('/payment/success' + url.search);
+      window.location.replace('/payment-result' + url.search);
     }
   </script>
   <style>

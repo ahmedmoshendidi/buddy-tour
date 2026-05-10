@@ -27,17 +27,51 @@ const pool = new Pool({
 const paymentStatus = new Map();
 
 // Helper to process fulfillment
-async function processKashierFulfillment(orderId, status, amount) {
+async function processKashierFulfillment(orderId, status, amount, metaData = null) {
   console.log(`🛠️ Processing Kashier fulfillment for Order: ${orderId}, Status: ${status}, Amount: ${amount}`);
   
-  const paymentData = paymentStatus.get(orderId.toString());
+  let paymentData = paymentStatus.get(orderId.toString());
+  
+  // Recovery from metaData if cache is lost (server restart)
+  if (!paymentData && metaData) {
+    console.log(`ℹ️ paymentData missing from cache for Order: ${orderId}. Attempting recovery from metaData...`);
+    try {
+      paymentData = {
+        billingData: {
+          firstName: metaData.firstName || metaData.full_name?.split(' ')[0] || "Customer",
+          lastName: metaData.lastName || metaData.full_name?.split(' ').slice(1).join(' ') || "",
+          email: metaData.email,
+          phone: metaData.phone,
+          nationality: metaData.nationality || "Unknown"
+        },
+        tourId: parseInt(metaData.tourId),
+        tourTitle: metaData.tourTitle,
+        selectedDate: metaData.date,
+        timeSlot: metaData.time,
+        peopleCount: {
+          adults: parseInt(metaData.adults || 1),
+          children: parseInt(metaData.children || 0)
+        },
+        sessionId: metaData.sessionId,
+        amount: parseFloat(amount)
+      };
+      console.log("✅ Recovered paymentData from metaData");
+    } catch (recoveryErr) {
+      console.error("❌ Failed to recover paymentData from metaData:", recoveryErr.message);
+      return false;
+    }
+  }
+
   if (!paymentData) {
-    console.warn(`⚠️ paymentData NOT FOUND in cache for Order: ${orderId}.`);
+    console.warn(`⚠️ paymentData NOT FOUND for Order: ${orderId} (Cache empty and no metaData available).`);
     return false;
   }
 
-  const isSuccess = ["SUCCESS", "captured", "completed", "SUCCESSFUL"].includes(status.toLowerCase());
-  if (!isSuccess) return false;
+  const isSuccess = ["SUCCESS", "captured", "completed", "SUCCESSFUL"].includes(status.toUpperCase());
+  if (!isSuccess) {
+    console.warn(`⚠️ Status "${status}" is not a success status.`);
+    return false;
+  }
 
   const client = await pool.connect();
   try {
@@ -46,6 +80,7 @@ async function processKashierFulfillment(orderId, status, amount) {
     // Idempotency check
     const alreadyProcessed = await client.query(`SELECT 1 FROM payments WHERE order_id = $1`, [orderId.toString()]);
     if (alreadyProcessed.rowCount > 0) {
+      console.log(`ℹ️ Order ${orderId} already processed. Skipping.`);
       await client.query('COMMIT');
       return true;
     }
@@ -63,6 +98,7 @@ async function processKashierFulfillment(orderId, status, amount) {
       if (holdConfirm.rowCount > 0) {
         const hold = holdConfirm.rows[0];
         await client.query(`UPDATE time_slots SET booked_seats = booked_seats + $1, held_seats = held_seats - $1 WHERE id = $2`, [hold.seats, hold.time_slot_id]);
+        console.log(`✅ Seat hold confirmed for session: ${sessionId}`);
       }
     }
 
@@ -82,6 +118,7 @@ async function processKashierFulfillment(orderId, status, amount) {
     );
 
     await client.query('COMMIT');
+    console.log(`✅ DB transaction committed for Order: ${orderId}`);
 
     paymentStatus.set(orderId.toString(), {
       ...paymentData,
@@ -109,6 +146,7 @@ async function processKashierFulfillment(orderId, status, amount) {
       console.log("📧 Sending emails for Order:", orderId);
       await sendConfirmationEmail(billingData.email, "Booking Confirmation", emailVariables);
       await sendAdminBookingNotification(emailVariables);
+      console.log("✅ Emails sent successfully");
     } catch (mailErr) {
       console.error("✉️ Email failed:", mailErr.message);
     }
@@ -167,7 +205,15 @@ router.post("/pay", async (req, res) => {
         tourTitle,
         tourId: tour_id,
         date,
-        time
+        time,
+        firstName,
+        lastName,
+        email,
+        phone,
+        nationality,
+        adults,
+        children,
+        sessionId: session_id
       }
     };
 
@@ -208,12 +254,12 @@ router.post("/webhook", async (req, res) => {
     const signature = req.headers["x-kashier-signature"];
     const body = JSON.stringify(req.body);
     
-    // In production, you'd verify HMAC here. For now, we process if valid body.
-    console.log("📨 Kashier Webhook received:", req.body);
+    // In production, you'd verify HMAC here.
+    console.log("📨 Kashier Webhook received:", JSON.stringify(req.body, null, 2));
     
     const { data } = req.body;
-    if (data && data.status === "SUCCESS") {
-      await processKashierFulfillment(data.merchantOrderId, data.status, data.amount);
+    if (data && (data.status === "SUCCESS" || data.status === "captured")) {
+      await processKashierFulfillment(data.merchantOrderId, data.status, data.amount, data.metaData);
     }
     
     res.status(200).send("OK");
@@ -256,11 +302,24 @@ router.get("/payment-status/:orderId", async (req, res) => {
 });
 
 // === /api/kashier/success-return ===
-router.all("/success-return", (req, res) => {
-  const queryString = new URLSearchParams(req.query).toString();
-  console.log("🔄 Redirecting to payment-response.html with params:", queryString);
-  res.redirect(`/payment-response.html?${queryString}`);
+router.all("/success-return", async (req, res) => {
+  const params = req.query;
+  const queryString = new URLSearchParams(params).toString();
+  console.log("🔄 Kashier Success Return reached. Params:", queryString);
+
+  const orderId = params.merchantOrderId || params.orderId;
+  const status = params.paymentStatus || params.status;
+  const amount = params.amount;
+
+  if (orderId && status === "SUCCESS") {
+    // Fulfillment call (idempotent)
+    // Note: Success return doesn't usually include full metadata, but we try anyway
+    await processKashierFulfillment(orderId, status, amount);
+  }
+
+  res.redirect(`/payment-result?${queryString}`);
 });
+
 
 // === /api/kashier/refund ===
 router.post("/refund", async (req, res) => {
