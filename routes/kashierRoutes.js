@@ -77,6 +77,9 @@ async function processKashierFulfillment(orderId, status, amount, metaData = nul
   try {
     await client.query('BEGIN');
 
+    // ✅ Race Condition Prevention: Advisory lock on orderId
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [orderId.toString()]);
+
     // Idempotency check
     const alreadyProcessed = await client.query(`SELECT 1 FROM payments WHERE order_id = $1`, [orderId.toString()]);
     if (alreadyProcessed.rowCount > 0) {
@@ -92,7 +95,14 @@ async function processKashierFulfillment(orderId, status, amount, metaData = nul
     // Confirm seat holds
     if (sessionId) {
       const holdConfirm = await client.query(
-        `UPDATE seat_holds SET status = 'confirmed', order_id = $1 WHERE session_id = $2 AND status = 'active' RETURNING id, time_slot_id, seats`,
+        `UPDATE seat_holds 
+         SET status = 'confirmed', order_id = $1 
+         WHERE id = (
+           SELECT id FROM seat_holds 
+           WHERE session_id = $2 AND status = 'active' 
+           LIMIT 1
+         )
+         RETURNING id, time_slot_id, seats`,
         [orderId.toString(), sessionId]
       );
       if (holdConfirm.rowCount > 0) {
