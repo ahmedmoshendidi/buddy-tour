@@ -13,7 +13,7 @@ export default function PaymentResultPage() {
 
   // ✅ نقرأ من الـ URL لو الحالة success أو failed
   const params = new URLSearchParams(location.search);
-  const successParam = params.get('success') || params.get('status') || params.get('transaction_status');
+  const successParam = params.get('success') || params.get('status') || params.get('transaction_status') || params.get('paymentStatus');
   const hasOrderId = params.get('orderId') || params.get('order_id') || params.get('uuid') || params.get('id');
 
   const urlIsSuccess =

@@ -13,7 +13,7 @@ export default function SuccessCleanup() {
     ranRef.current = true;
 
     const params = new URLSearchParams(window.location.search);
-    const status = params.get('success') || params.get('status') || params.get('transaction_status');
+    const status = params.get('success') || params.get('status') || params.get('transaction_status') || params.get('paymentStatus');
     const isSuccess =
       status === 'true' ||
       status === 'success' ||
@@ -40,6 +40,14 @@ export default function SuccessCleanup() {
       // 1) اول حاجة ، اعمل mark للتور كـ paid عشان العداد يختفي فورا
       if (sessionId) {
         markTourAsPaid(sessionId);
+
+        // ✅ Persist paid status for CartContext recovery on refresh
+        localStorage.setItem('paid_booking', JSON.stringify({
+          session_id: sessionId,
+          tour_id: tourId,
+          total_amount: bookingData?.total_amount || 0,
+          timestamp: new Date().toISOString()
+        }));
         
         // Meta Pixel Purchase Event
         if (typeof window !== 'undefined' && (window as any).fbq) {
