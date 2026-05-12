@@ -88,12 +88,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         const paidBookingRaw = localStorage.getItem('paid_booking');
         const paidBooking = paidBookingRaw ? JSON.parse(paidBookingRaw) : null;
 
-        // Filter out expired tours and mark paid ones
-        const validTours = parsed.filter((tour: BookedTour) =>
-          new Date(tour.holdExpiresAt) > new Date()
-        ).map((tour: BookedTour) => ({
+        // Filter out expired tours but ALWAYS keep paid ones
+        const validTours = parsed.filter((tour: BookedTour) => {
+          const isActuallyPaid = tour.isPaid || (paidBooking?.session_id === tour.sessionId);
+          const isNotExpired = new Date(tour.holdExpiresAt) > new Date();
+          return isActuallyPaid || isNotExpired;
+        }).map((tour: BookedTour) => ({
           ...tour,
-          isPaid: paidBooking?.session_id === tour.sessionId
+          isPaid: tour.isPaid || (paidBooking?.session_id === tour.sessionId),
+          orderId: tour.orderId || (paidBooking?.session_id === tour.sessionId ? paidBooking.order_id : undefined)
         }));
 
         console.log('📦 CartContext: Loaded', validTours.length, 'tours,', validTours.filter((t: BookedTour) => t.isPaid).length, 'paid');
