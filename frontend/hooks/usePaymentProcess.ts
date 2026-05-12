@@ -9,9 +9,12 @@ interface PaymentResult {
   transactionId?: string;
 }
 
+import { useCart } from '../components/CartContext';
+
 export function usePaymentProcess() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+  const { setTourOrderId } = useCart();
 
   const processPayment = async (formData: FormData): Promise<PaymentResult> => {
     setIsProcessing(true);
@@ -52,6 +55,11 @@ export function usePaymentProcess() {
       if (data.iframe_url && data.transaction_uuid) {
         console.log('✅ Kashier payment initiated:', data);
         localStorage.setItem('transaction_uuid', data.transaction_uuid.toString());
+        
+        // Save orderId into cart item so we can find it later
+        if (formData.session_id) {
+          setTourOrderId(formData.session_id, data.transaction_uuid.toString());
+        }
         
         // Redirect to Kashier payment page
         window.location.href = data.iframe_url;

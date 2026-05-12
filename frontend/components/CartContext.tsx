@@ -49,7 +49,8 @@ interface CartContextType {
 
   // Session-based operations
   removeBookedTourBySession: (sessionId: string) => void;
-  markTourAsPaid: (sessionId: string, orderId?: string) => void;
+  setTourOrderId: (sessionId: string, orderId: string) => void;
+  markTourAsPaid: (sessionId: string, orderId?: string, fallbackTourId?: number) => void;
 
   // Notification states
   notificationTour: Tour | null;
@@ -159,15 +160,41 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     });
   }, []);
 
-  const markTourAsPaid = React.useCallback((sessionId: string, orderId?: string) => {
+  const setTourOrderId = React.useCallback((sessionId: string, orderId: string) => {
     setBookedTours(prev => {
       const updated = prev.map(tour =>
         tour.sessionId === sessionId
-          ? { ...tour, isPaid: true, orderId: orderId || tour.orderId }
+          ? { ...tour, orderId: orderId }
           : tour
       );
-      const found = updated.some(t => t.sessionId === sessionId && t.isPaid);
-      console.log(`💳 CartContext: markTourAsPaid for ${sessionId}. Success: ${found}. OrderId: ${orderId}`);
+      localStorage.setItem('buddytour_booked_tours', JSON.stringify(updated));
+      console.log(`🔗 CartContext: Associated sessionId ${sessionId} with orderId ${orderId}`);
+      return updated;
+    });
+  }, []);
+
+  const markTourAsPaid = React.useCallback((sessionId: string, orderId?: string, fallbackTourId?: number) => {
+    setBookedTours(prev => {
+      let found = false;
+      const updated = prev.map(tour => {
+        // Match by orderId (MOST ACCURATE) OR sessionId OR fallback to tourId
+        const isMatch = (orderId && tour.orderId === orderId) || 
+                        (tour.sessionId === sessionId) || 
+                        (fallbackTourId && tour.tourId === fallbackTourId && !tour.isPaid);
+        
+        if (isMatch && !tour.isPaid) {
+          found = true;
+          return { ...tour, isPaid: true, orderId: orderId || tour.orderId };
+        }
+        return tour;
+      });
+
+      console.log(`💳 CartContext: markTourAsPaid result: found=${found} | orderId=${orderId} | session=${sessionId}`);
+      
+      if (found) {
+        localStorage.setItem('buddytour_booked_tours', JSON.stringify(updated));
+      }
+      
       return updated;
     });
   }, []);
@@ -202,6 +229,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     clearBookedTours,
     getCartTotal,
     removeBookedTourBySession,
+    setTourOrderId,
     markTourAsPaid,
     notificationTour,
     showNotification,

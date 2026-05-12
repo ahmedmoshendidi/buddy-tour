@@ -35,22 +35,22 @@ export default function SuccessCleanup() {
       const bookingDataRaw = localStorage.getItem('bookingData');
       const bookingData = bookingDataRaw ? JSON.parse(bookingDataRaw) : null;
 
+      const orderId = params.get('merchantOrderId') || params.get('orderId');
       const sessionId: string | undefined = paidBooking?.session_id || bookingData?.session_id;
       const tourId: number | undefined = bookingData?.tour_id;
 
       console.log('🧹 SuccessCleanup Trace:', { 
+        orderId,
         sessionId, 
         tourId, 
         hasPaidBooking: !!paidBooking, 
-        hasBookingData: !!bookingData,
-        allStorageKeys: Object.keys(localStorage).filter(k => k.includes('booking') || k.includes('tour'))
+        hasBookingData: !!bookingData
       });
 
       // 1) اول حاجة ، اعمل mark للتور كـ paid عشان العداد يختفي فورا
-      if (sessionId) {
-        const orderId = params.get('merchantOrderId') || params.get('orderId');
-        console.log(`✨ SuccessCleanup: Calling markTourAsPaid for session ${sessionId} | orderId: ${orderId}`);
-        markTourAsPaid(sessionId, orderId || undefined);
+      if (orderId || sessionId || tourId) {
+        console.log(`✨ SuccessCleanup: Marking as paid | OrderId: ${orderId} | Session: ${sessionId} | TourId: ${tourId}`);
+        markTourAsPaid(sessionId || '', orderId || undefined, tourId);
 
         // ✅ Persist paid status for CartContext recovery on refresh
         localStorage.setItem('paid_booking', JSON.stringify({
@@ -63,7 +63,7 @@ export default function SuccessCleanup() {
 
         // Meta Pixel Purchase Event
         if (typeof window !== 'undefined' && (window as any).fbq) {
-          const purchaseTrackingKey = `fbq_purchase_${sessionId}`;
+          const purchaseTrackingKey = `fbq_purchase_${sessionId || tourId}`;
           if (!localStorage.getItem(purchaseTrackingKey)) {
             (window as any).fbq('track', 'Purchase', {
               content_type: 'product',
@@ -77,21 +77,11 @@ export default function SuccessCleanup() {
         }
 
         // 2) Keep the tour in the list but mark as paid (it will show in BookingsSidebar now)
-        console.log('✅ SuccessCleanup: Tour marked as paid for sessionId:', sessionId);
+        console.log('✅ SuccessCleanup: Tour transition initiated');
       }
 
-      // Clean up bookingData if it exists
-      if (bookingDataRaw) {
-        localStorage.removeItem('bookingData');
-      }
-
-      // 3) امسح مفتاح السيشن الخاص بالتور لو بيطابق نفس السيشن
-      if (tourId && sessionId) {
-        const key = `buddy_tour_session_${tourId}`;
-        if (localStorage.getItem(key) === sessionId) {
-          localStorage.removeItem(key);
-        }
-      }
+      // DON'T remove bookingData immediately - let it stay for redundancy
+      // Clean up only very old data if needed (optional)
 
       // 4) نظّف الـ URL من باراميترات النجاح (إلا لو في صفحة النتيجة عشان الصفحة محتجاهم)
       if (window.location.pathname !== '/payment-result') {
