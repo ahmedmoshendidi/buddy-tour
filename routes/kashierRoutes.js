@@ -114,9 +114,9 @@ async function processKashierFulfillment(orderId, status, amount, metaData = nul
 
     // Insert booking
     const bookingInsert = await client.query(
-      `INSERT INTO bookings (tour_id, guide_id, full_name, email, phone, nationality, selected_date, time_slot, people_count)
-       VALUES ($1,1,$2,$3,$4,$5,$6::date,$7,$8) RETURNING id`,
-      [tourId, fullName, billingData.email, billingData.phone, billingData.nationality, selectedDate, timeSlot, totalPeople]
+      `INSERT INTO bookings (tour_id, guide_id, full_name, email, phone, nationality, selected_date, time_slot, people_count, order_id)
+       VALUES ($1,1,$2,$3,$4,$5,$6::date,$7,$8,$9) RETURNING id`,
+      [tourId, fullName, billingData.email, billingData.phone, billingData.nationality, selectedDate, timeSlot, totalPeople, orderId.toString()]
     );
 
     // Record payment
@@ -344,11 +344,20 @@ router.post("/refund", async (req, res) => {
     }
     
     const payment = paymentRes.rows[0];
-    const bookingRes = await client.query("SELECT * FROM bookings WHERE email = $1 AND selected_date >= CURRENT_DATE LIMIT 1", [payment.email]);
+    let bookingRes = await client.query("SELECT * FROM bookings WHERE order_id = $1", [orderId]);
+    
+    // Fallback for older bookings without order_id
+    if (bookingRes.rows.length === 0) {
+      console.log('⚠️ Booking not found by order_id, falling back to email search');
+      bookingRes = await client.query(
+        "SELECT * FROM bookings WHERE email = $1 AND selected_date >= CURRENT_DATE - INTERVAL '1 day' ORDER BY created_at DESC LIMIT 1", 
+        [payment.email]
+      );
+    }
     
     if (bookingRes.rows.length === 0) {
       client.release();
-      return res.status(404).json({ error: "Booking not found" });
+      return res.status(404).json({ error: "No matching booking found to cancel" });
     }
     
     const booking = bookingRes.rows[0];

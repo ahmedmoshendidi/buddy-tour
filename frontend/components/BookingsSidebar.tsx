@@ -4,8 +4,18 @@ import { useCurrency } from './CurrencyContext';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
-import { CheckCircle, Calendar, Clock, Users, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { CheckCircle, Calendar, Clock, Users, XCircle, AlertTriangle, Loader2, Info } from 'lucide-react';
 import { API_PREFIX } from '../config';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 
 interface BookingsSidebarProps {
   isOpen: boolean;
@@ -16,6 +26,21 @@ export default function BookingsSidebar({ isOpen, onClose }: BookingsSidebarProp
   const { paidTours, removeBookedTour } = useCart();
   const { formatPrice } = useCurrency();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmText: string;
+    onConfirm: () => void;
+    isError?: boolean;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    confirmText: "OK",
+    onConfirm: () => {},
+  });
 
   const handleCancelTour = async (tour: any) => {
     const tourDate = new Date(tour.date);
@@ -28,36 +53,68 @@ export default function BookingsSidebar({ isOpen, onClose }: BookingsSidebarProp
     } else if (hoursDiff > 0) {
       refundInfo = "Since the tour is in less than 24 hours, you are eligible for an 80% refund.";
     } else {
-      alert("This tour has already started or passed and cannot be cancelled for a refund.");
+      setDialogState({
+        isOpen: true,
+        title: "Cannot Cancel",
+        description: "This tour has already started or passed and cannot be cancelled for a refund.",
+        confirmText: "I Understand",
+        onConfirm: () => setDialogState(prev => ({ ...prev, isOpen: false })),
+        isError: true
+      });
       return;
     }
 
-    if (!window.confirm(`${refundInfo}\n\nAre you sure you want to cancel this booking?`)) {
-      return;
-    }
+    setDialogState({
+      isOpen: true,
+      title: "Cancel Booking?",
+      description: `${refundInfo}\n\nAre you sure you want to cancel this booking? This action cannot be undone.`,
+      confirmText: "Yes, Cancel Booking",
+      onConfirm: () => performCancellation(tour)
+    });
+  };
 
+  const performCancellation = async (tour: any) => {
+    setDialogState(prev => ({ ...prev, isOpen: false }));
     setCancellingId(tour.id);
+    
     try {
-      // In a real app, you'd find the order_id from the tour object
-      // For this demo, we'll use a placeholder or assume the backend can find it by email/tour
+      const orderId = tour.orderId || localStorage.getItem('transaction_uuid');
+      
+      console.log('💸 Initiating refund for orderId:', orderId);
+      
       const response = await fetch(`${API_PREFIX}/kashier/refund`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          orderId: localStorage.getItem('transaction_uuid') || 'DEMO-ORDER' 
+          orderId: orderId || 'DEMO-ORDER' 
         }),
       });
 
       const data = await response.json();
       if (data.success) {
-        alert(`Tour cancelled successfully! Refund of ${formatPrice(data.refundAmount)} (${data.percentage}%) initiated.`);
-        removeBookedTour(tour.id);
+        setDialogState({
+          isOpen: true,
+          title: "Cancellation Successful",
+          description: `Tour cancelled successfully! Refund of ${formatPrice(data.refundAmount)} (${data.percentage}%) has been initiated.`,
+          confirmText: "Great",
+          onConfirm: () => {
+            setDialogState(prev => ({ ...prev, isOpen: false }));
+            removeBookedTour(tour.id);
+          }
+        });
       } else {
         throw new Error(data.error || 'Cancellation failed');
       }
     } catch (error: any) {
       console.error('Cancellation error:', error);
-      alert('Failed to cancel tour: ' + error.message);
+      setDialogState({
+        isOpen: true,
+        title: "Cancellation Failed",
+        description: `Failed to cancel tour: ${error.message}. Please contact support for assistance.`,
+        confirmText: "OK",
+        onConfirm: () => setDialogState(prev => ({ ...prev, isOpen: false })),
+        isError: true
+      });
     } finally {
       setCancellingId(null);
     }
@@ -117,9 +174,9 @@ export default function BookingsSidebar({ isOpen, onClose }: BookingsSidebarProp
                   </div>
 
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="flex-1 text-xs text-red-600 border-red-100 hover:bg-red-50"
                       onClick={() => handleCancelTour(tour)}
                       disabled={cancellingId === tour.id}
@@ -132,7 +189,7 @@ export default function BookingsSidebar({ isOpen, onClose }: BookingsSidebarProp
                       Cancel Tour
                     </Button>
                   </div>
-                  
+
                   <p className="mt-3 text-[10px] text-muted-foreground flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3 text-orange-400" />
                     Refund policy: 100% (&gt;24h), 80% (&lt;24h)
@@ -143,6 +200,31 @@ export default function BookingsSidebar({ isOpen, onClose }: BookingsSidebarProp
           )}
         </div>
       </SheetContent>
+
+      <AlertDialog open={dialogState.isOpen} onOpenChange={(open) => setDialogState(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={dialogState.isError ? "text-red-600 flex items-center gap-2" : "text-primary flex items-center gap-2"}>
+              {dialogState.isError ? <AlertTriangle className="h-5 w-5" /> : <Info className="h-5 w-5" />}
+              {dialogState.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line text-gray-600">
+              {dialogState.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            {!dialogState.isError && dialogState.confirmText !== "Great" && (
+              <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+            )}
+            <AlertDialogAction 
+              onClick={dialogState.onConfirm}
+              className={dialogState.isError ? "bg-red-600 hover:bg-red-700" : "bg-primary hover:bg-primary/90"}
+            >
+              {dialogState.confirmText}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }

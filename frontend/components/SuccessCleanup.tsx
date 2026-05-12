@@ -27,11 +27,11 @@ export default function SuccessCleanup() {
       // Try to get sessionId from paid_booking first (for post-payment cleanup)
       const paidBookingRaw = localStorage.getItem('paid_booking');
       const paidBooking = paidBookingRaw ? JSON.parse(paidBookingRaw) : null;
-      
+
       // Fallback to bookingData if paid_booking doesn't exist (immediate after payment)
       const bookingDataRaw = localStorage.getItem('bookingData');
       const bookingData = bookingDataRaw ? JSON.parse(bookingDataRaw) : null;
-      
+
       const sessionId: string | undefined = paidBooking?.session_id || bookingData?.session_id;
       const tourId: number | undefined = bookingData?.tour_id;
 
@@ -39,16 +39,18 @@ export default function SuccessCleanup() {
 
       // 1) اول حاجة ، اعمل mark للتور كـ paid عشان العداد يختفي فورا
       if (sessionId) {
-        markTourAsPaid(sessionId);
+        const orderId = params.get('merchantOrderId') || params.get('orderId');
+        markTourAsPaid(sessionId, orderId || undefined);
 
         // ✅ Persist paid status for CartContext recovery on refresh
         localStorage.setItem('paid_booking', JSON.stringify({
           session_id: sessionId,
+          order_id: orderId,
           tour_id: tourId,
           total_amount: bookingData?.total_amount || 0,
           timestamp: new Date().toISOString()
         }));
-        
+
         // Meta Pixel Purchase Event
         if (typeof window !== 'undefined' && (window as any).fbq) {
           const purchaseTrackingKey = `fbq_purchase_${sessionId}`;
@@ -63,7 +65,7 @@ export default function SuccessCleanup() {
             console.log('✅ Meta Pixel Purchase Logged');
           }
         }
-        
+
         // 2) Keep the tour in the list but mark as paid (it will show in BookingsSidebar now)
         console.log('✅ SuccessCleanup: Tour marked as paid for sessionId:', sessionId);
       }

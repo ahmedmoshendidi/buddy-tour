@@ -22,6 +22,7 @@ interface BookedTour {
   holdExpiresAt: string;
   createdAt: string;
   isPaid?: boolean; // Track paid status
+  orderId?: string; // Track order ID (BT-...)
   language?: string; // Add language property
 }
 
@@ -48,7 +49,7 @@ interface CartContextType {
 
   // Session-based operations
   removeBookedTourBySession: (sessionId: string) => void;
-  markTourAsPaid: (sessionId: string) => void;
+  markTourAsPaid: (sessionId: string, orderId?: string) => void;
 
   // Notification states
   notificationTour: Tour | null;
@@ -82,23 +83,23 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       const savedBookedTours = localStorage.getItem('buddytour_booked_tours');
       if (savedBookedTours) {
         const parsed = JSON.parse(savedBookedTours);
-        
+
         // Check for paid bookings
         const paidBookingRaw = localStorage.getItem('paid_booking');
         const paidBooking = paidBookingRaw ? JSON.parse(paidBookingRaw) : null;
-        
+
         // Filter out expired tours and mark paid ones
-        const validTours = parsed.filter((tour: BookedTour) => 
+        const validTours = parsed.filter((tour: BookedTour) =>
           new Date(tour.holdExpiresAt) > new Date()
         ).map((tour: BookedTour) => ({
           ...tour,
           isPaid: paidBooking?.session_id === tour.sessionId
         }));
-        
+
         console.log('📦 CartContext: Loaded', validTours.length, 'tours,', validTours.filter((t: BookedTour) => t.isPaid).length, 'paid');
-        
+
         setBookedTours(validTours);
-        
+
         // Update localStorage if we removed expired tours
         if (validTours.length !== parsed.length) {
           localStorage.setItem('buddytour_booked_tours', JSON.stringify(validTours));
@@ -124,7 +125,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       id: `booked_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date().toISOString()
     };
-    
+
     setBookedTours(prev => [...prev, newBookedTour]);
     console.log('✅ Added to cart:', newBookedTour);
 
@@ -138,7 +139,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         currency: 'USD'
       });
     }
-    
+
     // Show notification if tour data is provided
     if (tourData) {
       setNotificationTour(tourData);
@@ -161,15 +162,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     });
   };
 
-  const markTourAsPaid = (sessionId: string) => {
+  const markTourAsPaid = (sessionId: string, orderId?: string) => {
     setBookedTours(prev => {
-      const updated = prev.map(tour => 
-        tour.sessionId === sessionId 
-          ? { ...tour, isPaid: true }
+      const updated = prev.map(tour =>
+        tour.sessionId === sessionId
+          ? { ...tour, isPaid: true, orderId: orderId || tour.orderId }
           : tour
       );
       const paidCount = updated.filter((t: BookedTour) => t.isPaid).length;
-      console.log('💳 Marked as paid by sessionId:', sessionId, '- Total paid tours:', paidCount);
+      console.log('💳 Marked as paid by sessionId:', sessionId, 'orderId:', orderId, '- Total paid tours:', paidCount);
       return updated;
     });
   };
