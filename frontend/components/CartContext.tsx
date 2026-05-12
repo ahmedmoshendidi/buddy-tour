@@ -149,28 +149,28 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     console.log('🗑️ Removed from cart:', tourId);
   };
 
-  const removeBookedTourBySession = (sessionId: string) => {
+  const removeBookedTourBySession = React.useCallback((sessionId: string) => {
     setBookedTours(prev => {
       const before = prev.length;
       const filtered = prev.filter(t => t.sessionId !== sessionId);
       const after = filtered.length;
-      console.log('🗑️ Removed from cart by sessionId:', sessionId, `(${before} -> ${after} tours)`);
+      console.log('🗑️ CartContext: Removed by sessionId:', sessionId, `(${before} -> ${after} tours)`);
       return filtered;
     });
-  };
+  }, []);
 
-  const markTourAsPaid = (sessionId: string, orderId?: string) => {
+  const markTourAsPaid = React.useCallback((sessionId: string, orderId?: string) => {
     setBookedTours(prev => {
       const updated = prev.map(tour =>
         tour.sessionId === sessionId
           ? { ...tour, isPaid: true, orderId: orderId || tour.orderId }
           : tour
       );
-      const paidCount = updated.filter((t: BookedTour) => t.isPaid).length;
-      console.log('💳 Marked as paid by sessionId:', sessionId, 'orderId:', orderId, '- Total paid tours:', paidCount);
+      const found = updated.some(t => t.sessionId === sessionId && t.isPaid);
+      console.log(`💳 CartContext: markTourAsPaid for ${sessionId}. Success: ${found}. OrderId: ${orderId}`);
       return updated;
     });
-  };
+  }, []);
 
 
   const clearBookedTours = () => {

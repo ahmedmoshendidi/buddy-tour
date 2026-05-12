@@ -13,13 +13,16 @@ export default function SuccessCleanup() {
     ranRef.current = true;
 
     const params = new URLSearchParams(window.location.search);
-    const status = params.get('success') || params.get('status') || params.get('transaction_status') || params.get('paymentStatus');
+    const statusParam = params.get('success') || params.get('status') || params.get('transaction_status') || params.get('paymentStatus') || params.get('payment_status');
     const isSuccess =
-      status === 'true' ||
-      status === 'success' ||
-      status === 'SUCCESSFUL' ||
-      status === 'SUCCESS' ||
-      status === 'completed';
+      statusParam === 'true' ||
+      statusParam === 'success' ||
+      statusParam === 'SUCCESSFUL' ||
+      statusParam === 'SUCCESS' ||
+      statusParam === 'completed' ||
+      params.get('completed') === 'true';
+
+    console.log('🔍 SuccessCleanup: Detected status =', statusParam, '| isSuccess =', isSuccess);
 
     if (!isSuccess) return;
 
@@ -35,11 +38,18 @@ export default function SuccessCleanup() {
       const sessionId: string | undefined = paidBooking?.session_id || bookingData?.session_id;
       const tourId: number | undefined = bookingData?.tour_id;
 
-      console.log('🧹 SuccessCleanup: sessionId =', sessionId, 'from', paidBooking ? 'paid_booking' : 'bookingData');
+      console.log('🧹 SuccessCleanup Trace:', { 
+        sessionId, 
+        tourId, 
+        hasPaidBooking: !!paidBooking, 
+        hasBookingData: !!bookingData,
+        allStorageKeys: Object.keys(localStorage).filter(k => k.includes('booking') || k.includes('tour'))
+      });
 
       // 1) اول حاجة ، اعمل mark للتور كـ paid عشان العداد يختفي فورا
       if (sessionId) {
         const orderId = params.get('merchantOrderId') || params.get('orderId');
+        console.log(`✨ SuccessCleanup: Calling markTourAsPaid for session ${sessionId} | orderId: ${orderId}`);
         markTourAsPaid(sessionId, orderId || undefined);
 
         // ✅ Persist paid status for CartContext recovery on refresh
