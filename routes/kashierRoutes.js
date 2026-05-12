@@ -379,16 +379,42 @@ router.post("/refund", async (req, res) => {
     
     console.log(`💸 Initiating refund for ${orderId}: ${refundPercentage * 100}%, Amount: ${refundAmount}`);
     
-    // Call Kashier Refund API
-    // Note: Verify the endpoint and method with official docs
-    // const refundResponse = await axios.post(`${KASHIER_BASE_URL}/v1/refunds`, {
-    //   transactionId: payment.transaction_id,
-    //   amount: refundAmount
-    // }, { headers: { "Authorization": KASHIER_SECRET_KEY } });
+    // === REAL KASHIER REFUND API v3 CALL ===
+    const REFUND_URL = `${KASHIER_BASE_URL.includes('test') ? 'https://test-fep.kashier.io' : 'https://fep.kashier.io'}/v3/orders/${orderId}`;
     
-    // Mock success for now
+    console.log(`🚀 Sending v3 PUT refund request to Kashier: ${REFUND_URL}`);
+    
+    try {
+      const kashierResponse = await axios.put(REFUND_URL, {
+        apiOperation: "REFUND",
+        reason: "Customer cancellation request",
+        transaction: {
+          amount: parseFloat(refundAmount.toFixed(2))
+        }
+      }, { 
+        headers: { 
+          "Authorization": KASHIER_SECRET_KEY, // v3 uses Secret Key
+          "Content-Type": "application/json",
+          "accept": "application/json"
+        } 
+      });
+
+      console.log("✅ Kashier v3 Refund Response:", kashierResponse.data);
+      
+      // Check for success in v3 response structure
+      if (kashierResponse.data.status !== "SUCCESS" && kashierResponse.data.response?.status !== "SUCCESS") {
+        throw new Error(kashierResponse.data.messages?.en || kashierResponse.data.error?.message || "Refund rejected");
+      }
+    } catch (apiErr) {
+      console.error("❌ Kashier v3 Refund Error:", apiErr.response?.data || apiErr.message);
+      return res.status(500).json({ 
+        error: "Kashier Refund failed: " + (apiErr.response?.data?.messages?.en || apiErr.response?.data?.error?.message || apiErr.message) 
+      });
+    }
+
+    // Database updates only if API call succeeded
     await client.query("UPDATE payments SET status = $1, refunded_amount = $2 WHERE order_id = $3", 
-      [refundPercentage === 1.0 ? 'fully_refunded' : 'partially_refunded', refundAmount * 100, orderId]);
+      [refundPercentage === 1.0 ? 'fully_refunded' : 'partially_refunded', Math.round(refundAmount * 100), orderId]);
     
     await client.query("UPDATE bookings SET status = 'cancelled' WHERE id = $1", [booking.id]);
     
