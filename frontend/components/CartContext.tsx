@@ -73,44 +73,38 @@ interface CartProviderProps {
 }
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  const [bookedTours, setBookedTours] = useState<BookedTour[]>([]);
+  const [bookedTours, setBookedTours] = useState<BookedTour[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const savedBookedTours = localStorage.getItem('buddytour_booked_tours');
+      if (!savedBookedTours) return [];
+      
+      const parsed = JSON.parse(savedBookedTours);
+      const paidBookingRaw = localStorage.getItem('paid_booking');
+      const paidBooking = paidBookingRaw ? JSON.parse(paidBookingRaw) : null;
+
+      // Filter out expired tours but ALWAYS keep paid ones
+      return parsed.filter((tour: BookedTour) => {
+        const isActuallyPaid = tour.isPaid || (paidBooking?.session_id === tour.sessionId);
+        const isNotExpired = new Date(tour.holdExpiresAt) > new Date();
+        return isActuallyPaid || isNotExpired;
+      }).map((tour: BookedTour) => ({
+        ...tour,
+        isPaid: tour.isPaid || (paidBooking?.session_id === tour.sessionId),
+        orderId: tour.orderId || (paidBooking?.session_id === tour.sessionId ? paidBooking.order_id : undefined)
+      }));
+    } catch (e) {
+      console.error('Error initializing CartContext:', e);
+      return [];
+    }
+  });
+  
   const [notificationTour, setNotificationTour] = useState<Tour | null>(null);
   const [showNotification, setShowNotification] = useState(false);
 
-  // Load booked tours from localStorage on mount
+  // Sync back to localStorage if we filtered during initialization
   useEffect(() => {
-    try {
-      const savedBookedTours = localStorage.getItem('buddytour_booked_tours');
-      if (savedBookedTours) {
-        const parsed = JSON.parse(savedBookedTours);
-
-        // Check for paid bookings
-        const paidBookingRaw = localStorage.getItem('paid_booking');
-        const paidBooking = paidBookingRaw ? JSON.parse(paidBookingRaw) : null;
-
-        // Filter out expired tours but ALWAYS keep paid ones
-        const validTours = parsed.filter((tour: BookedTour) => {
-          const isActuallyPaid = tour.isPaid || (paidBooking?.session_id === tour.sessionId);
-          const isNotExpired = new Date(tour.holdExpiresAt) > new Date();
-          return isActuallyPaid || isNotExpired;
-        }).map((tour: BookedTour) => ({
-          ...tour,
-          isPaid: tour.isPaid || (paidBooking?.session_id === tour.sessionId),
-          orderId: tour.orderId || (paidBooking?.session_id === tour.sessionId ? paidBooking.order_id : undefined)
-        }));
-
-        console.log('📦 CartContext: Loaded', validTours.length, 'tours,', validTours.filter((t: BookedTour) => t.isPaid).length, 'paid');
-
-        setBookedTours(validTours);
-
-        // Update localStorage if we removed expired tours
-        if (validTours.length !== parsed.length) {
-          localStorage.setItem('buddytour_booked_tours', JSON.stringify(validTours));
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load booked tours from localStorage:', error);
-    }
+    localStorage.setItem('buddytour_booked_tours', JSON.stringify(bookedTours));
   }, []);
 
   // Save booked tours to localStorage whenever they change
