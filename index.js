@@ -17,6 +17,9 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const sitemapRoute = require('./routes/sitemapRoute');
 const exchangeRatesRoute = require('./routes/exchangeRatesRoute');
 const guideApplicationRoutes = require('./routes/guideApplicationRoutes');
+const payoutRoutes = require('./routes/payoutRoutes');
+const authRoutes = require('./routes/authRoutes');
+const passport = require('./config/passport');
 const { cleanupExpiredHolds } = require('./controllers/bookingController');
 
 // Import middleware
@@ -39,6 +42,7 @@ app.use(helmet(helmetOptions));
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize());
 app.use("/api", rateLimiter);
 
 // ======================
@@ -51,6 +55,8 @@ app.use("/api/kashier", kashierRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', exchangeRatesRoute);
 app.use('/api/tour-guide-applications', guideApplicationRoutes);
+app.use('/api/payouts', payoutRoutes);
+app.use('/api/auth', authRoutes);
 
 // ======================
 // Dynamic Sitemap Route
