@@ -92,6 +92,18 @@ async function processKashierFulfillment(orderId, status, amount, metaData = nul
     const fullName = `${billingData.firstName} ${billingData.lastName || ''}`.trim();
     const totalPeople = Number(peopleCount.adults) + Number(peopleCount.children);
 
+    // Fetch tour commission and guide info
+    const tourRes = await client.query(
+      "SELECT commission_percentage, guide_id FROM tours WHERE id = $1",
+      [tourId]
+    );
+    const commissionPercent = tourRes.rows[0]?.commission_percentage || 15.00;
+    const guideId = tourRes.rows[0]?.guide_id || 1;
+
+    // Calculate Payouts
+    const platformFee = (amount * commissionPercent) / 100;
+    const payoutAmount = amount - platformFee;
+
     // Confirm seat holds
     if (sessionId) {
       const holdConfirm = await client.query(
@@ -112,11 +124,18 @@ async function processKashierFulfillment(orderId, status, amount, metaData = nul
       }
     }
 
-    // Insert booking
+    // Insert booking with payout details
     const bookingInsert = await client.query(
-      `INSERT INTO bookings (tour_id, guide_id, full_name, email, phone, nationality, selected_date, time_slot, people_count, order_id)
-       VALUES ($1,1,$2,$3,$4,$5,$6::date,$7,$8,$9) RETURNING id`,
-      [tourId, fullName, billingData.email, billingData.phone, billingData.nationality, selectedDate, timeSlot, totalPeople, orderId.toString()]
+      `INSERT INTO bookings (
+        tour_id, guide_id, full_name, email, phone, nationality, 
+        selected_date, time_slot, people_count, order_id,
+        payment_status, status, platform_fee, payout_amount, payout_status
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7::date,$8,$9,$10, 'paid', 'confirmed', $11, $12, 'pending') RETURNING id`,
+      [
+        tourId, guideId, fullName, billingData.email, billingData.phone, billingData.nationality, 
+        selectedDate, timeSlot, totalPeople, orderId.toString(),
+        platformFee, payoutAmount
+      ]
     );
 
     // Record payment
@@ -128,7 +147,7 @@ async function processKashierFulfillment(orderId, status, amount, metaData = nul
     );
 
     await client.query('COMMIT');
-    console.log(`✅ DB transaction committed for Order: ${orderId}`);
+    console.log(`✅ DB transaction committed for Order: ${orderId}. Payout calculated: ${payoutAmount} EGP`);
 
     paymentStatus.set(orderId.toString(), {
       ...paymentData,
