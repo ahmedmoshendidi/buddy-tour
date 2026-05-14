@@ -8,8 +8,17 @@
   <script>
     // Instant redirect to the React result page
     const url = new URL(window.location.href);
-    url.pathname = '/payment-result';
-    window.location.replace(url.toString());
+    const params = url.searchParams;
+    
+    // Check for Kashier specific success
+    const isSuccess = params.get('paymentStatus') === 'SUCCESS' || params.get('status') === 'SUCCESS';
+    
+    if (isSuccess) {
+      window.location.replace('/payment-result' + url.search);
+    } else {
+      // If failed or unknown, go to success anyway (the page will handle status)
+      window.location.replace('/payment-result' + url.search);
+    }
   </script>
   <style>
     body { 

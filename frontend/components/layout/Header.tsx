@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Compass, Heart, ShoppingCart } from 'lucide-react';
+import { Compass, Heart, ShoppingCart, CheckCircle } from 'lucide-react';
 import { useWishlist } from '../WishlistContext';
 import { useCart } from '../CartContext';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import WishlistSidebar from '../WishlistSidebar';
 import CartSidebar from '../CartSidebar';
+import BookingsSidebar from '../BookingsSidebar';
 import CurrencySelector from '../CurrencySelector';
 
 export default function Header() {
   const { wishlist } = useWishlist();
-  const { bookedTours } = useCart();
+  const { unpaidTours, paidTours } = useCart();
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isBookingsOpen, setIsBookingsOpen] = useState(false);
   const navigate = useNavigate();
 
   return (
@@ -60,13 +62,31 @@ export default function Header() {
             >
               <div className="relative">
                 <ShoppingCart className="h-6 w-6 text-muted-foreground hover:text-coral-500 transition-colors" />
-                {bookedTours.length > 0 && (
+                {unpaidTours.length > 0 && (
                   <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 bg-coral-500 hover:bg-coral-600 text-white text-xs flex items-center justify-center min-w-[20px]">
-                    {bookedTours.length}
+                    {unpaidTours.length}
                   </Badge>
                 )}
               </div>
               <span className="text-xs text-muted-foreground mt-1">Cart</span>
+            </Button>
+
+            {/* Bookings Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsBookingsOpen(true)}
+              className="flex flex-col items-center p-2 h-auto hover:bg-muted/50"
+            >
+              <div className="relative">
+                <CheckCircle className="h-6 w-6 text-muted-foreground hover:text-green-600 transition-colors" />
+                {paidTours.length > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 bg-green-500 hover:bg-green-600 text-white text-xs flex items-center justify-center min-w-[20px]">
+                    {paidTours.length}
+                  </Badge>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground mt-1">Bookings</span>
             </Button>
 
             <CurrencySelector />
@@ -102,6 +122,12 @@ export default function Header() {
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         onPayNow={(slug) => navigate(`/checkout/${slug}`)}
+      />
+
+      {/* Bookings Sidebar */}
+      <BookingsSidebar
+        isOpen={isBookingsOpen}
+        onClose={() => setIsBookingsOpen(false)}
       />
     </>
   );

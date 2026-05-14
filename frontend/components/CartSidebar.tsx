@@ -38,7 +38,7 @@ export default function CartSidebar({
   onPayNow 
 }: CartSidebarProps) {
   const { 
-    bookedTours,
+    unpaidTours,
     removeBookedTour,
     clearBookedTours,
     getCartTotal
@@ -101,7 +101,7 @@ export default function CartSidebar({
         </SheetHeader>
 
         <div className="mt-6">
-          {bookedTours.length === 0 ? (
+          {unpaidTours.length === 0 ? (
             <div className="text-center py-12">
               <div className="mx-auto mb-4 w-12 h-12 flex items-center justify-center">
                 <ShoppingCart className="h-12 w-12 text-muted-foreground" />
@@ -119,7 +119,7 @@ export default function CartSidebar({
               {/* Header with clear all */}
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  {bookedTours.length} tour{bookedTours.length !== 1 ? 's' : ''} in cart
+                  {unpaidTours.length} tour{unpaidTours.length !== 1 ? 's' : ''} in cart
                 </p>
                 <Button 
                   variant="ghost" 
@@ -134,7 +134,7 @@ export default function CartSidebar({
 
               {/* Cart Items */}
               <div className="space-y-3 max-h-[70vh] overflow-y-auto">
-                {bookedTours.map((bookedTour) => (
+                {unpaidTours.map((bookedTour) => (
                   <CartItemCard 
                     key={bookedTour.id}
                     bookedTour={bookedTour}
@@ -146,7 +146,7 @@ export default function CartSidebar({
               </div>
 
               {/* Cart Total */}
-              {bookedTours.length > 0 && (
+              {unpaidTours.length > 0 && (
                 <div className="pt-4 border-t border-border">
                   <div className="flex justify-between items-center mb-4">
                     <span className="font-medium text-gray-900">Total:</span>

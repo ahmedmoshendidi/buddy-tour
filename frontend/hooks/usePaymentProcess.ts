@@ -9,9 +9,12 @@ interface PaymentResult {
   transactionId?: string;
 }
 
+import { useCart } from '../components/CartContext';
+
 export function usePaymentProcess() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+  const { setTourOrderId } = useCart();
 
   const processPayment = async (formData: FormData): Promise<PaymentResult> => {
     setIsProcessing(true);
@@ -32,9 +35,9 @@ export function usePaymentProcess() {
         session_id: formData.session_id,
       };
 
-      console.log('💳 Processing XPay payment:', paymentData);
+      console.log('💳 Processing Kashier payment:', paymentData);
 
-      const response = await fetch(`${API_PREFIX}/xpay/pay`, {
+      const response = await fetch(`${API_PREFIX}/kashier/pay`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,12 +51,17 @@ export function usePaymentProcess() {
         throw new Error(data.error || data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // ✅ Handle XPay response
+      // ✅ Handle Kashier response
       if (data.iframe_url && data.transaction_uuid) {
-        console.log('✅ XPay payment initiated:', data);
+        console.log('✅ Kashier payment initiated:', data);
         localStorage.setItem('transaction_uuid', data.transaction_uuid.toString());
         
-        // Redirect to XPay payment page
+        // Save orderId into cart item so we can find it later
+        if (formData.session_id) {
+          setTourOrderId(formData.session_id, data.transaction_uuid.toString());
+        }
+        
+        // Redirect to Kashier payment page
         window.location.href = data.iframe_url;
         
         return { 
@@ -62,7 +70,7 @@ export function usePaymentProcess() {
           transactionId: data.transaction_uuid.toString()
         };
       } else {
-        throw new Error(data.error || 'XPay initiation failed: missing iframe_url or transaction_uuid');
+        throw new Error(data.error || 'Kashier initiation failed: missing iframe_url or transaction_uuid');
       }
 
     } catch (error: any) {

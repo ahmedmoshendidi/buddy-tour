@@ -171,10 +171,10 @@ const createSeatHold = async (req, res) => {
       );
     }
 
-    // Delete ANY existing hold for this session/slot (clears unique constraint)
+    // Delete ANY existing hold for this session (clears potential duplicates/conflicts)
     await client.query(
-      'DELETE FROM seat_holds WHERE session_id = $1 AND time_slot_id = $2',
-      [session_id, timeSlotId]
+      'DELETE FROM seat_holds WHERE session_id = $1',
+      [session_id]
     );
     
     // Recalculate availability after removing old hold

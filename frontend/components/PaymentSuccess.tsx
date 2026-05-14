@@ -29,7 +29,7 @@ export default function PaymentSuccess({
   useEffect(() => {
     // Read URL parameters for transaction details
     const urlParams = new URLSearchParams(window.location.search);
-    const txId = urlParams.get("id") || urlParams.get("transaction_id") || urlParams.get("uuid") || urlParams.get("order_id") || urlParams.get("orderId");
+    const txId = urlParams.get("id") || urlParams.get("transaction_id") || urlParams.get("transactionId") || urlParams.get("merchantOrderId") || urlParams.get("uuid") || urlParams.get("order_id") || urlParams.get("orderId");
     const amountCents = urlParams.get("amount_cents");
     const amountDirect = urlParams.get("amount");
 
@@ -39,8 +39,8 @@ export default function PaymentSuccess({
 
       // ✅ Fetch amount from backend if not present in URL
       if (!amountCents && !amountDirect) {
-        // We now prioritize XPay status as it is the current active gateway
-        fetch(`${API_PREFIX}/xpay/payment-status/${txId}`)
+        // We now prioritize Kashier then XPay
+        fetch(`${API_PREFIX}/kashier/payment-status/${txId}`)
           .then((res) => res.json())
           .then((data) => {
             if (data.amount_cents) {
@@ -48,8 +48,7 @@ export default function PaymentSuccess({
               setAmount(val);
               sessionStorage.setItem('last_amount', val.toString());
             } else {
-              // Fallback to Noon if XPay fails or doesn't have the data (for backward compatibility)
-              return fetch(`${API_PREFIX}/noon/payment-status/${txId}`);
+              return fetch(`${API_PREFIX}/xpay/payment-status/${txId}`);
             }
           })
           .then((res) => (res && typeof res.json === 'function' ? res.json() : null))
