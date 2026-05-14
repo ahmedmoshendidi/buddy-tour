@@ -26,19 +26,22 @@ const submitGuideApplication = async (req, res) => {
       motivation,
       uniqueValue,
       portfolio,
-      references
+      references,
+      bankName,
+      bankAccountNumber,
+      accountHolderName
     } = req.body;
 
     // Validate required fields
     if (!fullName || !email || !phone || !age || !currentCity || 
         !educationLevel || !languages || !preferredCities || 
         !availableDays || !tourTypes || !knowledgeAreas || 
-        !motivation || !uniqueValue) {
+        !motivation || !uniqueValue || !bankName || !bankAccountNumber || !accountHolderName) {
       return res.status(400).json({ 
         error: 'Missing required fields',
         required: ['fullName', 'email', 'phone', 'age', 'currentCity', 'educationLevel', 
                   'languages', 'preferredCities', 'availableDays', 'tourTypes', 
-                  'knowledgeAreas', 'motivation', 'uniqueValue']
+                  'knowledgeAreas', 'motivation', 'uniqueValue', 'bankName', 'bankAccountNumber', 'accountHolderName']
       });
     }
 
@@ -73,9 +76,11 @@ const submitGuideApplication = async (req, res) => {
         languages, licenses, preferred_cities, available_days,
         tour_types, group_size_preference, knowledge_areas,
         special_skills, motivation, unique_value,
-        portfolio, guide_references, status
+        portfolio, guide_references, status,
+        bank_name, bank_account_number, account_holder_name
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 'pending'
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 'pending',
+        $21, $22, $23
       ) RETURNING id, created_at`,
       [
         fullName, email, phone, age, currentCity,
@@ -84,7 +89,8 @@ const submitGuideApplication = async (req, res) => {
         JSON.stringify(availableDays), JSON.stringify(tourTypes),
         groupSizePreference, JSON.stringify(knowledgeAreas),
         specialSkills, motivation, uniqueValue,
-        portfolio, references
+        portfolio, references,
+        bankName, bankAccountNumber, accountHolderName
       ]
     );
 
@@ -276,10 +282,35 @@ const updateApplicationStatus = async (req, res) => {
         });
     }
 
-    // If approved, optionally create guide record
+    // If approved, create guide record
     if (status === 'approved') {
-      // TODO: Implement guide creation from application
-      console.log(`✅ Guide application approved: ${updatedApplication.full_name} (ID: ${id})`);
+      try {
+        const app = updatedApplication;
+        
+        // Convert languages array of objects to text array if necessary
+        // In the table it's text[], in app it's jsonb [{language: '...', proficiency: '...'}]
+        const languageNames = app.languages.map(l => l.language);
+
+        await client.query(
+          `INSERT INTO guides (
+            name, bio, languages, location, 
+            bank_account_number, bank_name, account_holder_name
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            app.full_name, 
+            app.motivation, // Use motivation as initial bio
+            languageNames, 
+            app.current_city,
+            app.bank_account_number,
+            app.bank_name,
+            app.account_holder_name
+          ]
+        );
+        console.log(`✅ Guide record created for: ${app.full_name}`);
+      } catch (guideErr) {
+        console.error('❌ Failed to create guide record:', guideErr);
+        // We don't rollback the application status update, but we log the error
+      }
     }
 
     res.json({

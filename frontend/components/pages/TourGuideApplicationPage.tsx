@@ -31,6 +31,9 @@ interface ApplicationData {
   uniqueValue: string;
   portfolio: string;
   references: string;
+  bankName: string;
+  bankAccountNumber: string;
+  accountHolderName: string;
 }
 
 export default function TourGuideApplicationPage() {
@@ -57,7 +60,10 @@ export default function TourGuideApplicationPage() {
     motivation: '',
     uniqueValue: '',
     portfolio: '',
-    references: ''
+    references: '',
+    bankName: '',
+    bankAccountNumber: '',
+    accountHolderName: ''
   });
 
   const cities = ['Alexandria', 'Cairo', 'Giza', 'Luxor', 'Aswan', 'Hurghada', 'Sharm El Sheikh'];
@@ -111,7 +117,10 @@ export default function TourGuideApplicationPage() {
         motivation: formData.motivation,
         uniqueValue: formData.uniqueValue,
         portfolio: formData.portfolio,
-        references: formData.references
+        references: formData.references,
+        bankName: formData.bankName,
+        bankAccountNumber: formData.bankAccountNumber,
+        accountHolderName: formData.accountHolderName
       };
 
       console.log('Submitting application:', applicationData);
@@ -545,6 +554,56 @@ export default function TourGuideApplicationPage() {
                         onChange={(e) => setFormData(prev => ({ ...prev, portfolio: e.target.value }))}
                         placeholder="Links to social media, websites, or descriptions of previous guiding work"
                       />
+                    </div>
+
+                    <div className="pt-6 border-t border-muted">
+                      <h4 className="text-lg font-semibold mb-4 text-primary flex items-center gap-2">
+                        <MapPin className="h-5 w-5" />
+                        Payout Information
+                      </h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Please provide your bank account details where you'd like to receive your payments after tours are completed.
+                      </p>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Bank Name *</label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            value={formData.bankName}
+                            onChange={(e) => setFormData(prev => ({ ...prev, bankName: e.target.value }))}
+                            placeholder="e.g. CIB, QNB, National Bank of Egypt"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Account Holder Name *</label>
+                            <input
+                              type="text"
+                              required
+                              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                              value={formData.accountHolderName}
+                              onChange={(e) => setFormData(prev => ({ ...prev, accountHolderName: e.target.value }))}
+                              placeholder="Name as it appears on your bank account"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Bank Account Number / IBAN *</label>
+                            <input
+                              type="text"
+                              required
+                              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                              value={formData.bankAccountNumber}
+                              onChange={(e) => setFormData(prev => ({ ...prev, bankAccountNumber: e.target.value }))}
+                              placeholder="Full account number or IBAN"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
