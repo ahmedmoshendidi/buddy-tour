@@ -19,7 +19,14 @@ if (process.env.GOOGLE_CLIENT_ID) {
         let result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         
         if (result.rows.length > 0) {
-          return done(null, result.rows[0]);
+          const user = result.rows[0];
+          // Ensure admin role is up to date
+          const isAdmin = email === process.env.ADMIN_EMAIL;
+          if (isAdmin && user.role !== 'admin') {
+            const updated = await pool.query('UPDATE users SET role = $1 WHERE id = $2 RETURNING *', ['admin', user.id]);
+            return done(null, updated.rows[0]);
+          }
+          return done(null, user);
         }
         
         // 2. If not, create new user

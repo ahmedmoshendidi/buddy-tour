@@ -16,6 +16,7 @@ import ServiceDurationPolicy from './components/pages/ServiceDurationPolicy';
 import PrivacyAndTermsPage from './components/pages/PrivacyAndTermsPage';
 
 import PaymentResultPage from './components/pages/PaymentResultPage';
+import AuthSuccessPage from './components/pages/AuthSuccessPage';
 import TourDetails from './components/TourDetails';
 import TicketsQuantity from './components/TicketsQuantity';
 import CheckoutProcess from './components/CheckoutProcess';
@@ -98,6 +99,7 @@ export default function App() {
           <Route path="/payment-result" element={<PaymentResultPage />} />
           {/* Alias for noon payment dashboard return URL typos */}
           <Route path="/payment_result" element={<PaymentResultPage />} />
+          <Route path="/auth-success" element={<AuthSuccessPage />} />
           <Route path="/privacy-policy" element={<PrivacyAndTermsPage />} />
           <Route path="/terms-and-conditions" element={<PrivacyAndTermsPage />} />
         </Route>
