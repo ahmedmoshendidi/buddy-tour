@@ -140,10 +140,12 @@ async function processKashierFulfillment(orderId, status, amount, metaData = nul
 
     // Record payment
     const amountCents = Math.round(amount * 100);
+    const currency = metaData?.currency || "EGP"; // Capture currency from metadata
+
     await client.query(
-      `INSERT INTO payments (order_id, transaction_id, email, full_name, amount_cents, status)
-       VALUES ($1,$2,$3,$4,$5,'captured')`,
-      [orderId.toString(), orderId.toString(), billingData.email, fullName, amountCents]
+      `INSERT INTO payments (order_id, transaction_id, email, full_name, amount_cents, status, currency)
+       VALUES ($1,$2,$3,$4,$5,'captured', $6)`,
+      [orderId.toString(), orderId.toString(), billingData.email, fullName, amountCents, currency]
     );
 
     await client.query('COMMIT');
@@ -408,7 +410,8 @@ router.post("/refund", async (req, res) => {
         apiOperation: "REFUND",
         reason: "Customer cancellation request",
         transaction: {
-          amount: parseFloat(refundAmount.toFixed(2))
+          amount: parseFloat(refundAmount.toFixed(2)),
+          currency: payment.currency || "EGP" // Use stored currency
         }
       }, { 
         headers: { 
