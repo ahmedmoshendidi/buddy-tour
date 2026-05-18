@@ -15,7 +15,7 @@ export default function CancellationPolicy() {
 
       <h2 className="text-xl font-semibold mt-6 mb-2 text-primary">Late Cancellation</h2>
       <p className="text-muted-foreground mb-4">
-        If you cancel less than <strong>24 hours before the tour</strong>, a small fee of <strong>20% of the total booking amount</strong> will be charged to cover guide preparation and scheduling costs.
+        If you cancel less than <strong>24 hours before the tour</strong>, the full booking amount will be charged and no refund will be issued.
       </p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2 text-primary">No-Show Policy</h2>

@@ -6,7 +6,7 @@ export default function PrivacyAndTermsPage() {
 
   const supportEmail = "support@buddytourguide.com";
   const lastUpdated = "October 2025";
-  const payskyPolicy = "https://paysky.io/";
+  const kashierPolicy = "https://kashier.io/";
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-12">
@@ -52,7 +52,7 @@ export default function PrivacyAndTermsPage() {
               </ul>
 
               <h3 className="font-semibold mt-6">2. Payment Processing</h3>
-              <p className="text-gray-700">We do not collect or store payment card details directly. All payments are processed by our trusted payment provider <a className="text-blue-600 underline" href={payskyPolicy} target="_blank" rel="noreferrer">Paysky</a>. Please review Paysky’s privacy policy for details about how they handle payment data.</p>
+              <p className="text-gray-700">We do not collect or store payment card details directly. All payments are processed by our trusted payment provider <a className="text-blue-600 underline" href={kashierPolicy} target="_blank" rel="noreferrer">Kashier</a>. Please review Kashier’s privacy policy for details about how they handle payment data.</p>
 
               <h3 className="font-semibold mt-6">3. How We Use Your Data</h3>
               <ul className="list-disc ml-6 text-gray-700">
@@ -63,7 +63,7 @@ export default function PrivacyAndTermsPage() {
               </ul>
 
               <h3 className="font-semibold mt-6">4. Sharing Your Data</h3>
-              <p className="text-gray-700">We do not sell or rent user data. We may share limited information with tour guides or tourists to facilitate bookings, with Paysky for payment processing, and with analytics providers (e.g., Google Analytics) to improve the service.</p>
+              <p className="text-gray-700">We do not sell or rent user data. We may share limited information with tour guides or tourists to facilitate bookings, with Kashier for payment processing, and with analytics providers (e.g., Google Analytics) to improve the service.</p>
 
               <h3 className="font-semibold mt-6">5. GDPR (European Union)</h3>
               <p className="text-gray-700">If you are located in the EU, you have rights under the GDPR including access, correction, deletion, portability and the right to withdraw consent. To exercise these rights contact us at <a className="text-blue-600 underline" href={`mailto:${supportEmail}`}>{supportEmail}</a>.</p>
@@ -75,7 +75,7 @@ export default function PrivacyAndTermsPage() {
               <p className="text-gray-700">We use cookies to personalize and improve the website. You can disable cookies via your browser settings but that may affect functionality.</p>
 
               <h3 className="font-semibold mt-6">8. Data Security</h3>
-              <p className="text-gray-700">We implement reasonable technical and organizational measures including HTTPS encryption and limited access to personal data. Financial data is handled by Paysky.</p>
+              <p className="text-gray-700">We implement reasonable technical and organizational measures including HTTPS encryption and limited access to personal data. Financial data is handled by Kashier.</p>
 
               <h3 className="font-semibold mt-6">9. Updates</h3>
               <p className="text-gray-700">We may update this policy occasionally. Significant changes will be communicated via email or a prominent notice on the site.</p>
@@ -99,7 +99,7 @@ export default function PrivacyAndTermsPage() {
               </ul>
 
               <h3 className="font-semibold mt-6">2. الدفع</h3>
-              <p className="text-gray-700">لا نجمع أو نخزن بيانات البطاقات الائتمانية مباشرة. تُدار جميع المدفوعات عبر مزود الدفع <a className="text-blue-600 underline" href={payskyPolicy} target="_blank" rel="noreferrer">Paysky</a>. راجع سياسة Paysky لمزيد من التفاصيل.</p>
+              <p className="text-gray-700">لا نجمع أو نخزن بيانات البطاقات الائتمانية مباشرة. تُدار جميع المدفوعات عبر مزود الدفع <a className="text-blue-600 underline" href={kashierPolicy} target="_blank" rel="noreferrer">Kashier</a>. راجع سياسة Kashier لمزيد من التفاصيل.</p>
 
               <h3 className="font-semibold mt-6">3. استخدام البيانات</h3>
               <ul className="list-disc mr-6 text-gray-700">
@@ -110,7 +110,7 @@ export default function PrivacyAndTermsPage() {
               </ul>
 
               <h3 className="font-semibold mt-6">4. مشاركة البيانات</h3>
-              <p className="text-gray-700">لا نبيع بيانات المستخدمين. قد نشارك معلومات محدودة مع المرشدين أو السائحين المعنيين، ومع Paysky لمعالجة المدفوعات، ومع مزودي التحليلات لتحسين الخدمة.</p>
+              <p className="text-gray-700">لا نبيع بيانات المستخدمين. قد نشارك معلومات محدودة مع المرشدين أو السائحين المعنيين، ومع Kashier لمعالجة المدفوعات، ومع مزودي التحليلات لتحسين الخدمة.</p>
 
               <h3 className="font-semibold mt-6">5. حقوق الاتحاد الأوروبي (GDPR)</h3>
               <p className="text-gray-700">إذا كنت من دول الاتحاد الأوروبي، لديك حقوق مثل الوصول والتعديل والحذف ونقل البيانات وسحب الموافقة. لممارسة هذه الحقوق راسلنا على <a className="text-blue-600 underline" href={`mailto:${supportEmail}`}>{supportEmail}</a>.</p>
@@ -119,7 +119,7 @@ export default function PrivacyAndTermsPage() {
               <p className="text-gray-700">إذا كنت مقيمًا في كاليفورنيا، يمكنك معرفة البيانات التي نجمعها وطلب حذفها ورفض أي بيع (نحن لا نبيع البيانات). اتصل بنا على <a className="text-blue-600 underline" href={`mailto:${supportEmail}`}>{supportEmail}</a>.</p>
 
               <h3 className="font-semibold mt-6">7. الأمان</h3>
-              <p className="text-gray-700">نطبق تدابير فنية وتنظيمية مناسبة مثل التشفير عبر HTTPS وتحديد صلاحيات الوصول. البيانات المالية تتم معالجتها عبر Paysky.</p>
+              <p className="text-gray-700">نطبق تدابير فنية وتنظيمية مناسبة مثل التشفير عبر HTTPS وتحديد صلاحيات الوصول. البيانات المالية تتم معالجتها عبر Kashier.</p>
 
               <h3 className="font-semibold mt-6">8. التحديثات</h3>
               <p className="text-gray-700">نحتفظ بالحق في تعديل سياسة الخصوصية وسنقوم بإخطار المستخدمين في حال حدوث تغييرات جوهرية.</p>
@@ -145,7 +145,7 @@ export default function PrivacyAndTermsPage() {
               <p className="text-gray-700">All content on the platform is owned or licensed to Buddytourguide. You may not copy or republish content without permission.</p>
 
               <h3 className="font-semibold mt-6">4. Payments & Cancellations</h3>
-              <p className="text-gray-700">Payments are processed by Paysky. Refunds and cancellations follow our booking policy; please see the booking flow for specifics.</p>
+              <p className="text-gray-700">Payments are processed by Kashier. Refunds and cancellations follow our booking policy; please see the booking flow for specifics.</p>
 
               <h3 className="font-semibold mt-6">5. Liability</h3>
               <p className="text-gray-700">We are not liable for indirect or consequential damages arising from use of the platform. Guides are independent providers; we act as a marketplace.</p>
@@ -177,7 +177,7 @@ export default function PrivacyAndTermsPage() {
               <p className="text-gray-700">جميع المحتويات على المنصة مملوكة لـ Buddytourguide أو مرخّصة لها. لا يسمح بنسخ المحتوى دون إذن.</p>
 
               <h3 className="font-semibold mt-6">4. المدفوعات والإلغاء</h3>
-              <p className="text-gray-700">تتم معالجة المدفوعات عبر Paysky. سياسات الاسترجاع والإلغاء تتبع سياسة الحجز المتاحة خلال عملية الحجز.</p>
+              <p className="text-gray-700">تتم معالجة المدفوعات عبر Kashier. سياسات الاسترجاع والإلغاء تتبع سياسة الحجز المتاحة خلال عملية الحجز.</p>
 
               <h3 className="font-semibold mt-6">5. المسؤولية</h3>
               <p className="text-gray-700">لسنا مسؤولين عن الأضرار غير المباشرة الناتجة عن استخدام المنصة. المرشدون مستقلون ونحن نعمل كمنصة سوقية.</p>

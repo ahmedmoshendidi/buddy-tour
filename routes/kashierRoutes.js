@@ -369,7 +369,7 @@ router.post("/refund", async (req, res) => {
     if (hoursDiff > 24) {
       refundPercentage = 1.0; // 100%
     } else if (hoursDiff > 0) {
-      refundPercentage = 0.8; // 80%
+      refundPercentage = 0.0; // 0%
     } else {
       client.release();
       return res.status(400).json({ error: "Cannot refund past tours" });
@@ -379,42 +379,44 @@ router.post("/refund", async (req, res) => {
     
     console.log(`💸 Initiating refund for ${orderId}: ${refundPercentage * 100}%, Amount: ${refundAmount}`);
     
-    // === REAL KASHIER REFUND API v3 CALL ===
-    const REFUND_URL = `${KASHIER_BASE_URL.includes('test') ? 'https://test-fep.kashier.io' : 'https://fep.kashier.io'}/v3/orders/${orderId}`;
-    
-    console.log(`🚀 Sending v3 PUT refund request to Kashier: ${REFUND_URL}`);
-    
-    try {
-      const kashierResponse = await axios.put(REFUND_URL, {
-        apiOperation: "REFUND",
-        reason: "Customer cancellation request",
-        transaction: {
-          amount: parseFloat(refundAmount.toFixed(2))
-        }
-      }, { 
-        headers: { 
-          "Authorization": KASHIER_SECRET_KEY, // v3 uses Secret Key
-          "Content-Type": "application/json",
-          "accept": "application/json"
-        } 
-      });
-
-      console.log("✅ Kashier v3 Refund Response:", kashierResponse.data);
+    if (refundAmount > 0) {
+      // === REAL KASHIER REFUND API v3 CALL ===
+      const REFUND_URL = `${KASHIER_BASE_URL.includes('test') ? 'https://test-fep.kashier.io' : 'https://fep.kashier.io'}/v3/orders/${orderId}`;
       
-      // Check for success in v3 response structure
-      if (kashierResponse.data.status !== "SUCCESS" && kashierResponse.data.response?.status !== "SUCCESS") {
-        throw new Error(kashierResponse.data.messages?.en || kashierResponse.data.error?.message || "Refund rejected");
+      console.log(`🚀 Sending v3 PUT refund request to Kashier: ${REFUND_URL}`);
+      
+      try {
+        const kashierResponse = await axios.put(REFUND_URL, {
+          apiOperation: "REFUND",
+          reason: "Customer cancellation request",
+          transaction: {
+            amount: parseFloat(refundAmount.toFixed(2))
+          }
+        }, { 
+          headers: { 
+            "Authorization": KASHIER_SECRET_KEY, // v3 uses Secret Key
+            "Content-Type": "application/json",
+            "accept": "application/json"
+          } 
+        });
+
+        console.log("✅ Kashier v3 Refund Response:", kashierResponse.data);
+        
+        // Check for success in v3 response structure
+        if (kashierResponse.data.status !== "SUCCESS" && kashierResponse.data.response?.status !== "SUCCESS") {
+          throw new Error(kashierResponse.data.messages?.en || kashierResponse.data.error?.message || "Refund rejected");
+        }
+      } catch (apiErr) {
+        console.error("❌ Kashier v3 Refund Error:", apiErr.response?.data || apiErr.message);
+        return res.status(500).json({ 
+          error: "Kashier Refund failed: " + (apiErr.response?.data?.messages?.en || apiErr.response?.data?.error?.message || apiErr.message) 
+        });
       }
-    } catch (apiErr) {
-      console.error("❌ Kashier v3 Refund Error:", apiErr.response?.data || apiErr.message);
-      return res.status(500).json({ 
-        error: "Kashier Refund failed: " + (apiErr.response?.data?.messages?.en || apiErr.response?.data?.error?.message || apiErr.message) 
-      });
     }
 
-    // Database updates only if API call succeeded
+    // Database updates only if API call succeeded or if no refund was required
     await client.query("UPDATE payments SET status = $1, refunded_amount = $2 WHERE order_id = $3", 
-      [refundPercentage === 1.0 ? 'fully_refunded' : 'partially_refunded', Math.round(refundAmount * 100), orderId]);
+      [refundPercentage === 1.0 ? 'fully_refunded' : (refundPercentage === 0.0 ? 'no_refund' : 'partially_refunded'), Math.round(refundAmount * 100), orderId]);
     
     await client.query("UPDATE bookings SET status = 'cancelled' WHERE id = $1", [booking.id]);
     
