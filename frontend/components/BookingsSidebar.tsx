@@ -51,7 +51,7 @@ export default function BookingsSidebar({ isOpen, onClose }: BookingsSidebarProp
     if (hoursDiff > 24) {
       refundInfo = "You are eligible for a 100% refund (Full Refund).";
     } else if (hoursDiff > 0) {
-      refundInfo = "Since the tour is in less than 24 hours, you are eligible for an 80% refund.";
+      refundInfo = "Since the tour is in less than 24 hours, you are not eligible for a refund. The full amount will be charged.";
     } else {
       setDialogState({
         isOpen: true,
@@ -192,7 +192,7 @@ export default function BookingsSidebar({ isOpen, onClose }: BookingsSidebarProp
 
                   <p className="mt-3 text-[10px] text-muted-foreground flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3 text-orange-400" />
-                    Refund policy: 100% (&gt;24h), 80% (&lt;24h)
+                    Refund policy: 100% (&gt;24h), 0% (&lt;24h)
                   </p>
                 </Card>
               ))}
