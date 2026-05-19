@@ -51,6 +51,8 @@ export default function HeroSection({ onExploreTours }: HeroSectionProps) {
             src={currentImage.src}
             alt={currentImage.title}
             className="w-full h-full object-cover"
+            fetchPriority={currentImageIndex === 0 ? "high" : "auto"}
+            loading={currentImageIndex === 0 ? "eager" : "lazy"}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-transparent" />
           {/* Arabic-inspired decorative element */}
