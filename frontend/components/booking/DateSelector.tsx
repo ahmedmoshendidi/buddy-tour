@@ -102,7 +102,11 @@ export default function DateSelector({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}
+              onClick={() => {
+                const newDate = new Date(currentMonth);
+                newDate.setMonth(newDate.getMonth() - 1);
+                setCurrentMonth(newDate);
+              }}
             >
               ‹
             </Button>
@@ -112,7 +116,11 @@ export default function DateSelector({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}
+              onClick={() => {
+                const newDate = new Date(currentMonth);
+                newDate.setMonth(newDate.getMonth() + 1);
+                setCurrentMonth(newDate);
+              }}
             >
               ›
             </Button>

@@ -163,9 +163,23 @@ export default function TicketsQuantity({ tourId, onBack, onCheckout }: TicketsQ
   }, [tourId]);
 
 
-  // Check availability when selection changes
+  // Check availability when selection changes (debounced to improve responsiveness / INP)
   useEffect(() => {
-    checkSeatAvailability();
+    if (!tour || !selectedDate || !selectedTime || (adults + children) === 0) {
+      setAvailabilityError('');
+      setAvailabilityLoading(false);
+      return;
+    }
+
+    // Clear previous error immediately on any selection change for better responsiveness
+    setAvailabilityError('');
+
+    const delay = 350; // ms
+    const timer = setTimeout(() => {
+      checkSeatAvailability();
+    }, delay);
+
+    return () => clearTimeout(timer);
   }, [selectedDate, selectedTime, adults, children]);
 
 

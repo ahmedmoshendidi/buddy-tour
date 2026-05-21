@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Clock } from 'lucide-react';
 
 interface CountdownTimerProps {
@@ -10,6 +10,13 @@ interface CountdownTimerProps {
 export default function CountdownTimer({ expirationTime, onExpire, className = '' }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
 
+  // Use a stable ref for onExpire so parent re-renders (changing the callback reference)
+  // do not constantly tear down and recreate the interval timer.
+  const onExpireRef = useRef(onExpire);
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
+
   useEffect(() => {
     const calculateTimeLeft = () => {
       const expiration = new Date(expirationTime);
@@ -18,7 +25,7 @@ export default function CountdownTimer({ expirationTime, onExpire, className = '
       
       if (diff <= 0) {
         setTimeLeft(0);
-        onExpire?.();
+        onExpireRef.current?.();
         return 0;
       }
       
@@ -39,7 +46,7 @@ export default function CountdownTimer({ expirationTime, onExpire, className = '
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [expirationTime, onExpire]);
+  }, [expirationTime]);
 
   const formatTime = (seconds: number): string => {
     if (seconds <= 0) return '00:00';

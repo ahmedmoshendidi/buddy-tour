@@ -48,7 +48,7 @@ export default function CheckoutProcess() {
     }
   }, []);
 
-  // 🕒 Check hold expiration (localStorage + cart fallback)
+  // 🕒 Check hold expiration (localStorage + cart fallback) without high-frequency polling
   useEffect(() => {
     const checkBookingData = () => {
       const bookingData = localStorage.getItem('bookingData');
@@ -75,20 +75,17 @@ export default function CheckoutProcess() {
     };
 
     checkBookingData();
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'bookingData') checkBookingData();
     };
-    const intervalId = setInterval(() => {
-      if (!holdExpiration) checkBookingData();
-    }, 100);
-    setTimeout(() => clearInterval(intervalId), 2000);
+
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      clearInterval(intervalId);
     };
-  }, [holdExpiration, bookedTours]);
+  }, [bookedTours]);
 
   const handleNext = async () => {
     if (currentStep === 2) {
