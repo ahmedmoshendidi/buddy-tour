@@ -167,7 +167,7 @@ export default function PaymentFailure({ onBackToHome, onRetryPayment }: Payment
               </p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline" className="bg-white">📧 support@buddytourguide.com</Badge>
-                <Badge variant="outline" className="bg-white">📱 +20 102 903 1487</Badge>
+                <Badge variant="outline" className="bg-white">📱 +20 150 553 1547</Badge>
                 <Badge variant="outline" className="bg-white">💬 Live Chat Available</Badge>
               </div>
             </div>

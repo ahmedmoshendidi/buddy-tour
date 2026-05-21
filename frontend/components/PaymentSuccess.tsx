@@ -212,7 +212,7 @@ export default function PaymentSuccess({
                   📧 support@buddytourguide.com
                 </Badge>
                 <Badge variant="outline" className="bg-white">
-                  📱 +20 102 903 1487
+                  📱 +20 150 553 1547
                 </Badge>
               </div>
             </div>

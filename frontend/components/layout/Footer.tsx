@@ -55,7 +55,7 @@ export default function Footer() {
             <h4 className="mb-4 font-semibold text-primary">Support</h4>
             <div className="text-sm text-muted-foreground space-y-2">
               <p>Email: <a href="mailto:support@buddytourguide.com" className="hover:text-primary transition-colors">support@buddytourguide.com</a></p>
-              <p>Phone: <a href="tel:01029031487" className="hover:text-primary transition-colors">01029031487</a></p>
+              <p>Phone: <a href="tel:01505531547" className="hover:text-primary transition-colors">01505531547</a></p>
 
               <p>
                 <Link to="/cancellation-policy" className="hover:text-primary transition-colors">
