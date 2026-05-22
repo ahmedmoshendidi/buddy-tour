@@ -22,8 +22,6 @@ export default function SuccessCleanup() {
       statusParam === 'completed' ||
       params.get('completed') === 'true';
 
-    console.log('🔍 SuccessCleanup: Detected status =', statusParam, '| isSuccess =', isSuccess);
-
     if (!isSuccess) return;
 
     try {
@@ -39,17 +37,8 @@ export default function SuccessCleanup() {
       const sessionId: string | undefined = paidBooking?.session_id || bookingData?.session_id;
       const tourId: number | undefined = bookingData?.tour_id;
 
-      console.log('🧹 SuccessCleanup Trace:', { 
-        orderId,
-        sessionId, 
-        tourId, 
-        hasPaidBooking: !!paidBooking, 
-        hasBookingData: !!bookingData
-      });
-
       // 1) اول حاجة ، اعمل mark للتور كـ paid عشان العداد يختفي فورا
       if (orderId || sessionId || tourId) {
-        console.log(`✨ SuccessCleanup: Marking as paid | OrderId: ${orderId} | Session: ${sessionId} | TourId: ${tourId}`);
         markTourAsPaid(sessionId || '', orderId || undefined, tourId);
 
         // ✅ Persist paid status for CartContext recovery on refresh
@@ -72,12 +61,10 @@ export default function SuccessCleanup() {
               currency: 'USD'
             });
             localStorage.setItem(purchaseTrackingKey, 'true');
-            console.log('✅ Meta Pixel Purchase Logged');
           }
         }
 
         // 2) Keep the tour in the list but mark as paid (it will show in BookingsSidebar now)
-        console.log('✅ SuccessCleanup: Tour transition initiated');
       }
 
       // DON'T remove bookingData immediately - let it stay for redundancy
